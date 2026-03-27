@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://honeynet-framework.local/schemas/catalog_snapshot.schema.json",
+  "title": "CatalogSnapshot",
+  "description": "Deterministic catalog pack: archetype ids map to default deploy images and optional labels. Policy content lives in the file, not in Python.",
+  "type": "object",
+  "required": ["schema_version", "entries"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bump when breaking the entries shape for readers."
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/catalogEntry" }
+    }
+  },
+  "$defs": {
+    "catalogEntry": {
+      "type": "object",
+      "required": ["id", "default_image"],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Referenced by systems[].deploy.catalog_archetype in the world model."
+        },
+        "default_image": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Docker image reference applied when this archetype is selected."
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Optional metadata for UIs or custom resolvers."
+        }
+      }
+    }
+  }
+}

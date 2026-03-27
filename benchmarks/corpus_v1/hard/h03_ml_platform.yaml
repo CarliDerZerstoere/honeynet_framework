@@ -1,0 +1,96 @@
+id: h03_ml_platform
+difficulty: hard
+tags: [ml, data-science, feature-store, model-registry, pipeline]
+description: >
+  Machine learning platform: feature store, model registry, training scheduler,
+  experiment tracker (MLflow), inference API, object storage (MinIO),
+  PostgreSQL metadata, Kafka for data pipeline events, monitoring.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for an ML platform with a feature store, model registry,
+      training scheduler, experiment tracker, inference API, object storage,
+      metadata database, data pipeline events stream, and monitoring.
+  - id: detailed
+    text: |
+      Model a production machine learning platform:
+      - Public zone: Model inference REST API
+      - Internal zone: Feature store, model registry, MLflow experiment tracker,
+        training job scheduler
+      - Data zone: MinIO object storage for datasets and model artifacts,
+        PostgreSQL metadata database, Kafka for data pipeline events
+      - Ops zone: Prometheus and Grafana monitoring
+      Include honeytokens for model API keys, data scientist credentials,
+      and training job service accounts.
+reference:
+  required_services:
+    - id: inference_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: feature_store
+      kinds_any: [database, runtime]
+      deployable_only: true
+    - id: model_registry
+      kinds_any: [infra, runtime]
+      deployable_only: true
+    - id: training_scheduler
+      kinds_any: [infra, runtime]
+      deployable_only: true
+    - id: experiment_tracker
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: object_storage
+      kinds_any: [storage]
+      archetypes_any: [minio/minio, minio]
+      deployable_only: true
+    - id: metadata_db
+      kinds_any: [database]
+      deployable_only: true
+    - id: pipeline_events
+      kinds_any: [queue]
+      archetypes_any: [apache/kafka, kafka]
+      deployable_only: true
+    - id: grafana_dashboard
+      kinds_any: [monitor, web]
+      archetypes_any: [grafana]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: ops_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: inference_api
+      target_service_id: model_registry
+    - source_service_id: inference_api
+      target_service_id: feature_store
+    - source_service_id: training_scheduler
+      target_service_id: object_storage
+    - source_service_id: training_scheduler
+      target_service_id: pipeline_events
+    - source_service_id: experiment_tracker
+      target_service_id: metadata_db
+    - source_service_id: model_registry
+      target_service_id: object_storage
+  forbidden_placements:
+    - service_id: metadata_db
+      zone_id: public_zone
+    - service_id: object_storage
+      zone_id: public_zone
+    - service_id: feature_store
+      zone_id: public_zone
+    - service_id: training_scheduler
+      zone_id: public_zone
+    - service_id: pipeline_events
+      zone_id: public_zone

@@ -1,0 +1,6 @@
+# Dependencies are declared in pyproject.toml.
+# This file exists only for tooling that requires a requirements.txt.
+#
+# Install production deps:  pip install .
+# Install with dev extras:  pip install -e ".[dev]"
+-e .

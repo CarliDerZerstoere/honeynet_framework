@@ -1,0 +1,104 @@
+id: h02_telecom_mediation
+difficulty: hard
+tags: [telecom, cdr, mediation, signaling, billing]
+description: >
+  Telecom mediation platform with real-time signaling stream (Kafka),
+  call detail record archive (Cassandra/ClickHouse), billing API,
+  identity federation, lawful intercept compliance store, monitoring.
+  Tests telecom-specific data theme detection and multi-store layout.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a telecom mediation platform with a signaling events stream,
+      call detail record archive, billing API, identity federation, compliance store,
+      and monitoring.
+  - id: detailed
+    text: |
+      Model a telecommunications carrier's mediation and billing platform:
+      - Signaling zone: Kafka cluster for near-real-time signaling events
+      - Core zone: Billing REST API, mediation engine consuming the signaling stream
+      - Data zone: Cassandra or ClickHouse for long-term call detail records (CDRs),
+        PostgreSQL for subscriber accounts
+      - Identity zone: Identity federation service (OIDC/SAML) for staff access
+      - Compliance zone: Lawful intercept archived exports store, compliance audit log
+      - Ops zone: Prometheus monitoring
+      Include honeytokens for billing API credentials and lawful intercept admin keys.
+reference:
+  required_services:
+    - id: signaling_stream
+      kinds_any: [queue]
+      roles_any: [signaling, stream, events]
+      deployable_only: true
+    - id: cdr_archive
+      kinds_any: [database]
+      roles_any: [cdr, call records, archive, billing]
+      deployable_only: true
+    - id: billing_api
+      kinds_any: [web, runtime]
+      roles_any: [billing, api]
+      deployable_only: true
+    - id: identity_federation
+      kinds_any: [identity]
+      roles_any: [identity, federation, sso]
+      deployable_only: true
+    - id: compliance_store
+      kinds_any: [storage, database]
+      roles_any: [compliance, lawful, archive, exports]
+      deployable_only: true
+    - id: mediation_engine
+      kinds_any: [runtime, worker]
+      roles_any: [mediation, processor, cdr]
+      deployable_only: true
+    - id: subscriber_db
+      kinds_any: [database]
+      archetypes_any: [postgres, mysql]
+      deployable_only: true
+    - id: api_gateway
+      kinds_any: [web, infra]
+      roles_any: [gateway, proxy, ingress]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      deployable_only: true
+  required_zones:
+    - id: signaling_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: identity_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: compliance_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: core_zone
+      exposure_any: [internal, private]
+      internal: true
+  supplemental_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+  required_dependencies:
+    - source_service_id: mediation_engine
+      target_service_id: signaling_stream
+    - source_service_id: mediation_engine
+      target_service_id: cdr_archive
+    - source_service_id: billing_api
+      target_service_id: subscriber_db
+    - source_service_id: billing_api
+      target_service_id: cdr_archive
+    - source_service_id: api_gateway
+      target_service_id: billing_api
+  forbidden_placements:
+    - service_id: cdr_archive
+      zone_id: signaling_zone
+    - service_id: compliance_store
+      zone_id: signaling_zone
+    - service_id: identity_federation
+      zone_id: signaling_zone
+    - service_id: subscriber_db
+      zone_id: signaling_zone
+    - service_id: signaling_stream
+      zone_id: signaling_zone

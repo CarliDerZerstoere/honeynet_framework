@@ -1,0 +1,72 @@
+id: m06_streaming_platform
+difficulty: medium
+tags: [streaming, kafka, event-driven, analytics]
+description: >
+  Event streaming platform: Kafka broker, Zookeeper, stream processor,
+  ClickHouse analytics store, internal API. Tests queue + analytics
+  archetype clustering and zone distribution.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for an event streaming platform with Kafka, Zookeeper,
+      a stream processor, ClickHouse for analytics, and an internal API.
+  - id: detailed
+    text: |
+      Model a real-time event streaming platform: an Apache Kafka broker with
+      Zookeeper coordination, a stream processing worker consuming events,
+      a ClickHouse columnar store for analytics queries, and an internal REST
+      API for downstream consumers.
+reference:
+  required_services:
+    - id: kafka_broker
+      kinds_any: [queue]
+      archetypes_any: [apache/kafka, kafka]
+      deployable_only: true
+    - id: zookeeper
+      kinds_any: [infra]
+      archetypes_any: [apache/zookeeper, zookeeper]
+      deployable_only: true
+    - id: stream_processor
+      kinds_any: [runtime]
+      deployable_only: true
+    - id: analytics_store
+      kinds_any: [database]
+      archetypes_any: [clickhouse, crate]
+      deployable_only: true
+    - id: internal_api
+      kinds_any: [web, runtime]
+      roles_any: [api, gateway]
+      deployable_only: true
+    - id: analytics_dashboard
+      kinds_any: [web, monitor]
+      roles_any: [dashboard, analytics]
+      deployable_only: true
+  required_zones:
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: api_zone
+      exposure_any: [internal, private, dmz]
+      internal: false
+  supplemental_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+  required_dependencies:
+    - source_service_id: kafka_broker
+      target_service_id: zookeeper
+      relation: depends_on
+    - source_service_id: stream_processor
+      target_service_id: kafka_broker
+    - source_service_id: stream_processor
+      target_service_id: analytics_store
+    - source_service_id: analytics_dashboard
+      target_service_id: analytics_store
+  forbidden_placements:
+    - service_id: analytics_store
+      zone_id: api_zone
+    - service_id: kafka_broker
+      zone_id: api_zone

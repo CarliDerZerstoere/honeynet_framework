@@ -1,0 +1,53 @@
+id: e04_monitoring_stack
+difficulty: easy
+tags: [monitoring, prometheus, grafana]
+description: >
+  Internal monitoring stack with Prometheus, Grafana, Alertmanager, and a log
+  aggregator. Grafana depends on Prometheus; Alertmanager depends on Prometheus.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet with an internal Prometheus metrics collector and a Grafana dashboard.
+  - id: detailed
+    text: |
+      Model an operations monitoring stack: a Prometheus instance scraping internal
+      services and a Grafana dashboard for visualisation, both in an internal ops zone.
+reference:
+  required_services:
+    - id: prometheus
+      kinds_any: [monitor]
+      archetypes_any: [prometheus, prom/prometheus]
+      deployable_only: true
+    - id: grafana
+      kinds_any: [monitor, web]
+      archetypes_any: [grafana]
+      deployable_only: true
+    - id: alertmanager
+      kinds_any: [monitor]
+      archetypes_any: [alertmanager, prom/alertmanager]
+      deployable_only: true
+    - id: log_aggregator
+      kinds_any: [logging, monitor]
+      archetypes_any: [elasticsearch, loki]
+      deployable_only: true
+  required_zones:
+    - id: ops_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: logging_zone
+      exposure_any: [internal, private]
+      internal: true
+  supplemental_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+  required_dependencies:
+    - source_service_id: grafana
+      target_service_id: prometheus
+    - source_service_id: alertmanager
+      target_service_id: prometheus
+  forbidden_placements:
+    - service_id: prometheus
+      zone_id: ops_zone
+    - service_id: log_aggregator
+      zone_id: ops_zone

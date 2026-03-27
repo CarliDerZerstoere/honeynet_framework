@@ -1,0 +1,93 @@
+id: h09_defense_c2
+difficulty: hard
+tags: [defense, c2, intelligence, siem]
+description: >
+  Military command-and-control honeypot with a command portal, situational awareness
+  API, tactical database, NATS encrypted message bus, intelligence feed service,
+  Vault secrets management, audit trail, SIEM, and monitoring.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a defense C2 system with a command portal, situational
+      awareness API, tactical database, encrypted message bus, intelligence feed,
+      secrets vault, audit trail, SIEM, and monitoring.
+  - id: detailed
+    text: |
+      Model a military command-and-control infrastructure: a web-based command portal
+      for officers, a situational awareness REST API aggregating sensor feeds, a
+      PostgreSQL tactical database for mission data, a NATS message bus for encrypted
+      inter-unit communication, an intelligence feed service ingesting threat data,
+      a Vault instance for secrets and key management, an audit trail service for
+      compliance, a SIEM for security monitoring, and Prometheus/Grafana for system
+      health. All backend services must be fully isolated from the public-facing portal.
+reference:
+  required_services:
+    - id: command_portal
+      kinds_any: [web]
+      deployable_only: true
+    - id: situational_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: tactical_db
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+    - id: message_bus
+      kinds_any: [queue]
+      archetypes_any: [nats, rabbitmq]
+      deployable_only: true
+    - id: intel_feed
+      kinds_any: [runtime, worker]
+      deployable_only: true
+    - id: secrets_vault
+      kinds_any: [identity, infra]
+      archetypes_any: [vault]
+      deployable_only: true
+    - id: audit_trail
+      kinds_any: [monitor, database]
+      deployable_only: true
+    - id: siem
+      kinds_any: [monitor]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      archetypes_any: [prometheus, grafana]
+      deployable_only: true
+  required_zones:
+    - id: command_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: tactical_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: intel_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: security_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: command_portal
+      target_service_id: situational_api
+    - source_service_id: situational_api
+      target_service_id: tactical_db
+    - source_service_id: situational_api
+      target_service_id: message_bus
+    - source_service_id: intel_feed
+      target_service_id: message_bus
+    - source_service_id: situational_api
+      target_service_id: secrets_vault
+  forbidden_placements:
+    - service_id: tactical_db
+      zone_id: command_zone
+    - service_id: secrets_vault
+      zone_id: command_zone
+    - service_id: message_bus
+      zone_id: command_zone
+    - service_id: intel_feed
+      zone_id: command_zone
+    - service_id: audit_trail
+      zone_id: command_zone

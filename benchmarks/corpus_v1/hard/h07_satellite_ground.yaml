@@ -1,0 +1,88 @@
+id: h07_satellite_ground
+difficulty: hard
+tags: [satellite, ground-station, telemetry, space]
+description: >
+  Satellite ground station honeypot with Kafka telemetry ingestion, command uplink
+  API, ephemeris database, orbit propagator, mission control dashboard, HSM vault
+  for encryption keys, audit logging, and monitoring.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a satellite ground station with telemetry ingestion,
+      a command uplink API, ephemeris database, orbit propagator, mission control
+      dashboard, key vault, audit service, and monitoring.
+  - id: detailed
+    text: |
+      Model a satellite ground station infrastructure: a Kafka stream ingesting
+      real-time telemetry frames, a command uplink REST API for sending commands
+      to spacecraft, a PostgreSQL ephemeris database storing orbital parameters,
+      an orbit propagator service computing passes, a mission control web dashboard,
+      a Vault HSM for TM/TC encryption keys, an audit logging service, and Prometheus
+      monitoring. The command uplink and HSM must be isolated from public access.
+      Telemetry and command paths must be in separate zones.
+reference:
+  required_services:
+    - id: telemetry_stream
+      kinds_any: [queue]
+      archetypes_any: [kafka]
+      deployable_only: true
+    - id: command_uplink
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: ephemeris_db
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+    - id: orbit_propagator
+      kinds_any: [runtime, worker]
+      deployable_only: true
+    - id: mission_control
+      kinds_any: [web]
+      deployable_only: true
+    - id: key_vault
+      kinds_any: [identity, infra]
+      archetypes_any: [vault]
+      deployable_only: true
+    - id: audit_service
+      kinds_any: [monitor, database]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      archetypes_any: [prometheus, grafana]
+      deployable_only: true
+  required_zones:
+    - id: ops_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: telemetry_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: command_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: security_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: orbit_propagator
+      target_service_id: ephemeris_db
+    - source_service_id: mission_control
+      target_service_id: telemetry_stream
+    - source_service_id: command_uplink
+      target_service_id: key_vault
+    - source_service_id: command_uplink
+      target_service_id: ephemeris_db
+    - source_service_id: orbit_propagator
+      target_service_id: telemetry_stream
+  forbidden_placements:
+    - service_id: command_uplink
+      zone_id: ops_zone
+    - service_id: key_vault
+      zone_id: ops_zone
+    - service_id: ephemeris_db
+      zone_id: ops_zone
+    - service_id: telemetry_stream
+      zone_id: ops_zone

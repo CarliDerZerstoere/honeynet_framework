@@ -1,0 +1,148 @@
+corpus_version: "1"
+created: "2026-03-22"
+description: "Benchmark corpus v1 for the Honeynet Framework — 30 scenarios across easy/medium/hard."
+
+scenarios:
+  # Easy (e01–e06)
+  - id: e01_web_db
+    path: easy/e01_web_db.yaml
+    difficulty: easy
+    tags: [web, database, two-tier]
+  - id: e02_identity_only
+    path: easy/e02_identity_only.yaml
+    difficulty: easy
+    tags: [identity, ldap]
+  - id: e03_web_cache_db
+    path: easy/e03_web_cache_db.yaml
+    difficulty: easy
+    tags: [web, cache, database, three-tier]
+  - id: e04_monitoring_stack
+    path: easy/e04_monitoring_stack.yaml
+    difficulty: easy
+    tags: [monitoring, prometheus, grafana]
+  - id: e05_message_queue
+    path: easy/e05_message_queue.yaml
+    difficulty: easy
+    tags: [queue, rabbitmq]
+  - id: e06_object_storage
+    path: easy/e06_object_storage.yaml
+    difficulty: easy
+    tags: [storage, minio]
+  - id: e07_dns_sinkhole
+    path: easy/e07_dns_sinkhole.yaml
+    difficulty: easy
+    tags: [dns, sinkhole, logging]
+  - id: e08_vpn_gateway
+    path: easy/e08_vpn_gateway.yaml
+    difficulty: easy
+    tags: [vpn, gateway, wiki]
+  - id: e09_file_share
+    path: easy/e09_file_share.yaml
+    difficulty: easy
+    tags: [file-share, ldap, antivirus]
+  - id: e10_ci_runner
+    path: easy/e10_ci_runner.yaml
+    difficulty: easy
+    tags: [ci, runner, artifacts]
+
+  # Medium (m01–m06)
+  - id: m01_ecommerce
+    path: medium/m01_ecommerce.yaml
+    difficulty: medium
+    tags: [ecommerce, multi-tier, payment]
+  - id: m02_corporate_email
+    path: medium/m02_corporate_email.yaml
+    difficulty: medium
+    tags: [email, ldap, file-share]
+  - id: m03_healthcare
+    path: medium/m03_healthcare.yaml
+    difficulty: medium
+    tags: [healthcare, fhir, ehr, audit]
+  - id: m04_devops_platform
+    path: medium/m04_devops_platform.yaml
+    difficulty: medium
+    tags: [devops, gitea, jenkins, monitoring]
+  - id: m05_supply_chain
+    path: medium/m05_supply_chain.yaml
+    difficulty: medium
+    tags: [supply-chain, vendor-portal, erp]
+  - id: m06_streaming_platform
+    path: medium/m06_streaming_platform.yaml
+    difficulty: medium
+    tags: [streaming, kafka, analytics]
+  - id: m07_scada_honeypot
+    path: medium/m07_scada_honeypot.yaml
+    difficulty: medium
+    tags: [scada, ics, ot, honeypot]
+  - id: m08_crypto_exchange
+    path: medium/m08_crypto_exchange.yaml
+    difficulty: medium
+    tags: [crypto, exchange, trading, fintech]
+  - id: m09_ad_network
+    path: medium/m09_ad_network.yaml
+    difficulty: medium
+    tags: [advertising, analytics, fraud]
+  - id: m10_game_backend
+    path: medium/m10_game_backend.yaml
+    difficulty: medium
+    tags: [gaming, matchmaking, chat, realtime]
+
+  # Hard (h01–h06)
+  - id: h01_banking_core
+    path: hard/h01_banking_core.yaml
+    difficulty: hard
+    tags: [banking, identity, compliance, multi-zone]
+  - id: h02_telecom_mediation
+    path: hard/h02_telecom_mediation.yaml
+    difficulty: hard
+    tags: [telecom, cdr, signaling, compliance]
+  - id: h03_ml_platform
+    path: hard/h03_ml_platform.yaml
+    difficulty: hard
+    tags: [ml, feature-store, model-registry, data-pipeline]
+  - id: h04_zerotrust_enterprise
+    path: hard/h04_zerotrust_enterprise.yaml
+    difficulty: hard
+    tags: [zero-trust, vault, identity, compliance]
+  - id: h05_iot_platform
+    path: hard/h05_iot_platform.yaml
+    difficulty: hard
+    tags: [iot, mqtt, timeseries, fleet]
+  - id: h06_government_portal
+    path: hard/h06_government_portal.yaml
+    difficulty: hard
+    tags: [government, federated-identity, audit, high-security]
+  - id: h07_satellite_ground
+    path: hard/h07_satellite_ground.yaml
+    difficulty: hard
+    tags: [satellite, ground-station, telemetry, space]
+  - id: h08_smart_city
+    path: hard/h08_smart_city.yaml
+    difficulty: hard
+    tags: [iot, smart-city, traffic, timeseries]
+  - id: h09_defense_c2
+    path: hard/h09_defense_c2.yaml
+    difficulty: hard
+    tags: [defense, c2, intelligence, siem]
+  - id: h10_pharma_research
+    path: hard/h10_pharma_research.yaml
+    difficulty: hard
+    tags: [pharma, lims, research, regulatory]
+
+metrics:
+  collected:
+    - service_hit_rate
+    - zone_hit_rate
+    - dependency_hit_rate
+    - forbidden_violation_count
+    - validation_passed
+    - compilation_passed
+    - apply_passed
+    - total_tokens
+    - total_duration_s
+    - cold_run
+    - world_model_repair_attempts
+    - semantic_judge_score
+  cold_warm_distinction: true
+  cost_estimation_prompt: concise
+  quality_evaluation_prompt: detailed

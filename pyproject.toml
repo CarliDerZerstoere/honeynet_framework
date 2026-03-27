@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "honeynet-framework"
+version = "0.1.0"
+description = "Generate and deploy honeynets from natural language prompts using LLMs"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Honeynet Framework Contributors"}
+]
+keywords = ["honeynet", "honeypot", "security", "deception", "docker", "terraform", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "httpx>=0.25.0",
+    "PyYAML>=6.0.0",
+    "prompt_toolkit>=3.0.0",
+    "rich>=13.0.0",
+    "typing-extensions>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+honeynet = "honeynet_framework.cli:main"
+
+# Plugin extension points.  Third-party packages register implementations
+# of CatalogPackPlugin, RepairStrategyPlugin, and EvaluationBackendPlugin
+# by declaring entry points in these groups.
+[project.entry-points."honeynet.catalog_pack"]
+# Example (uncomment in a downstream package):
+# my_pack = "my_package.plugins:MyCatalogPack"
+
+[project.entry-points."honeynet.repair_strategy"]
+noop = "honeynet_framework.plugins.noop_repair:noop_repair"
+# my_strategy = "my_package.plugins:MyRepairStrategy"
+
+[project.entry-points."honeynet.evaluation_backend"]
+# my_backend = "my_package.plugins:MyEvaluationBackend"
+
+[project.urls]
+# TODO: replace YOUR_ORG with your actual GitHub organization once the repo is public.
+Documentation = "https://github.com/YOUR_ORG/honeynet-framework#readme"
+Issues = "https://github.com/YOUR_ORG/honeynet-framework/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["honeynet_framework*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

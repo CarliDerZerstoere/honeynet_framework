@@ -1,0 +1,26 @@
+id: example_minimal
+prompts:
+  - id: concise
+    text: |
+      Create a small internal honeynet with an identity service and metrics storage.
+  - id: narrative
+    text: |
+      Model a compact internal infrastructure where an identity platform depends on a metrics store.
+reference:
+  required_services:
+    - id: identity_federation
+      roles_any: ["identity federation"]
+      deployable_only: true
+    - id: metrics_store
+      roles_any: ["metrics store"]
+      deployable_only: true
+  required_zones:
+    - id: internal_ops
+      names_any: ["internal", "ops"]
+      exposure_any: ["internal"]
+      internal: true
+  required_dependencies:
+    - source_service_id: identity_federation
+      target_service_id: metrics_store
+      relation: depends_on
+  forbidden_placements: []

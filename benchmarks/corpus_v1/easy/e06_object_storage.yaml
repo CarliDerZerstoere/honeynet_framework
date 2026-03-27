@@ -1,0 +1,49 @@
+id: e06_object_storage
+difficulty: easy
+tags: [storage, minio, s3-compatible]
+description: >
+  Object storage platform with API gateway, MinIO storage backend, and metadata
+  database. Tests storage archetype and API-to-storage dependency chain.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet with an internal MinIO object storage service.
+  - id: detailed
+    text: |
+      Model a corporate data lake with an S3-compatible object storage backend
+      (MinIO) accessible only from internal services.
+reference:
+  required_services:
+    - id: object_storage
+      kinds_any: [storage]
+      archetypes_any: [minio/minio, minio]
+      deployable_only: true
+    - id: api_gateway
+      kinds_any: [web, api]
+      roles_any: [gateway, api]
+      deployable_only: true
+    - id: metadata_db
+      kinds_any: [database]
+      archetypes_any: [postgres, mysql]
+      deployable_only: true
+  required_zones:
+    - id: app_zone
+      exposure_any: [dmz, restricted]
+      internal: false
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+  supplemental_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+  required_dependencies:
+    - source_service_id: api_gateway
+      target_service_id: object_storage
+    - source_service_id: api_gateway
+      target_service_id: metadata_db
+  forbidden_placements:
+    - service_id: object_storage
+      zone_id: app_zone
+    - service_id: metadata_db
+      zone_id: app_zone

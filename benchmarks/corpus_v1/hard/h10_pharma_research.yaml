@@ -1,0 +1,95 @@
+id: h10_pharma_research
+difficulty: hard
+tags: [pharma, lims, research, regulatory]
+description: >
+  Pharmaceutical research lab honeypot with a lab management portal, LIMS API,
+  compound database, Celery analysis pipeline, document vault, regulatory
+  submission API, audit service, Keycloak identity, and monitoring.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a pharma research lab with a lab portal, LIMS API,
+      compound database, analysis pipeline, document vault, regulatory submission
+      service, audit logging, identity management, and monitoring.
+  - id: detailed
+    text: |
+      Model a pharmaceutical research laboratory IT environment: a lab management
+      web portal for scientists, a LIMS REST API tracking samples and experiments,
+      a PostgreSQL compound database for molecular data, a Celery-based analysis
+      pipeline running computational chemistry jobs, a MinIO document vault for
+      research papers and patents, a regulatory submission API for FDA filings,
+      an audit service for GxP compliance, Keycloak for identity management,
+      and Prometheus monitoring. Research data and regulatory systems must be
+      isolated from the public portal.
+reference:
+  required_services:
+    - id: lab_portal
+      kinds_any: [web]
+      deployable_only: true
+    - id: lims_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: compound_db
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+    - id: analysis_pipeline
+      kinds_any: [runtime, worker]
+      archetypes_any: [celery]
+      deployable_only: true
+    - id: document_vault
+      kinds_any: [storage]
+      archetypes_any: [minio]
+      deployable_only: true
+    - id: regulatory_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: audit_service
+      kinds_any: [monitor, database]
+      deployable_only: true
+    - id: identity_service
+      kinds_any: [identity]
+      archetypes_any: [keycloak]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      archetypes_any: [prometheus, grafana]
+      deployable_only: true
+  required_zones:
+    - id: portal_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: research_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: regulatory_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: identity_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: lab_portal
+      target_service_id: lims_api
+    - source_service_id: lims_api
+      target_service_id: compound_db
+    - source_service_id: lims_api
+      target_service_id: identity_service
+    - source_service_id: analysis_pipeline
+      target_service_id: compound_db
+    - source_service_id: regulatory_api
+      target_service_id: document_vault
+    - source_service_id: regulatory_api
+      target_service_id: audit_service
+  forbidden_placements:
+    - service_id: compound_db
+      zone_id: portal_zone
+    - service_id: document_vault
+      zone_id: portal_zone
+    - service_id: regulatory_api
+      zone_id: portal_zone
+    - service_id: identity_service
+      zone_id: portal_zone

@@ -1,0 +1,68 @@
+id: m10_game_backend
+difficulty: medium
+tags: [gaming, matchmaking, chat, realtime]
+description: >
+  Online game backend honeypot with a game API server, Redis session store,
+  PostgreSQL player database, matchmaking service, NATS chat broker, and
+  admin dashboard.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a game backend with a game API, session cache,
+      player database, matchmaking, chat service, and admin dashboard.
+  - id: detailed
+    text: |
+      Model the backend of a multiplayer online game: a REST game API handling
+      player actions, a Redis session store for active sessions, a PostgreSQL
+      database for player profiles and inventories, a matchmaking service
+      pairing players, a NATS-based real-time chat broker, and an admin
+      dashboard for game masters. The player database and admin panel must
+      be in a secure internal zone.
+reference:
+  required_services:
+    - id: game_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: session_store
+      kinds_any: [database]
+      archetypes_any: [redis]
+      deployable_only: true
+    - id: player_db
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+    - id: matchmaker
+      kinds_any: [runtime, worker]
+      deployable_only: true
+    - id: chat_broker
+      kinds_any: [queue]
+      archetypes_any: [nats, rabbitmq]
+      deployable_only: true
+    - id: admin_dashboard
+      kinds_any: [web]
+      roles_any: [admin, management]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: game_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: game_api
+      target_service_id: session_store
+    - source_service_id: game_api
+      target_service_id: player_db
+    - source_service_id: matchmaker
+      target_service_id: session_store
+    - source_service_id: game_api
+      target_service_id: chat_broker
+  forbidden_placements:
+    - service_id: player_db
+      zone_id: public_zone
+    - service_id: admin_dashboard
+      zone_id: public_zone

@@ -1,0 +1,67 @@
+id: m02_corporate_email
+difficulty: medium
+tags: [email, ldap, file-share, corporate]
+description: >
+  Corporate email system: SMTP/IMAP server, LDAP directory, file storage for
+  attachments, webmail portal. Tests identity + storage zone placement.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet mimicking a corporate email system with a mail server,
+      LDAP directory, file share, and webmail portal.
+  - id: detailed
+    text: |
+      Model a corporate email infrastructure: a public-facing webmail portal,
+      an internal SMTP/IMAP mail server, an LDAP directory for authentication,
+      and a file share for email attachments. Include honeytokens for admin
+      credentials and shared calendar API keys.
+reference:
+  required_services:
+    - id: webmail_portal
+      kinds_any: [web]
+      roles_any: [webmail, portal, web]
+      deployable_only: true
+    - id: mail_server
+      roles_any: [mail, smtp, imap, email]
+      deployable_only: true
+    - id: ldap_directory
+      kinds_any: [identity]
+      roles_any: [ldap, directory, identity]
+      deployable_only: true
+    - id: file_storage
+      kinds_any: [storage]
+      deployable_only: true
+    - id: antispam_filter
+      kinds_any: [runtime, proxy]
+      roles_any: [antispam, filter, gateway]
+      deployable_only: true
+    - id: calendar_service
+      kinds_any: [web, runtime]
+      roles_any: [calendar, scheduling]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: dmz_zone
+      exposure_any: [dmz, restricted]
+      internal: false
+  required_dependencies:
+    - source_service_id: webmail_portal
+      target_service_id: mail_server
+    - source_service_id: mail_server
+      target_service_id: ldap_directory
+    - source_service_id: mail_server
+      target_service_id: file_storage
+    - source_service_id: antispam_filter
+      target_service_id: mail_server
+  forbidden_placements:
+    - service_id: ldap_directory
+      zone_id: public_zone
+    - service_id: file_storage
+      zone_id: public_zone
+    - service_id: mail_server
+      zone_id: public_zone

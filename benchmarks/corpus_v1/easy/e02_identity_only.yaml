@@ -1,0 +1,50 @@
+id: e02_identity_only
+difficulty: easy
+tags: [identity, ldap, single-service]
+description: >
+  Identity service cluster with LDAP directory, authentication proxy, and admin
+  console. Tests identity placement and dependency chains through the auth proxy.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet with only an internal LDAP directory service.
+  - id: detailed
+    text: |
+      Model a corporate internal directory using an LDAP server accessible only
+      from the internal network.
+reference:
+  required_services:
+    - id: ldap_service
+      kinds_any: [identity]
+      roles_any: [ldap, directory, identity]
+      deployable_only: true
+    - id: auth_proxy
+      kinds_any: [web, proxy]
+      roles_any: [auth, authentication, proxy]
+      deployable_only: true
+    - id: admin_console
+      kinds_any: [web]
+      roles_any: [admin, management]
+      deployable_only: true
+  required_zones:
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: dmz_zone
+      exposure_any: [dmz, restricted]
+      internal: false
+  # Used only to interpret forbidden_placements (not counted in zone coverage).
+  supplemental_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+  required_dependencies:
+    - source_service_id: auth_proxy
+      target_service_id: ldap_service
+    - source_service_id: admin_console
+      target_service_id: ldap_service
+  forbidden_placements:
+    - service_id: ldap_service
+      zone_id: dmz_zone
+    - service_id: admin_console
+      zone_id: dmz_zone

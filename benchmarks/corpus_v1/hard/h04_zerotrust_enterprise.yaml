@@ -1,0 +1,106 @@
+id: h04_zerotrust_enterprise
+difficulty: hard
+tags: [zero-trust, mtls, vault, service-mesh, identity, compliance]
+description: >
+  Zero-trust enterprise: API gateway with mTLS, Vault secrets manager,
+  Keycloak SSO, three internal service tiers, shared data store,
+  SIEM-like audit aggregation, Prometheus monitoring.
+  Tests fine-grained identity + secrets management zone placement.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a zero-trust enterprise architecture with an mTLS API gateway,
+      Vault secrets manager, Keycloak SSO, three service tiers, data store, SIEM audit, and monitoring.
+  - id: detailed
+    text: |
+      Model a zero-trust enterprise:
+      - DMZ zone: mTLS-terminating API gateway (nginx/Envoy), Keycloak SSO
+      - Secrets zone: HashiCorp Vault for dynamic secrets and PKI
+      - Service zone A: Customer-facing microservice
+      - Service zone B: Internal business logic microservice
+      - Service zone C: Notification and email dispatch microservice
+      - Data zone: PostgreSQL with strict network policies
+      - Security zone: SIEM-style audit log aggregator, Vault audit log consumer
+      - Ops zone: Prometheus and Grafana
+      All inter-service traffic is authenticated.
+      Include honeytokens for Vault root tokens, service account credentials,
+      and database admin passwords.
+reference:
+  required_services:
+    - id: api_gateway
+      kinds_any: [web, infra]
+      roles_any: [gateway, proxy, mtls, ingress]
+      deployable_only: true
+    - id: vault
+      kinds_any: [infra, identity]
+      archetypes_any: [vault, hashicorp/vault]
+      deployable_only: true
+    - id: keycloak_sso
+      kinds_any: [identity]
+      archetypes_any: [keycloak]
+      deployable_only: true
+    - id: data_store
+      kinds_any: [database]
+      deployable_only: true
+    - id: audit_aggregator
+      kinds_any: [monitor, database]
+      deployable_only: true
+    - id: customer_service
+      kinds_any: [web, runtime]
+      roles_any: [customer, frontend, api]
+      deployable_only: true
+    - id: business_service
+      kinds_any: [runtime]
+      roles_any: [business, logic, backend]
+      deployable_only: true
+    - id: notification_service
+      kinds_any: [runtime, worker]
+      roles_any: [notification, email, dispatch]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      deployable_only: true
+  required_zones:
+    - id: dmz_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: secrets_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: security_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: service_zone_a
+      exposure_any: [internal, private]
+      internal: true
+    - id: service_zone_b
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: api_gateway
+      target_service_id: keycloak_sso
+      relation: depends_on
+    - source_service_id: customer_service
+      target_service_id: vault
+    - source_service_id: customer_service
+      target_service_id: data_store
+    - source_service_id: business_service
+      target_service_id: data_store
+    - source_service_id: business_service
+      target_service_id: vault
+    - source_service_id: api_gateway
+      target_service_id: customer_service
+  forbidden_placements:
+    - service_id: vault
+      zone_id: dmz_zone
+    - service_id: data_store
+      zone_id: dmz_zone
+    - service_id: audit_aggregator
+      zone_id: dmz_zone
+    - service_id: keycloak_sso
+      zone_id: dmz_zone
+    - service_id: business_service
+      zone_id: dmz_zone

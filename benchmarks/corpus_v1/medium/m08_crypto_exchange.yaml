@@ -1,0 +1,65 @@
+id: m08_crypto_exchange
+difficulty: medium
+tags: [crypto, exchange, trading, fintech]
+description: >
+  Cryptocurrency exchange honeypot with a trading API, Redis order book, wallet
+  service, PostgreSQL ledger, KYC identity verification, and monitoring.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a crypto exchange with a trading API, order book cache,
+      wallet service, ledger database, KYC identity check, and monitoring.
+  - id: detailed
+    text: |
+      Model a cryptocurrency exchange platform: a public-facing trading API for
+      order submission, a Redis-backed order book for real-time matching, a wallet
+      service managing hot and cold storage, a PostgreSQL ledger for transaction
+      history, a KYC identity verification service, and Prometheus monitoring.
+      The wallet service and ledger must be isolated from the public zone.
+reference:
+  required_services:
+    - id: trading_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: order_book
+      kinds_any: [database]
+      archetypes_any: [redis]
+      deployable_only: true
+    - id: wallet_service
+      kinds_any: [runtime]
+      deployable_only: true
+    - id: ledger_db
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+    - id: kyc_identity
+      kinds_any: [identity, runtime]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      archetypes_any: [prometheus, grafana]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: trading_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: vault_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: trading_api
+      target_service_id: order_book
+    - source_service_id: trading_api
+      target_service_id: kyc_identity
+    - source_service_id: wallet_service
+      target_service_id: ledger_db
+  forbidden_placements:
+    - service_id: wallet_service
+      zone_id: public_zone
+    - service_id: ledger_db
+      zone_id: public_zone
+    - service_id: order_book
+      zone_id: public_zone

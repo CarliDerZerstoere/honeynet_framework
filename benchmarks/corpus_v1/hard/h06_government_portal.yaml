@@ -1,0 +1,110 @@
+id: h06_government_portal
+difficulty: hard
+tags: [government, citizen-portal, high-security, audit, federated-identity]
+description: >
+  Government citizen portal with federated identity, high-security classification zones,
+  document management, case management API, PostgreSQL backend, eSigning service,
+  compliance audit trail, and monitoring.
+  Tests high-security zone placement, federated identity, and strict forbidden placements.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a government citizen portal with federated identity,
+      document management, case management API, database, eSigning service,
+      compliance audit, and monitoring.
+  - id: detailed
+    text: |
+      Model a national government citizen portal:
+      - Public DMZ: Citizen-facing web portal, Nginx load balancer
+      - Application zone: Case management REST API, document upload and retrieval service
+      - Document zone: Document management system, eSigning microservice
+      - Data zone: PostgreSQL database for case records, classified document store
+      - Identity zone: Federated identity provider (OIDC/SAML) linked to national identity
+      - Compliance zone: Immutable audit trail service, data retention compliance store
+      - Ops zone: Prometheus and Grafana monitoring with alerts
+      Include honeytokens for case worker credentials, eSigning admin keys,
+      and database replication credentials.
+reference:
+  required_services:
+    - id: citizen_portal
+      kinds_any: [web]
+      deployable_only: true
+    - id: case_management_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: document_management
+      kinds_any: [storage, runtime]
+      deployable_only: true
+    - id: esigning_service
+      kinds_any: [runtime, web]
+      deployable_only: true
+    - id: case_db
+      kinds_any: [database]
+      deployable_only: true
+    - id: federated_identity
+      kinds_any: [identity]
+      roles_any: [identity, federation, sso, oidc, saml]
+      deployable_only: true
+    - id: audit_trail
+      kinds_any: [monitor, database, storage]
+      deployable_only: true
+    - id: load_balancer
+      kinds_any: [web, infra]
+      roles_any: [loadbalancer, proxy, ingress]
+      deployable_only: true
+    - id: classified_store
+      kinds_any: [storage]
+      roles_any: [classified, secure, documents]
+      deployable_only: true
+    - id: retention_store
+      kinds_any: [storage, database]
+      roles_any: [retention, compliance, archive]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      deployable_only: true
+  required_zones:
+    - id: public_dmz
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: application_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: identity_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: compliance_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: document_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: case_management_api
+      target_service_id: federated_identity
+      relation: depends_on
+    - source_service_id: case_management_api
+      target_service_id: case_db
+      relation: depends_on
+    - source_service_id: citizen_portal
+      target_service_id: case_management_api
+    - source_service_id: case_management_api
+      target_service_id: document_management
+    - source_service_id: esigning_service
+      target_service_id: document_management
+    - source_service_id: audit_trail
+      target_service_id: retention_store
+  forbidden_placements:
+    - service_id: case_db
+      zone_id: public_dmz
+    - service_id: federated_identity
+      zone_id: public_dmz
+    - service_id: audit_trail
+      zone_id: public_dmz
+    - service_id: document_management
+      zone_id: public_dmz
+    - service_id: classified_store
+      zone_id: public_dmz

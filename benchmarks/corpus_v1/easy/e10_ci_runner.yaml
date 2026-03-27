@@ -1,0 +1,41 @@
+id: e10_ci_runner
+difficulty: easy
+tags: [ci, runner, artifacts]
+description: >
+  CI runner honeypot with a GitLab Runner or similar build agent, a MinIO
+  artifact cache, and a PostgreSQL database for job metadata.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet with a CI build runner, an artifact storage, and a job database.
+  - id: detailed
+    text: |
+      Model a continuous integration environment: a build runner that executes
+      pipelines, a MinIO object store caching build artifacts, and a PostgreSQL
+      database tracking job results and pipeline metadata.
+reference:
+  required_services:
+    - id: ci_runner
+      kinds_any: [runtime, worker]
+      deployable_only: true
+    - id: artifact_store
+      kinds_any: [storage]
+      archetypes_any: [minio]
+      deployable_only: true
+    - id: job_database
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+  required_zones:
+    - id: build_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: ci_runner
+      target_service_id: artifact_store
+    - source_service_id: ci_runner
+      target_service_id: job_database
+  forbidden_placements: []

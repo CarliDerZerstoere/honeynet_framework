@@ -1,0 +1,46 @@
+id: e09_file_share
+difficulty: easy
+tags: [file-share, ldap, antivirus]
+description: >
+  File sharing honeypot with a Nextcloud or Samba server, LDAP authentication,
+  and an antivirus scanner monitoring uploaded files.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet with a file sharing server, LDAP authentication, and antivirus scanning.
+  - id: detailed
+    text: |
+      Model a corporate file-sharing environment where employees access shared
+      documents through Nextcloud, authenticate via LDAP, and all uploads pass
+      through an antivirus scanner.
+reference:
+  required_services:
+    - id: file_server
+      kinds_any: [web, storage]
+      archetypes_any: [nextcloud, samba, owncloud]
+      deployable_only: true
+    - id: ldap_server
+      kinds_any: [identity]
+      archetypes_any: [openldap, ldap, lldap]
+      deployable_only: true
+    - id: av_scanner
+      kinds_any: [runtime, monitor]
+      archetypes_any: [clamav]
+      deployable_only: true
+  required_zones:
+    - id: dmz_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: backend_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: file_server
+      target_service_id: ldap_server
+    - source_service_id: file_server
+      target_service_id: av_scanner
+  forbidden_placements:
+    - service_id: ldap_server
+      zone_id: dmz_zone
+    - service_id: av_scanner
+      zone_id: dmz_zone

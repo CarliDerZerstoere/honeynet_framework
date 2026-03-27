@@ -1,0 +1,43 @@
+id: e08_vpn_gateway
+difficulty: easy
+tags: [vpn, gateway, wiki]
+description: >
+  VPN gateway honeypot with an authentication proxy, an internal wiki as a
+  lure target, and connection logging.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet with a VPN gateway, an auth proxy, and an internal wiki.
+  - id: detailed
+    text: |
+      Model a small corporate remote-access environment: a VPN concentrator for
+      incoming connections, an authentication proxy that validates credentials,
+      and an internal wiki containing fake corporate documents as bait.
+reference:
+  required_services:
+    - id: vpn_gateway
+      kinds_any: [infra, runtime]
+      archetypes_any: [wireguard, openvpn]
+      deployable_only: true
+    - id: auth_proxy
+      kinds_any: [web, identity]
+      deployable_only: true
+    - id: internal_wiki
+      kinds_any: [web]
+      archetypes_any: [mediawiki, dokuwiki, wiki]
+      deployable_only: true
+  required_zones:
+    - id: edge_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: vpn_gateway
+      target_service_id: auth_proxy
+    - source_service_id: internal_wiki
+      target_service_id: auth_proxy
+  forbidden_placements:
+    - service_id: internal_wiki
+      zone_id: edge_zone

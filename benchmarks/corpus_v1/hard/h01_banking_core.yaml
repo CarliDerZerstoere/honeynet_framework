@@ -1,0 +1,109 @@
+id: h01_banking_core
+difficulty: hard
+tags: [banking, fintech, multi-zone, identity, compliance]
+description: >
+  Banking core platform with DMZ gateway, customer web banking portal,
+  internal core-banking API, fraud detection, identity/SSO, PostgreSQL ledger,
+  Kafka event bus, compliance audit service, and monitoring.
+  Tests multi-zone isolation, identity placement, and cross-zone dependency logic.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a banking core platform with an API gateway, web banking portal,
+      core-banking API, fraud detection, SSO identity service, ledger database, Kafka event bus,
+      compliance audit, and monitoring.
+  - id: detailed
+    text: |
+      Model a financial institution's core banking infrastructure:
+      - DMZ zone: Nginx API gateway, public-facing web banking portal
+      - Core zone: Internal core-banking REST API, fraud detection microservice
+      - Identity zone: Keycloak SSO handling all authentication
+      - Data zone: PostgreSQL ledger database, Kafka event bus for transaction events
+      - Compliance zone: Audit logging service, document store for regulatory records
+      - Ops zone: Prometheus and Grafana monitoring
+      Include honeytokens for core-banking API keys, admin DB credentials, and
+      compliance officer credentials.
+reference:
+  required_services:
+    - id: api_gateway
+      kinds_any: [web, infra]
+      roles_any: [gateway, proxy, ingress]
+      deployable_only: true
+    - id: web_banking
+      kinds_any: [web]
+      deployable_only: true
+    - id: core_banking_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: fraud_detection
+      kinds_any: [runtime]
+      deployable_only: true
+    - id: identity_sso
+      kinds_any: [identity]
+      archetypes_any: [keycloak]
+      deployable_only: true
+    - id: ledger_db
+      kinds_any: [database]
+      deployable_only: true
+    - id: event_bus
+      kinds_any: [queue]
+      deployable_only: true
+    - id: audit_service
+      kinds_any: [monitor, database, storage]
+      deployable_only: true
+    - id: document_store
+      kinds_any: [storage]
+      roles_any: [compliance, regulatory, documents]
+      deployable_only: true
+    - id: notification_service
+      kinds_any: [runtime, worker]
+      roles_any: [notification, alerts, email]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      deployable_only: true
+  required_zones:
+    - id: dmz_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: core_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: identity_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: compliance_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: ops_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: core_banking_api
+      target_service_id: identity_sso
+      relation: depends_on
+    - source_service_id: core_banking_api
+      target_service_id: ledger_db
+      relation: depends_on
+    - source_service_id: api_gateway
+      target_service_id: core_banking_api
+    - source_service_id: web_banking
+      target_service_id: core_banking_api
+    - source_service_id: fraud_detection
+      target_service_id: event_bus
+    - source_service_id: core_banking_api
+      target_service_id: event_bus
+  forbidden_placements:
+    - service_id: ledger_db
+      zone_id: dmz_zone
+    - service_id: identity_sso
+      zone_id: dmz_zone
+    - service_id: audit_service
+      zone_id: dmz_zone
+    - service_id: event_bus
+      zone_id: dmz_zone
+    - service_id: fraud_detection
+      zone_id: dmz_zone

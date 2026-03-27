@@ -1,0 +1,64 @@
+id: m03_healthcare
+difficulty: medium
+tags: [healthcare, fhir, ehr, audit]
+description: >
+  Healthcare records system: patient portal, internal EHR API, FHIR service,
+  PostgreSQL patient database, document storage, audit log.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet simulating a healthcare records system with a patient portal,
+      EHR API, FHIR service, patient database, document storage, and audit logging.
+  - id: detailed
+    text: |
+      Model a HIPAA-relevant healthcare IT infrastructure: a public patient portal,
+      an internal Electronic Health Records API, a FHIR-compliant data service,
+      a PostgreSQL patient database, document storage for medical records, and
+      an audit logging service. Include HIPAA-relevant honeytokens.
+reference:
+  required_services:
+    - id: patient_portal
+      kinds_any: [web]
+      deployable_only: true
+    - id: ehr_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: patient_db
+      kinds_any: [database]
+      deployable_only: true
+    - id: document_storage
+      kinds_any: [storage]
+      deployable_only: true
+    - id: fhir_service
+      kinds_any: [web, runtime]
+      roles_any: [fhir, interop, api]
+      deployable_only: true
+    - id: audit_log
+      kinds_any: [monitor, database, storage]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: patient_portal
+      target_service_id: ehr_api
+    - source_service_id: ehr_api
+      target_service_id: patient_db
+    - source_service_id: fhir_service
+      target_service_id: patient_db
+    - source_service_id: ehr_api
+      target_service_id: document_storage
+  forbidden_placements:
+    - service_id: patient_db
+      zone_id: public_zone
+    - service_id: document_storage
+      zone_id: public_zone
+    - service_id: audit_log
+      zone_id: public_zone

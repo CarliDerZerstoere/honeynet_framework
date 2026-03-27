@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "id": "test-nginx",
+      "default_image": "nginx:1.25-alpine",
+      "labels": {"role": "web"}
+    }
+  ]
+}

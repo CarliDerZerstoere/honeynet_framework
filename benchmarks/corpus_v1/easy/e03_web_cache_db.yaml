@@ -1,0 +1,47 @@
+id: e03_web_cache_db
+difficulty: easy
+tags: [web, cache, database, three-tier]
+description: >
+  Three-tier application with web, Redis cache, database, and log collector.
+  Dependencies flow from web through cache to database.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet with a public web server, a Redis cache, and a PostgreSQL database.
+  - id: detailed
+    text: |
+      Model a three-tier web stack: a public-facing web application, a Redis
+      caching layer, and a PostgreSQL database in a data zone.
+reference:
+  required_services:
+    - id: web_server
+      kinds_any: [web]
+      deployable_only: true
+    - id: redis_cache
+      archetypes_any: [redis]
+      deployable_only: true
+    - id: postgres_db
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+    - id: log_collector
+      kinds_any: [monitor, logging]
+      archetypes_any: [fluentd, fluentbit, filebeat]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: web_server
+      target_service_id: redis_cache
+    - source_service_id: web_server
+      target_service_id: postgres_db
+  forbidden_placements:
+    - service_id: postgres_db
+      zone_id: public_zone
+    - service_id: redis_cache
+      zone_id: public_zone

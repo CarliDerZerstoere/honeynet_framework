@@ -1,0 +1,43 @@
+id: e07_dns_sinkhole
+difficulty: easy
+tags: [dns, sinkhole, logging]
+description: >
+  DNS sinkhole honeypot with a recursive DNS resolver, a sinkhole web server
+  that captures requests to blackholed domains, and centralized logging.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet with a DNS server, a sinkhole web page, and log collection.
+  - id: detailed
+    text: |
+      Model a DNS sinkhole environment where a recursive DNS resolver redirects
+      suspicious domains to a local web server that captures and logs all incoming
+      requests for threat analysis.
+reference:
+  required_services:
+    - id: dns_resolver
+      kinds_any: [infra, runtime]
+      archetypes_any: [coredns, bind, bind9]
+      deployable_only: true
+    - id: sinkhole_web
+      kinds_any: [web]
+      deployable_only: true
+    - id: log_collector
+      kinds_any: [monitor, logging]
+      archetypes_any: [fluentd, fluentbit, filebeat, syslog]
+      deployable_only: true
+  required_zones:
+    - id: dns_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: logging_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: sinkhole_web
+      target_service_id: dns_resolver
+    - source_service_id: log_collector
+      target_service_id: sinkhole_web
+  forbidden_placements:
+    - service_id: log_collector
+      zone_id: dns_zone

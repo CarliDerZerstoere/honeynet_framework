@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Honeynet runtime artefacts (generated per run — not source files)
+output/
+work/
+*.tofu/
+*.terraform/
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
+
+# Secrets / local overrides
+.env
+*.env.local
+secrets.yaml
+
+# Benchmark results (generated, large binaries)
+benchmark_results/
+
+# Claude / Cursor IDE
+.claude/
+.cursor/
+
+# Temp
+.tmp/
+.pytest_tmp/
+
+# OS
+.DS_Store
+Thumbs.db

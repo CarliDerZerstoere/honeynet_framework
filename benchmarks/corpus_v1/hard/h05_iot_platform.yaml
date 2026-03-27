@@ -1,0 +1,106 @@
+id: h05_iot_platform
+difficulty: hard
+tags: [iot, mqtt, edge, time-series, fleet-management]
+description: >
+  IoT platform: MQTT broker for device telemetry, edge aggregation workers,
+  InfluxDB time-series store, Kafka for high-throughput ingestion,
+  fleet management API, firmware update service, identity for device auth,
+  monitoring.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for an IoT platform with an MQTT broker, edge workers,
+      InfluxDB time-series store, Kafka ingestion, fleet management API,
+      firmware update service, device identity, and monitoring.
+  - id: detailed
+    text: |
+      Model an industrial IoT platform:
+      - Edge zone: MQTT broker receiving device telemetry from field sensors,
+        edge aggregation workers doing pre-processing
+      - Ingestion zone: Kafka cluster for high-throughput event ingestion
+      - Data zone: InfluxDB time-series store, PostgreSQL for device metadata
+      - Application zone: Fleet management REST API, firmware update service
+      - Identity zone: Device certificate authority and identity service
+      - Ops zone: Prometheus and Grafana
+      Include honeytokens for device master API keys, fleet admin credentials,
+      and MQTT broker admin credentials.
+reference:
+  required_services:
+    - id: mqtt_broker
+      kinds_any: [queue, infra]
+      roles_any: [mqtt, broker, iot, telemetry]
+      deployable_only: true
+    - id: timeseries_store
+      kinds_any: [database]
+      archetypes_any: [influxdb]
+      roles_any: [time-series, metrics, telemetry, iot]
+      deployable_only: true
+    - id: kafka_ingestion
+      kinds_any: [queue]
+      archetypes_any: [apache/kafka, kafka]
+      deployable_only: true
+    - id: fleet_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: device_identity
+      kinds_any: [identity]
+      deployable_only: true
+    - id: edge_worker
+      kinds_any: [runtime, worker]
+      roles_any: [edge, aggregation, preprocessing]
+      deployable_only: true
+    - id: firmware_service
+      kinds_any: [web, runtime]
+      roles_any: [firmware, update, ota]
+      deployable_only: true
+    - id: device_metadata_db
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      deployable_only: true
+  required_zones:
+    - id: edge_zone
+      exposure_any: [internal, private, edge]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: ingestion_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: application_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: identity_zone
+      exposure_any: [internal, private]
+      internal: true
+  supplemental_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+  required_dependencies:
+    - source_service_id: edge_worker
+      target_service_id: mqtt_broker
+    - source_service_id: edge_worker
+      target_service_id: kafka_ingestion
+    - source_service_id: kafka_ingestion
+      target_service_id: timeseries_store
+    - source_service_id: fleet_api
+      target_service_id: device_metadata_db
+    - source_service_id: fleet_api
+      target_service_id: device_identity
+    - source_service_id: firmware_service
+      target_service_id: device_metadata_db
+  forbidden_placements:
+    - service_id: timeseries_store
+      zone_id: edge_zone
+    - service_id: device_identity
+      zone_id: edge_zone
+    - service_id: device_metadata_db
+      zone_id: edge_zone
+    - service_id: kafka_ingestion
+      zone_id: edge_zone
+    - service_id: mqtt_broker
+      zone_id: edge_zone

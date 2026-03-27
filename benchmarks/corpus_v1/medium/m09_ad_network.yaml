@@ -1,0 +1,65 @@
+id: m09_ad_network
+difficulty: medium
+tags: [advertising, analytics, fraud]
+description: >
+  Ad network honeypot with an ad serving API, click tracker, campaign database,
+  Redis bid cache, analytics dashboard, and fraud detection service.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for an ad network with ad serving, click tracking, a campaign
+      database, bid caching, an analytics dashboard, and fraud detection.
+  - id: detailed
+    text: |
+      Model a programmatic advertising platform: a public ad serving API that returns
+      creatives, a click tracker logging impressions and conversions, a PostgreSQL
+      campaign database, a Redis real-time bid cache, a Grafana analytics dashboard
+      for reporting, and a fraud detection service identifying invalid traffic.
+      Keep the campaign database and fraud service internal.
+reference:
+  required_services:
+    - id: ad_server
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: click_tracker
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: campaign_db
+      kinds_any: [database]
+      archetypes_any: [postgres, mysql, mariadb]
+      deployable_only: true
+    - id: bid_cache
+      kinds_any: [database]
+      archetypes_any: [redis]
+      deployable_only: true
+    - id: analytics_dashboard
+      kinds_any: [web, monitor]
+      archetypes_any: [grafana]
+      deployable_only: true
+    - id: fraud_detector
+      kinds_any: [runtime]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: backend_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: analytics_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: ad_server
+      target_service_id: bid_cache
+    - source_service_id: ad_server
+      target_service_id: campaign_db
+    - source_service_id: click_tracker
+      target_service_id: campaign_db
+    - source_service_id: fraud_detector
+      target_service_id: click_tracker
+  forbidden_placements:
+    - service_id: campaign_db
+      zone_id: public_zone
+    - service_id: fraud_detector
+      zone_id: public_zone

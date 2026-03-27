@@ -1,0 +1,67 @@
+id: m04_devops_platform
+difficulty: medium
+tags: [devops, gitea, jenkins, registry, monitoring]
+description: >
+  Internal DevOps platform: Git hosting, CI runner, container registry,
+  artifact storage, monitoring. Tests infra archetype clustering.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for an internal DevOps platform with Git hosting, CI/CD,
+      container registry, artifact storage, and monitoring.
+  - id: detailed
+    text: |
+      Model an internal developer platform: a Gitea source code host, a Jenkins
+      CI/CD runner, a private Docker container registry, an artifact repository,
+      and a Prometheus/Grafana monitoring stack, all within an internal network.
+reference:
+  required_services:
+    - id: git_hosting
+      kinds_any: [web, infra]
+      archetypes_any: [gitea]
+      deployable_only: true
+    - id: ci_runner
+      kinds_any: [infra, runtime]
+      deployable_only: true
+    - id: container_registry
+      kinds_any: [infra, storage]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      deployable_only: true
+    - id: artifact_store
+      kinds_any: [storage]
+      roles_any: [artifact, repository, nexus]
+      deployable_only: true
+    - id: ci_database
+      kinds_any: [database]
+      archetypes_any: [postgres, mysql]
+      deployable_only: true
+  required_zones:
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: build_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+  supplemental_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+  required_dependencies:
+    - source_service_id: ci_runner
+      target_service_id: git_hosting
+    - source_service_id: ci_runner
+      target_service_id: container_registry
+    - source_service_id: ci_runner
+      target_service_id: ci_database
+    - source_service_id: git_hosting
+      target_service_id: ci_database
+  forbidden_placements:
+    - service_id: ci_database
+      zone_id: build_zone
+    - service_id: container_registry
+      zone_id: build_zone

@@ -1,0 +1,62 @@
+id: m05_supply_chain
+difficulty: medium
+tags: [supply-chain, vendor-portal, inventory, erp]
+description: >
+  Supply chain management: public vendor portal, internal inventory API,
+  ERP-style PostgreSQL backend, Redis cache, document storage.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a supply chain management system with a vendor portal,
+      inventory API, PostgreSQL database, Redis cache, and document storage.
+  - id: detailed
+    text: |
+      Model a corporate supply chain system: a public vendor self-service portal,
+      an internal inventory REST API, an ERP-style PostgreSQL database for purchase
+      orders and supplier data, a Redis cache for inventory look-ups, and document
+      storage for contracts and invoices. Include honeytokens for supplier API keys.
+reference:
+  required_services:
+    - id: vendor_portal
+      kinds_any: [web]
+      deployable_only: true
+    - id: inventory_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: erp_db
+      kinds_any: [database]
+      deployable_only: true
+    - id: redis_cache
+      archetypes_any: [redis]
+      deployable_only: true
+    - id: document_storage
+      kinds_any: [storage]
+      deployable_only: true
+    - id: notification_service
+      kinds_any: [runtime, worker]
+      roles_any: [notification, mailer, email]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: vendor_portal
+      target_service_id: inventory_api
+    - source_service_id: inventory_api
+      target_service_id: erp_db
+    - source_service_id: inventory_api
+      target_service_id: redis_cache
+  forbidden_placements:
+    - service_id: erp_db
+      zone_id: public_zone
+    - service_id: redis_cache
+      zone_id: public_zone
+    - service_id: document_storage
+      zone_id: public_zone

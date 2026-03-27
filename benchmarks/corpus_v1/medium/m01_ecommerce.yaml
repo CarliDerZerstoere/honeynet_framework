@@ -1,0 +1,72 @@
+id: m01_ecommerce
+difficulty: medium
+tags: [ecommerce, multi-tier, payment]
+description: >
+  E-commerce platform: public storefront, product catalog API, Redis cart,
+  PostgreSQL orders, simulated payment service. Tests multi-zone placement
+  and service interdependencies.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for an e-commerce platform with a storefront, product API,
+      Redis cart, PostgreSQL orders, and a payment service.
+  - id: detailed
+    text: |
+      Model a mid-size e-commerce company: a public web storefront, an internal
+      product catalog REST API backed by a PostgreSQL database, a Redis session
+      and cart store, and a simulated payment processing microservice with its
+      own internal service zone. Include realistic honeytokens.
+reference:
+  required_services:
+    - id: storefront
+      kinds_any: [web]
+      deployable_only: true
+    - id: product_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: redis_cart
+      archetypes_any: [redis]
+      deployable_only: true
+    - id: orders_db
+      kinds_any: [database]
+      deployable_only: true
+    - id: payment_service
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: search_service
+      kinds_any: [runtime, web]
+      archetypes_any: [elasticsearch, opensearch]
+      deployable_only: true
+    - id: notification_service
+      kinds_any: [runtime, worker]
+      roles_any: [notification, mailer, email]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: internal_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: payment_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: storefront
+      target_service_id: product_api
+    - source_service_id: product_api
+      target_service_id: orders_db
+    - source_service_id: storefront
+      target_service_id: redis_cart
+    - source_service_id: product_api
+      target_service_id: search_service
+  forbidden_placements:
+    - service_id: orders_db
+      zone_id: public_zone
+    - service_id: redis_cart
+      zone_id: public_zone
+    - service_id: payment_service
+      zone_id: public_zone

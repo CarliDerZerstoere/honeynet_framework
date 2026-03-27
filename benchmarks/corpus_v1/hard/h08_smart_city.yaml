@@ -1,0 +1,88 @@
+id: h08_smart_city
+difficulty: hard
+tags: [iot, smart-city, traffic, timeseries]
+description: >
+  Smart city platform honeypot with MQTT sensor gateway, traffic management API,
+  InfluxDB metrics, PostgreSQL city database, citizen portal, emergency dispatch
+  service, Kafka event bus, and monitoring.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet for a smart city platform with an IoT sensor gateway,
+      traffic management API, time-series database, city database, citizen portal,
+      emergency dispatch, event bus, and monitoring.
+  - id: detailed
+    text: |
+      Model a smart city infrastructure: an MQTT broker receiving sensor data from
+      traffic lights and environmental monitors, a traffic management REST API for
+      signal coordination, an InfluxDB for time-series metrics, a PostgreSQL database
+      for city records, a public citizen portal, an emergency dispatch service for
+      first responders, a Kafka event bus for cross-system notifications, and
+      Prometheus monitoring. Sensor data and dispatch must be on isolated networks.
+reference:
+  required_services:
+    - id: sensor_gateway
+      kinds_any: [queue, infra]
+      archetypes_any: [mosquitto, emqx, mqtt]
+      deployable_only: true
+    - id: traffic_api
+      kinds_any: [web, runtime]
+      deployable_only: true
+    - id: metrics_db
+      kinds_any: [database]
+      archetypes_any: [influxdb, timescaledb]
+      deployable_only: true
+    - id: city_db
+      kinds_any: [database]
+      archetypes_any: [postgres]
+      deployable_only: true
+    - id: citizen_portal
+      kinds_any: [web]
+      deployable_only: true
+    - id: emergency_dispatch
+      kinds_any: [runtime, web]
+      deployable_only: true
+    - id: event_bus
+      kinds_any: [queue]
+      archetypes_any: [kafka]
+      deployable_only: true
+    - id: monitoring
+      kinds_any: [monitor]
+      archetypes_any: [prometheus, grafana]
+      deployable_only: true
+  required_zones:
+    - id: public_zone
+      exposure_any: [internet, public]
+      internal: false
+    - id: iot_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: data_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: dispatch_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: ops_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: traffic_api
+      target_service_id: sensor_gateway
+    - source_service_id: traffic_api
+      target_service_id: metrics_db
+    - source_service_id: citizen_portal
+      target_service_id: city_db
+    - source_service_id: emergency_dispatch
+      target_service_id: event_bus
+    - source_service_id: traffic_api
+      target_service_id: event_bus
+  forbidden_placements:
+    - service_id: metrics_db
+      zone_id: public_zone
+    - service_id: city_db
+      zone_id: public_zone
+    - service_id: emergency_dispatch
+      zone_id: public_zone
+    - service_id: sensor_gateway
+      zone_id: public_zone

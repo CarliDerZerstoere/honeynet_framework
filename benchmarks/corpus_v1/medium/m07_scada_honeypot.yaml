@@ -1,0 +1,61 @@
+id: m07_scada_honeypot
+difficulty: medium
+tags: [scada, ics, ot, honeypot]
+description: >
+  SCADA/ICS honeypot with an HMI web panel, a historian database for time-series
+  process data, an OPC-UA simulator, an engineering workstation, and centralized
+  syslog collection.
+prompts:
+  - id: concise
+    text: |
+      Create a honeynet simulating an industrial SCADA environment with an HMI panel,
+      a historian database, an OPC-UA server, an engineering workstation, and syslog.
+  - id: detailed
+    text: |
+      Model an industrial control system network: an HMI web panel operators use to
+      monitor process values, a historian database storing time-series measurements,
+      an OPC-UA server simulating PLCs and RTUs, an engineering workstation for
+      configuration changes, and a centralized syslog server. Keep the OPC-UA server
+      and historian on a separate process network isolated from the corporate zone.
+reference:
+  required_services:
+    - id: hmi_panel
+      kinds_any: [web]
+      deployable_only: true
+    - id: historian_db
+      kinds_any: [database]
+      archetypes_any: [influxdb, timescaledb, postgres]
+      deployable_only: true
+    - id: opcua_server
+      kinds_any: [runtime, infra]
+      deployable_only: true
+    - id: eng_workstation
+      kinds_any: [web, runtime]
+      roles_any: [engineering, admin, configuration]
+      deployable_only: true
+    - id: syslog_server
+      kinds_any: [monitor, logging]
+      archetypes_any: [syslog, rsyslog, fluentd]
+      deployable_only: true
+  required_zones:
+    - id: corporate_zone
+      exposure_any: [internet, public, dmz]
+      internal: false
+    - id: process_zone
+      exposure_any: [internal, private]
+      internal: true
+    - id: logging_zone
+      exposure_any: [internal, private]
+      internal: true
+  required_dependencies:
+    - source_service_id: hmi_panel
+      target_service_id: opcua_server
+    - source_service_id: opcua_server
+      target_service_id: historian_db
+    - source_service_id: eng_workstation
+      target_service_id: opcua_server
+  forbidden_placements:
+    - service_id: historian_db
+      zone_id: corporate_zone
+    - service_id: opcua_server
+      zone_id: corporate_zone
