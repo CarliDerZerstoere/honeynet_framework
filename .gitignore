@@ -31,12 +31,45 @@ htmlcov/
 # Honeynet runtime artefacts (generated per run — not source files)
 output/
 work/
+runs/
+pipelinestages/
+
+# OpenTofu / Terraform state
 *.tofu/
 *.terraform/
 .terraform/
+.terraform.lock.hcl
 terraform.tfstate
-terraform.tfstate.backup
+terraform.tfstate.*
 *.tfplan
+tfplan
+main.tofu.json
+
+# Pipeline artifacts (written by orchestrator, deployer, benchmark runner)
+deployer_stages.json
+world_model.json
+world_model.yaml
+qa_report.json
+validation_report.json
+semantic_judge.json
+scenario_fit_report.json
+catalog_resolution.json
+metrics.json
+metrics_report.html
+report_data.json
+summary.json
+path_a_diagnostics.json
+repair_history.jsonl
+repair_attempts.jsonl
+repair_attempts.lock
+
+# Telemetry
+telemetry/
+
+# Benchmark reports
+benchmark_report.html
+benchmark_report.json
+benchmark_result.json
 
 # Secrets / local overrides
 .env
@@ -44,7 +77,7 @@ terraform.tfstate.backup
 secrets.yaml
 
 # Benchmark results (generated, large binaries)
-benchmark_results/
+benchmark_results*/
 
 # Claude / Cursor IDE
 .claude/

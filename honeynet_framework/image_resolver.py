@@ -386,6 +386,28 @@ class ImageResolver:
                         fb_entry.digest_ref = None
                     return fb_entry
 
+        # 3b. Namespace alias fallback — when a namespaced image (e.g. bitnami/kafka)
+        # is not found on any registry, try the bare image name as an official
+        # Docker Hub image (kafka → library/kafka) or well-known alternative
+        # namespaces.  This handles cases where the LLM suggests a bitnami image
+        # that requires authentication or doesn't exist publicly.
+        if registry in ("registry-1.docker.io", "ghcr.io") and "/" in repo:
+            bare_name = repo.rsplit("/", 1)[-1]  # "bitnami/kafka" → "kafka"
+            tag = reference if not reference.startswith("sha256:") else "latest"
+            # Try official Docker Hub image first (e.g. library/kafka:latest)
+            alias_candidates = [f"{bare_name}:{tag}", f"{bare_name}:latest"]
+            for alias in alias_candidates:
+                alias_entry = await self._resolve_with_retry(alias)
+                if alias_entry.status == ResolutionStatus.RESOLVED:
+                    logger.info(
+                        "Namespace alias fallback: %s → %s", image_ref, alias,
+                    )
+                    alias_entry.image_ref = alias
+                    alias_entry.message = f"resolved via namespace alias fallback: {alias}"
+                    if not (alias_entry.digest_ref and "@sha256:" in alias_entry.digest_ref):
+                        alias_entry.digest_ref = None
+                    return alias_entry
+
         # 4. :latest as last resort — handles cases where only the tag is wrong
         lr_registry, lr_repo, lr_reference = _parse_image_ref(image_ref)
         # Only try :latest if the original ref used an explicit tag (not already "latest" or a digest)

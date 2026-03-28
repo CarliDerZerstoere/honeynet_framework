@@ -149,8 +149,24 @@ def _try_deterministic_repair(
 
     # --- Pattern 2: Usage/help text (image needs subcommand) ---
     if ("USAGE:" in logs.upper() or "Usage:" in logs) and not probe_failure.get("running"):
+        # Try to infer the correct subcommand from OCI Cmd + usage output.
+        # Example: minio's Cmd is ["minio"] but it needs "server /data";
+        # the usage text often contains "COMMAND" hints.
+        inferred_cmd: list[str] | None = None
         if image_profile and hasattr(image_profile, "cmd") and image_profile.cmd:
-            system.deploy.command = list(image_profile.cmd)
+            base_cmd = list(image_profile.cmd)
+            # Check if the usage output mentions a "server" subcommand — common
+            # for services that require a subcommand + path (minio, consul, vault).
+            server_match = _re.search(
+                r'(?:COMMANDS?|Available commands?).*?\b(server)\b',
+                logs, _re.IGNORECASE | _re.DOTALL,
+            )
+            if server_match:
+                inferred_cmd = base_cmd + ["server", "/data"]
+            else:
+                inferred_cmd = base_cmd
+        if inferred_cmd:
+            system.deploy.command = inferred_cmd
             logger.info(
                 "Deterministic repair: set command=%s for '%s' (from usage output)",
                 system.deploy.command, probe_failure.get("system_name", "?"),
@@ -1731,10 +1747,16 @@ class HoneynetOrchestrator:
                         tofu_json = tofu_path.read_text(encoding="utf-8")
                         metrics.expected_containers = len(projection.containers)
                         try:
-                            await self.deployer._run_tofu(["init"])
-                            _recovery_apply = await self.deployer.apply()
-                            if _recovery_apply.success:
+                            _plan_res, _recovery_apply = await self.deployer.plan_and_apply()
+                            if _recovery_apply and _recovery_apply.success:
                                 logger.info("Survivor re-deploy succeeded")
+                            else:
+                                logger.warning(
+                                    "Survivor re-deploy plan_and_apply did not succeed "
+                                    "(plan=%s, apply=%s)",
+                                    _plan_res.success if _plan_res else None,
+                                    _recovery_apply.success if _recovery_apply else None,
+                                )
                         except Exception as _redeploy_err:
                             logger.warning("Survivor re-deploy failed: %s", _redeploy_err)
 
@@ -2440,6 +2462,14 @@ class HoneynetOrchestrator:
         loop = asyncio.get_running_loop()
         failures: list[dict] = []
 
+        from .image_introspector import get_image_profile as _probe_get_profile
+
+        # Images that need a config file mounted to start — probing them bare
+        # always fails and wastes time.  Detect via OCI entrypoint heuristics.
+        _CONFIG_DEPENDENT_ENTRYPOINTS = frozenset({
+            "haproxy", "envoy", "squid", "varnishd", "lighttpd",
+        })
+
         for sys_name, system in world_model.systems.items():
             if not system.deploy or not system.deploy.image:
                 continue
@@ -2450,6 +2480,31 @@ class HoneynetOrchestrator:
                 if "=" in pair:
                     k, _, v = pair.partition("=")
                     env_dict[k] = v
+
+            # Skip probing images that cannot run standalone:
+            # 1. Base runtimes (node, python) without a command — they exit immediately
+            # 2. Config-dependent images (haproxy, envoy) — need mounted config files
+            try:
+                _pre_profile = await _probe_get_profile(image, timeout=8)
+            except Exception:
+                _pre_profile = None
+            if _pre_profile and _pre_profile.available:
+                # Base runtime without command → guaranteed to exit immediately
+                if _pre_profile.is_base_runtime and not command:
+                    logger.debug(
+                        "Pre-deploy probe skipped for '%s' (%s): base runtime without command",
+                        sys_name, image,
+                    )
+                    continue
+                # Config-dependent daemon → probe always fails without mounted config
+                if _pre_profile.entrypoint:
+                    ep_basename = _pre_profile.entrypoint[-1].rsplit("/", 1)[-1].lower()
+                    if ep_basename in _CONFIG_DEPENDENT_ENTRYPOINTS:
+                        logger.debug(
+                            "Pre-deploy probe skipped for '%s' (%s): config-dependent image",
+                            sys_name, image,
+                        )
+                        continue
 
             try:
                 result = await loop.run_in_executor(
