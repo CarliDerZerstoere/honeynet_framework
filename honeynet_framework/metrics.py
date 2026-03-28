@@ -6,8 +6,9 @@ Tracks two metric groups:
    runtime health checks, container start rate
 2. Scenario Fit: planned/running service coverage, zone coverage, dependency coverage
 
-Schema version 3: renamed fields for clarity (apply_* → deploy_*, qa_* → health_check_*,
-container_realization_ratio → container_start_rate, *_recall → *_coverage, etc.)
+Schema version 4: separated prompt-fit vs formal-benchmark metrics, fixed
+container_start_rate denominator semantics, added final_system_count,
+image_first_pass_rate, and deterministic correction counts.
 """
 
 from dataclasses import dataclass, field
@@ -42,15 +43,15 @@ class DeploymentMetrics:
     validation_repair_success: bool = False
     config_validation_pass: bool = False      # Static config analysis passed (tofu validate)
     plan_success: bool = False                # Deployment plan generation succeeded
-    deploy_success: bool = False              # Containers were deployed (full or partial)
+    deploy_success: bool = False              # Full apply succeeded (False for partial deploys)
     deploy_first_attempt: bool = False        # Deploy succeeded on the first try (no retry)
     deploy_retried: bool = False              # Deploy needed at least one retry
-    deploy_retry_count: int = 0              # Number of deploy retry attempts
+    deploy_retry_count: int = 0              # Accumulated retry attempts (import + apply-repair)
     runtime_verification_success: bool = False  # All expected containers are running and healthy
     health_check_rate: float = 0.0           # Fraction of connectivity/health checks that passed
-    container_start_rate: float = 0.0        # Fraction of expected containers that started (running / expected)
-    expected_containers: int = 0             # Containers expected after any drops
-    planned_containers: int = 0              # Containers originally planned before any systems were dropped
+    container_start_rate: float = 0.0        # running / originally planned (denominator never shifts)
+    expected_containers: int = 0             # Original planned container count (set once, never updated after drops)
+    planned_containers: int = 0              # Alias: containers originally planned before any systems were dropped
     dropped_containers: int = 0              # Systems removed during repair/probe
     running_containers: int = 0
     health_checks_total: int = 0
@@ -62,18 +63,33 @@ class DeploymentMetrics:
 
     # Scenario fit metrics
     zone_count: int = 0
-    system_count: int = 0
-    model_dep_rate: float = 0.0              # Fraction of declared model dependencies that are satisfied (proxy metric)
-    image_check_rate: float = 0.0            # Fraction of container images that passed OCI validation
-    planned_service_coverage: float = 0.0    # Fraction of benchmark-required services present in the deployment plan
-    running_service_coverage: float = 0.0    # Fraction of benchmark-required services actually running (post-deploy)
-    planned_zone_coverage: float = 0.0       # Fraction of benchmark-required zones present in the deployment plan
-    running_zone_coverage: float = 0.0       # Fraction of benchmark-required zones with ≥1 running container
+    system_count: int = 0                    # System count at extraction time (before drops/repairs)
+    final_system_count: int = 0              # System count after all repairs and drops
+    # Internal consistency: fraction of declared depends_on edges pointing to existing systems
+    model_dep_rate: float = 0.0
+    image_first_pass_rate: float = 0.0       # First-pass image resolution rate (diagnostic, before repair)
+    image_check_rate: float = 0.0            # Post-repair image resolution rate (final)
+
+    # Prompt-fit evaluation (always computed from NL prompt analysis)
+    prompt_fit_service_coverage: float = 0.0
+    prompt_fit_zone_coverage: float = 0.0
+    prompt_fit_pass: bool = False            # service_recall >= 0.7 AND zone_recall >= 0.5
+
+    # Formal benchmark evaluation (computed only when benchmark reference exists)
+    formal_service_coverage: float = 0.0
+    formal_zone_coverage: float = 0.0
+    formal_benchmark_pass: bool = False      # All formal requirements met (100% coverage, 0 violations)
+
+    # Composite fields (formal wins when present, else prompt-fit)
+    planned_service_coverage: float = 0.0    # Effective service coverage used for reporting
+    running_service_coverage: float = 0.0    # Fraction of benchmark-required services actually running
+    planned_zone_coverage: float = 0.0       # Effective zone coverage used for reporting
+    running_zone_coverage: float = 0.0       # Fraction of benchmark-required zones with >=1 running container
     planned_dep_coverage: float = 0.0        # Fraction of benchmark-required dependencies satisfied in the plan
     running_dep_coverage: float = 0.0        # Fraction of benchmark-required dependencies where both ends are running
     benchmark_dep_required: int = 0          # Number of dependencies the benchmark requires (0 = none defined)
     placement_violations: int = 0            # Services deployed in zones where they are forbidden
-    benchmark_pass: bool = False             # True when all benchmark requirements are met
+    benchmark_pass: bool = False             # Composite: formal_benchmark_pass when ref exists, else prompt_fit_pass
     benchmark_status: str = "not_configured" # not_configured | measured | error | empty_reference
     benchmark_id: str = ""
     benchmark_ref: str = ""
@@ -95,9 +111,9 @@ class DeploymentMetrics:
     repair_incident_count: int = 0
     repair_actions: list[dict] = field(default_factory=list)
 
-    # Deterministic post-processing corrections (for thesis analysis)
-    deterministic_dep_additions: list[dict] = field(default_factory=list)
-    deterministic_placement_fixes: list[dict] = field(default_factory=list)
+    # Deterministic post-processing correction counts (for thesis analysis)
+    deterministic_dep_addition_count: int = 0
+    deterministic_placement_fix_count: int = 0
 
     # Error tracking
     errors: list[str] = field(default_factory=list)
@@ -144,8 +160,20 @@ class DeploymentMetrics:
         scen = {
             "zone_count": self.zone_count,
             "system_count": self.system_count,
+            "final_system_count": self.final_system_count,
             "model_dep_rate": round(self.model_dep_rate, 4),
+            "image_first_pass_rate": round(self.image_first_pass_rate, 4),
             "image_check_rate": round(self.image_check_rate, 4),
+            "prompt_fit_service_coverage": round(self.prompt_fit_service_coverage, 4),
+            "prompt_fit_zone_coverage": round(self.prompt_fit_zone_coverage, 4),
+            "prompt_fit_pass": self.prompt_fit_pass,
+            "formal_service_coverage": round(self.formal_service_coverage, 4),
+            "formal_zone_coverage": round(self.formal_zone_coverage, 4),
+            "formal_benchmark_pass": (
+                None
+                if self.benchmark_status == "not_configured"
+                else self.formal_benchmark_pass
+            ),
             "planned_service_coverage": round(self.planned_service_coverage, 4),
             "running_service_coverage": round(self.running_service_coverage, 4),
             "planned_zone_coverage": round(self.planned_zone_coverage, 4),
@@ -174,8 +202,8 @@ class DeploymentMetrics:
             "deploy_completed": self.deploy_completed,
             "repair_incident_count": self.repair_incident_count,
             "repair_actions": self.repair_actions,
-            "deterministic_dep_additions": self.deterministic_dep_additions,
-            "deterministic_placement_fixes": self.deterministic_placement_fixes,
+            "deterministic_dep_addition_count": self.deterministic_dep_addition_count,
+            "deterministic_placement_fix_count": self.deterministic_placement_fix_count,
             "stage_durations": {
                 k: round(v, 3) for k, v in self.stage_durations.items()
             },
@@ -189,10 +217,10 @@ class DeploymentMetrics:
         }
         blocked = self._compute_blocked_before_deploy()
         return {
-            "schema_version": 3,
+            "schema_version": 4,
             "recorded_at_utc": _utc_now_iso(),
             "envelope": {
-                "metrics_schema_version": 3,
+                "metrics_schema_version": 4,
             },
             "observability": obs,
             "deployability": dep,
@@ -230,8 +258,8 @@ class DeploymentMetrics:
             f"  Health check status:   {self.health_check_status}",
             f"  Container health:      {self.container_health_status}",
             f"  Benchmark status:      {self.benchmark_status}",
-            f"  Zones: {self.zone_count}  Systems: {self.system_count}",
-            f"  Image Check Rate:      {self.image_check_rate:.0%}",
+            f"  Zones: {self.zone_count}  Systems: {self.system_count} (final: {self.final_system_count})",
+            f"  Image Check Rate:      {self.image_check_rate:.0%} (first pass: {self.image_first_pass_rate:.0%})",
             f"  Model Dep Rate:        {self.model_dep_rate:.0%}",
             f"  Scenario Fit Score:    {self.scenario_fit_score:.2f}",
             f"  Error Class:           {self.error_class or 'n/a'}",

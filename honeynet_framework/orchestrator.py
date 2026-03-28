@@ -775,8 +775,12 @@ class HoneynetOrchestrator:
         metrics.system_count = sys_count
         metrics.planned_containers = sys_count
         # Record deterministic post-processing corrections
-        metrics.deterministic_dep_additions = getattr(self.extractor, "last_dep_additions", [])
-        metrics.deterministic_placement_fixes = getattr(self.extractor, "last_placement_fixes", [])
+        metrics.deterministic_dep_addition_count = len(
+            getattr(self.extractor, "last_dep_additions", [])
+        )
+        metrics.deterministic_placement_fix_count = len(
+            getattr(self.extractor, "last_placement_fixes", [])
+        )
 
         # === Optional: catalog snapshot (P4) — after extract, before structural validation ===
         if self.config.catalog_snapshot_path:
@@ -986,8 +990,17 @@ class HoneynetOrchestrator:
         try:
             from .prompt_fit import compute_prompt_fit
             prompt_fit = compute_prompt_fit(user_request, world_model)
+            metrics.prompt_fit_service_coverage = prompt_fit.service_recall
+            metrics.prompt_fit_zone_coverage = prompt_fit.zone_recall
+            metrics.prompt_fit_pass = (
+                prompt_fit.service_recall >= 0.7
+                and prompt_fit.zone_recall >= 0.5
+            )
+            # Default composite fields to prompt-fit (may be overridden by formal below)
             metrics.planned_service_coverage = prompt_fit.service_recall
             metrics.planned_zone_coverage = prompt_fit.zone_recall
+            metrics.benchmark_pass = metrics.prompt_fit_pass
+            metrics.benchmark_status = "measured"
             if prompt_fit.unmatched or prompt_fit.zone_unmatched:
                 logger.warning(
                     "Prompt-fit: services %d/%d (%.0f%%), zones %d/%d (%.0f%%). "
@@ -1005,11 +1018,6 @@ class HoneynetOrchestrator:
                     len(prompt_fit.matched), len(prompt_fit.requirements),
                     len(prompt_fit.zone_matched), len(prompt_fit.zone_requirements),
                 )
-            metrics.benchmark_status = "measured"
-            metrics.benchmark_pass = (
-                prompt_fit.service_recall >= 0.7
-                and prompt_fit.zone_recall >= 0.5
-            )
         except Exception as e:
             logger.debug("Prompt-fit evaluation failed: %s", e)
 
@@ -1018,8 +1026,8 @@ class HoneynetOrchestrator:
             try:
                 scenario_doc = load_benchmark_reference(self.config.benchmark_reference_path)
                 formal = compute_formal_scenario_fit(world_model, scenario_doc)
-                metrics.planned_service_coverage = float(formal.get("planned_service_coverage", 0.0))
-                metrics.planned_zone_coverage = float(formal.get("planned_zone_coverage", 0.0))
+                metrics.formal_service_coverage = float(formal.get("planned_service_coverage", 0.0))
+                metrics.formal_zone_coverage = float(formal.get("planned_zone_coverage", 0.0))
                 metrics.planned_dep_coverage = float(
                     formal.get("planned_dep_coverage", 0.0)
                 )
@@ -1029,12 +1037,26 @@ class HoneynetOrchestrator:
                 metrics.benchmark_id = str(formal.get("benchmark_id", ""))
                 metrics.benchmark_ref = str(self.config.benchmark_reference_path)
                 if formal.get("vacuous_reference"):
-                    metrics.benchmark_pass = False
+                    metrics.formal_benchmark_pass = False
                     metrics.benchmark_status = "empty_reference"
                 else:
-                    metrics.benchmark_pass = bool(formal.get("benchmark_pass", False))
+                    metrics.formal_benchmark_pass = bool(formal.get("benchmark_pass", False))
                     metrics.benchmark_status = "measured"
                 metrics.scenario_fit_score = float(formal.get("scenario_fit_score", 0.0))
+                # Formal benchmark overrides composite fields when present
+                metrics.planned_service_coverage = metrics.formal_service_coverage
+                metrics.planned_zone_coverage = metrics.formal_zone_coverage
+                metrics.benchmark_pass = metrics.formal_benchmark_pass
+                logger.info(
+                    "Scenario-fit: formal benchmark overrides prompt-fit coverage "
+                    "(svc %.2f→%.2f, zone %.2f→%.2f, pass %s→%s)",
+                    metrics.prompt_fit_service_coverage,
+                    metrics.formal_service_coverage,
+                    metrics.prompt_fit_zone_coverage,
+                    metrics.formal_zone_coverage,
+                    metrics.prompt_fit_pass,
+                    metrics.formal_benchmark_pass,
+                )
                 self._save_scenario_fit_report(formal, work_dir)
             except Exception as e:
                 logger.warning("Formal scenario-fit evaluation failed: %s", e)
@@ -1048,9 +1070,15 @@ class HoneynetOrchestrator:
         t_img = time.monotonic()
         world_model, image_errors, img_total, img_first_pass = await self._image_repair_loop(world_model)
 
-        # Compute actual image validation pass rate (first-pass, before repair)
-        metrics.image_check_rate = (
+        # First-pass rate (diagnostic — how many images resolved without repair)
+        metrics.image_first_pass_rate = (
             img_first_pass / img_total if img_total > 0 else 0.0
+        )
+        # Post-repair rate (final — images that are valid after all repair attempts)
+        metrics.image_check_rate = (
+            (img_total - len(image_errors)) / img_total
+            if img_total > 0
+            else 1.0
         )
 
         if image_errors:
@@ -1387,8 +1415,10 @@ class HoneynetOrchestrator:
 
             metrics.config_validation_pass = bool(validate_stage and validate_stage.success)
             metrics.plan_success = bool(plan_stage and plan_stage.success)
-            metrics.deploy_success = bool(apply_stage and apply_stage.success)
-            if metrics.deploy_success:
+            metrics.deploy_success = bool(
+                apply_stage and apply_stage.success and not metrics.partial_deploy
+            )
+            if apply_stage and apply_stage.success:
                 metrics.deploy_completed = True
             metrics.deploy_first_attempt = bool(apply_stage and apply_stage.success)
             metrics.deploy_retried = False
@@ -1463,7 +1493,7 @@ class HoneynetOrchestrator:
                     )
                     if import_ok:
                         logger.info("Import succeeded — retrying plan+apply...")
-                        metrics.deploy_retry_count = 1
+                        metrics.deploy_retry_count += 1
                         retry_plan = await self.deployer.plan()
                         if retry_plan.success:
                             retry_apply = await self.deployer.apply()
@@ -1745,7 +1775,9 @@ class HoneynetOrchestrator:
                         )
                         self.renderer.render(projection, output_path=tofu_path)
                         tofu_json = tofu_path.read_text(encoding="utf-8")
-                        metrics.expected_containers = len(projection.containers)
+                        # NOTE: Do NOT update metrics.expected_containers here —
+                        # it must stay at the original planned count so that
+                        # container_start_rate reflects true success rate.
                         try:
                             _plan_res, _recovery_apply = await self.deployer.plan_and_apply()
                             if _recovery_apply and _recovery_apply.success:
@@ -1779,7 +1811,9 @@ class HoneynetOrchestrator:
                     )
                     metrics.running_containers = len(running)
                     metrics.container_start_rate = (
-                        len(running) / len(expected) if expected else 0.0
+                        len(running) / metrics.expected_containers
+                        if metrics.expected_containers > 0
+                        else 0.0
                     )
                     metrics.runtime_verification_success = len(failed_runtime) == 0
                     if not failed_runtime:
@@ -1915,6 +1949,9 @@ class HoneynetOrchestrator:
             # Store scenario_fit_score from the formal evaluation (use deployed if available)
             if deployed_formal.get("scenario_fit_score") is not None:
                 metrics.scenario_fit_score = float(deployed_formal["scenario_fit_score"])
+
+            # Record final system count after all repairs and drops
+            metrics.final_system_count = len(world_model.systems)
 
             if failed_runtime or not qa_ok:
                 metrics.failure_stage = FailureStage.RUNTIME_VERIFY.value

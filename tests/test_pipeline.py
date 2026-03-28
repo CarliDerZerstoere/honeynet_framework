@@ -745,9 +745,16 @@ class TestMetricsShape:
         m = DeploymentMetrics(zone_count=5, system_count=20, model_dep_rate=1.0, image_check_rate=1.0)
         sf = m.to_dict()["scenario_fit"]
         expected_keys = {
-            "zone_count", "system_count", "model_dep_rate",
-            "image_check_rate",
-            # Benchmark coverage fields (schema v3)
+            "zone_count", "system_count", "final_system_count",
+            "model_dep_rate",
+            "image_first_pass_rate", "image_check_rate",
+            # Prompt-fit evaluation fields (schema v4)
+            "prompt_fit_service_coverage", "prompt_fit_zone_coverage",
+            "prompt_fit_pass",
+            # Formal benchmark evaluation fields (schema v4)
+            "formal_service_coverage", "formal_zone_coverage",
+            "formal_benchmark_pass",
+            # Composite coverage fields
             "planned_service_coverage", "running_service_coverage",
             "planned_zone_coverage", "running_zone_coverage",
             "planned_dep_coverage", "running_dep_coverage",

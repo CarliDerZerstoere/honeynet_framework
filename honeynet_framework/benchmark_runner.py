@@ -47,7 +47,8 @@ class BenchmarkResult:
     planned_dep_coverage: float = 0.0       # Fraction of benchmark-required dependencies in deployment plan
     benchmark_dep_required: int = 0        # Total deps the benchmark requires (0 = none defined → n/a)
     placement_violations: int = 0           # Services placed in forbidden zones
-    benchmark_pass: bool = False            # All benchmark requirements met in plan
+    benchmark_pass: bool = False            # Composite: formal when ref exists, else prompt-fit
+    formal_benchmark_pass: bool = False     # Formal benchmark pass (100% coverage, 0 violations)
 
     # Deployability
     deploy_success: bool = False
@@ -445,6 +446,7 @@ async def _run_single_scenario(
         result.benchmark_dep_required = int(scen.get("benchmark_dep_required", 0))
         result.placement_violations = int(scen.get("placement_violations", 0))
         result.benchmark_pass = bool(scen.get("benchmark_pass", False))
+        result.formal_benchmark_pass = bool(scen.get("formal_benchmark_pass", False))
 
         result.running_service_coverage = float(scen.get("running_service_coverage", 0))
         result.running_zone_coverage = float(scen.get("running_zone_coverage", 0))
