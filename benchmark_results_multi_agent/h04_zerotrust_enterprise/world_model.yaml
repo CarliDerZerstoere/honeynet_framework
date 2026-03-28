@@ -1,0 +1,241 @@
+organization:
+  business_units: []
+  name: zero_trust_enterprise
+  regions: []
+  type: ''
+secrets:
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  honeytoken_db_admin_password:
+    name: honeytoken_db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  honeytoken_service_account_credential:
+    name: honeytoken_service_account_credential
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  honeytoken_vault_root_token:
+    name: honeytoken_vault_root_token
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  service_account_credential:
+    name: service_account_credential
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  vault_root_token:
+    name: vault_root_token
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  grafana:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3000 || (echo > /dev/tcp/localhost/3000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: security_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.security.zero_trust_enterprise.internal
+      issues: []
+      role: Dashboard for monitoring metrics
+      secrets: []
+      services: []
+  honeytoken_vault_root:
+    deploy:
+      command:
+      - server
+      - -dev
+      depends_on: []
+      env:
+      - VERSION=1.15.6
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - vault
+        - status
+        timeout: 10s
+      image: hashicorp/vault:1.15
+      ports:
+      - 8200
+      volumes: []
+      zone: secrets_zone
+    kind: unknown
+    name: honeytoken_vault_root
+    simulate:
+      behaviors: []
+      hostname: honeytoken-vault.secrets.zero_trust_enterprise.internal
+      issues: []
+      role: Decoy Vault root token
+      secrets:
+      - honeytoken_vault_root_token
+      services: []
+  postgresql_primary:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: postgresql_primary
+    simulate:
+      behaviors: []
+      hostname: db-primary.data.zero_trust_enterprise.internal
+      issues: []
+      role: Primary PostgreSQL database
+      secrets:
+      - db_admin_password
+      services: []
+  siem_audit_log_aggregator:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: security_zone
+    kind: unknown
+    name: siem_audit_log_aggregator
+    simulate:
+      behaviors: []
+      hostname: siem-aggregator.security.zero_trust_enterprise.internal
+      issues: []
+      role: Aggregates audit logs for SIEM
+      secrets: []
+      services: []
+  vault_audit_log_consumer:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: security_zone
+    kind: unknown
+    name: vault_audit_log_consumer
+    simulate:
+      behaviors: []
+      hostname: vault-audit.security.zero_trust_enterprise.internal
+      issues: []
+      role: Consumes and processes Vault audit logs
+      secrets: []
+      services: []
+zones:
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  dmz_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: dmz_zone
+    name: dmz_zone
+  secrets_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: secrets_zone
+    name: secrets_zone
+  security_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: security_zone
+    name: security_zone
+  service_zone_a:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: service_zone_a
+    name: service_zone_a
+  service_zone_b:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: service_zone_b
+    name: service_zone_b

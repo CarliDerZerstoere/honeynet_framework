@@ -1,0 +1,834 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "military_command_and_control_command_zone": {
+        "name": "military_command_and_control_command_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "military_command_and_control_tactical_zone": {
+        "name": "military_command_and_control_tactical_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "military_command_and_control_intel_zone": {
+        "name": "military_command_and_control_intel_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "military_command_and_control_data_zone": {
+        "name": "military_command_and_control_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "military_command_and_control_security_zone": {
+        "name": "military_command_and_control_security_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "military_command_and_control_honeynet_backbone": {
+        "name": "military_command_and_control_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_command_portal": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_tactical_db": {
+        "name": "mariadb@sha256:31c1aa20ba2d78c4cbc45b2675e40ffd6a3cd59897a9767ce88fc284309f55ab",
+        "keep_locally": true
+      },
+      "hn_intel_feed_service": {
+        "name": "nats@sha256:5498ba57b9471840be3d15b033a4eec554d1c02fa6c2cc0ca2d888637f6c6e2f",
+        "keep_locally": true
+      },
+      "hn_audit_trail_service": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_siem_service": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_admin_ui": {
+        "name": "adminer@sha256:aedd36aebf9352b435a2657f0a1e51fc6ac054dd838f42aee2a79ce059a1d796",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_alerting_service": {
+        "name": "prom/alertmanager@sha256:361db356b33041437517f1cd298462055580585f26555c317df1a3caf2868552",
+        "keep_locally": true
+      },
+      "hn_sensor_feed_aggregator": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_threat_intelligence_service": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_coordination_service": {
+        "name": "nats@sha256:5498ba57b9471840be3d15b033a4eec554d1c02fa6c2cc0ca2d888637f6c6e2f",
+        "keep_locally": true
+      },
+      "hn_compliance_service": {
+        "name": "prom/alertmanager@sha256:361db356b33041437517f1cd298462055580585f26555c317df1a3caf2868552",
+        "keep_locally": true
+      },
+      "hn_mission_data_service": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_monitoring_agent": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_file_share_service": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_network_monitor": {
+        "name": "nats@sha256:5498ba57b9471840be3d15b033a4eec554d1c02fa6c2cc0ca2d888637f6c6e2f",
+        "keep_locally": true
+      },
+      "hn_fluentd_service": {
+        "name": "fluent/fluentd@sha256:3e0bd37d74c95cff04a5a70ca4bb7470c6f807075cb914c1267c89f5801e1333",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_command_portal": {
+        "name": "hn_command_portal",
+        "image": "${docker_image.hn_command_portal.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_command_zone.name}",
+            "aliases": [
+              "command_portal"
+            ]
+          }
+        ],
+        "hostname": "command-portal.command.military.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1026,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_tactical_db": {
+        "name": "hn_tactical_db",
+        "image": "${docker_image.hn_tactical_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_tactical_zone.name}",
+            "aliases": [
+              "tactical_db"
+            ]
+          }
+        ],
+        "hostname": "tactical-db.tactical.military.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_intel_feed_service": {
+        "name": "hn_intel_feed_service",
+        "image": "${docker_image.hn_intel_feed_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_intel_zone.name}",
+            "aliases": [
+              "intel_feed_service"
+            ]
+          }
+        ],
+        "hostname": "intel-feed.intel.military.internal",
+        "command": [
+          "--config",
+          "nats-server.conf"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "nats",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_audit_trail_service": {
+        "name": "hn_audit_trail_service",
+        "image": "${docker_image.hn_audit_trail_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_security_zone.name}",
+            "aliases": [
+              "audit_trail_service"
+            ]
+          }
+        ],
+        "hostname": "audit-trail.security.military.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3000/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_siem_service": {
+        "name": "hn_siem_service",
+        "image": "${docker_image.hn_siem_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_security_zone.name}",
+            "aliases": [
+              "siem_service"
+            ]
+          }
+        ],
+        "hostname": "siem.security.military.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_ui": {
+        "name": "hn_admin_ui",
+        "image": "${docker_image.hn_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_tactical_zone.name}",
+            "aliases": [
+              "admin_ui"
+            ]
+          }
+        ],
+        "hostname": "admin-ui.tactical.military.internal",
+        "depends_on": [
+          "docker_container.hn_tactical_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_security_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "log-collector.security.military.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alerting_service": {
+        "name": "hn_alerting_service",
+        "image": "${docker_image.hn_alerting_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_security_zone.name}",
+            "aliases": [
+              "alerting_service"
+            ]
+          }
+        ],
+        "hostname": "alerting.security.military.internal",
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_sensor_feed_aggregator": {
+        "name": "hn_sensor_feed_aggregator",
+        "image": "${docker_image.hn_sensor_feed_aggregator.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_intel_zone.name}",
+            "aliases": [
+              "sensor_feed_aggregator"
+            ]
+          }
+        ],
+        "hostname": "sensor-feed.intel.military.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_threat_intelligence_service": {
+        "name": "hn_threat_intelligence_service",
+        "image": "${docker_image.hn_threat_intelligence_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_intel_zone.name}",
+            "aliases": [
+              "threat_intelligence_service"
+            ]
+          }
+        ],
+        "hostname": "threat-intel.intel.military.internal",
+        "depends_on": [
+          "docker_container.hn_intel_feed_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3000/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_coordination_service": {
+        "name": "hn_coordination_service",
+        "image": "${docker_image.hn_coordination_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_tactical_zone.name}",
+            "aliases": [
+              "coordination_service"
+            ]
+          }
+        ],
+        "hostname": "coordination.tactical.military.internal",
+        "command": [
+          "--config",
+          "nats-server.conf"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "nats",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_compliance_service": {
+        "name": "hn_compliance_service",
+        "image": "${docker_image.hn_compliance_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_security_zone.name}",
+            "aliases": [
+              "compliance_service"
+            ]
+          }
+        ],
+        "hostname": "compliance.security.military.internal",
+        "depends_on": [
+          "docker_container.hn_audit_trail_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_mission_data_service": {
+        "name": "hn_mission_data_service",
+        "image": "${docker_image.hn_mission_data_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_tactical_zone.name}",
+            "aliases": [
+              "mission_data_service"
+            ]
+          }
+        ],
+        "hostname": "mission-data.tactical.military.internal",
+        "depends_on": [
+          "docker_container.hn_tactical_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3000/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_command_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api-gateway.command.military.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_agent": {
+        "name": "hn_monitoring_agent",
+        "image": "${docker_image.hn_monitoring_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_security_zone.name}",
+            "aliases": [
+              "monitoring_agent"
+            ]
+          }
+        ],
+        "hostname": "monitoring-agent.security.military.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3000/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share_service": {
+        "name": "hn_file_share_service",
+        "image": "${docker_image.hn_file_share_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_data_zone.name}",
+            "aliases": [
+              "file_share_service"
+            ]
+          }
+        ],
+        "hostname": "file-share.data.military.internal",
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_network_monitor": {
+        "name": "hn_network_monitor",
+        "image": "${docker_image.hn_network_monitor.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_security_zone.name}",
+            "aliases": [
+              "network_monitor"
+            ]
+          }
+        ],
+        "hostname": "network-monitor.security.military.internal",
+        "command": [
+          "--config",
+          "nats-server.conf"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:8222/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fluentd_service": {
+        "name": "hn_fluentd_service",
+        "image": "${docker_image.hn_fluentd_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.military_command_and_control_security_zone.name}",
+            "aliases": [
+              "fluentd_service"
+            ]
+          }
+        ],
+        "hostname": "fluentd.security.military.internal",
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=default"
+        ],
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "military_command_and_control"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

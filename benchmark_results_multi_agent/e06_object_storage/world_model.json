@@ -1,0 +1,697 @@
+{
+  "zones": {
+    "app_zone": {
+      "name": "app_zone",
+      "deploy": {
+        "network_name": "app_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "monitoring_zone": {
+      "name": "monitoring_zone",
+      "deploy": {
+        "network_name": "monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "security_zone": {
+      "name": "security_zone",
+      "deploy": {
+        "network_name": "security_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "app_zone",
+        "ports": [
+          80,
+          443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "object_storage",
+          "metadata_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api-gateway.app.corporate_data_lake.internal",
+        "role": "Handles incoming API requests and routes them to appropriate services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "web_frontend": {
+      "name": "web_frontend",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "app_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "api_gateway"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "web-frontend.app.corporate_data_lake.internal",
+        "role": "Serves the main web application interface to users",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "object_storage": {
+      "name": "object_storage",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ROOT_USER=minioadmin",
+          "MINIO_ROOT_PASSWORD=minioadmin"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "object-storage.data.corporate_data_lake.internal",
+        "role": "S3-compatible storage for internal data lake services",
+        "issues": [],
+        "secrets": [
+          "object_storage_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "metadata_db": {
+      "name": "metadata_db",
+      "kind": "database",
+      "deploy": {
+        "image": "mysql:8.0",
+        "zone": "data_zone",
+        "ports": [
+          3306,
+          33060
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123",
+          "MYSQL_DATABASE=metadata"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "metadata-db.data.corporate_data_lake.internal",
+        "role": "Stores metadata information for the data lake",
+        "issues": [],
+        "secrets": [
+          "metadata_db_root_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_collector": {
+      "name": "monitoring_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "monitoring_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "object_storage",
+          "metadata_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoring-collector.monitoring.corporate_data_lake.internal",
+        "role": "Collects monitoring data from various services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alerting_service": {
+      "name": "alerting_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "mongo:7.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          27017
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "monitoring_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mongo",
+            "--eval",
+            "db.adminCommand('ping')"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alerting-service.monitoring.corporate_data_lake.internal",
+        "role": "Handles alerts based on monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_service": {
+      "name": "backup_service",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "object_storage"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup-service.data.corporate_data_lake.internal",
+        "role": "Handles backup operations for data storage",
+        "issues": [],
+        "secrets": [
+          "backup_service_access_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "monitoring_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "log-collector.monitoring.corporate_data_lake.internal",
+        "role": "Aggregates logs from various services for analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "identity_service": {
+      "name": "identity_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "security_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "identity-service.security.corporate_data_lake.internal",
+        "role": "Manages user identities and authentication",
+        "issues": [],
+        "secrets": [
+          "ldap_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "data_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "ldapsearch",
+            "-x",
+            "-H",
+            "ldap://localhost:389",
+            "-b",
+            "dc=example,dc=org"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "file-share.data.corporate_data_lake.internal",
+        "role": "Provides shared file storage for internal services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "bait_admin_panel": {
+      "name": "bait_admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "app_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES="
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "httpd-foreground"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "bait-admin-panel.app.corporate_data_lake.internal",
+        "role": "Decoy admin panel to attract unauthorized access attempts",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "data_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "service-discovery.data.corporate_data_lake.internal",
+        "role": "Facilitates service discovery for internal services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "coordination_service": {
+      "name": "coordination_service",
+      "kind": "infra",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "data_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "coordination-service.data.corporate_data_lake.internal",
+        "role": "Coordinates distributed tasks and services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "data_transform_service": {
+      "name": "data_transform_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "data_zone",
+        "ports": [
+          2019,
+          443,
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "object_storage",
+          "metadata_db"
+        ],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:2019/health"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "data-transform-service.data.corporate_data_lake.internal",
+        "role": "Processes and transforms data within the data lake",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "security_monitor": {
+      "name": "security_monitor",
+      "kind": "monitor",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "security_zone",
+        "ports": [
+          2019,
+          443,
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "identity_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "security-monitor.security.corporate_data_lake.internal",
+        "role": "Monitors security events and alerts",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_dashboard": {
+      "name": "log_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          3000
+        ],
+        "env": [
+          "GF_SECURITY_ADMIN_PASSWORD=admin"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "log-dashboard.monitoring.corporate_data_lake.internal",
+        "role": "Dashboard for visualizing log data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "corporate_data_lake",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "object_storage_admin_password": {
+      "name": "object_storage_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "metadata_db_root_password": {
+      "name": "metadata_db_root_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_service_access_key": {
+      "name": "backup_service_access_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "ldap_admin_password": {
+      "name": "ldap_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

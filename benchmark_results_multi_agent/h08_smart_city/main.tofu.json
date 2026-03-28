@@ -1,0 +1,651 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "smart_city_infrastructure_public_zone": {
+        "name": "smart_city_infrastructure_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "smart_city_infrastructure_iot_zone": {
+        "name": "smart_city_infrastructure_iot_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "smart_city_infrastructure_data_zone": {
+        "name": "smart_city_infrastructure_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "smart_city_infrastructure_dispatch_zone": {
+        "name": "smart_city_infrastructure_dispatch_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "smart_city_infrastructure_ops_zone": {
+        "name": "smart_city_infrastructure_ops_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "smart_city_infrastructure_honeynet_backbone": {
+        "name": "smart_city_infrastructure_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_traffic_api": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_metrics_db": {
+        "name": "influxdb@sha256:5355c90249dac331bbcd1fdf3c31c7782400cd0ec5225145fc50b9aa026e9342",
+        "keep_locally": true
+      },
+      "hn_city_db": {
+        "name": "mariadb@sha256:31c1aa20ba2d78c4cbc45b2675e40ffd6a3cd59897a9767ce88fc284309f55ab",
+        "keep_locally": true
+      },
+      "hn_citizen_portal": {
+        "name": "drupal@sha256:42b3811155c952269b18766dfdb7f12457a7db21b197fc46fb595d7fc0b1f31d",
+        "keep_locally": true
+      },
+      "hn_event_bus": {
+        "name": "rabbitmq@sha256:c601bbed8c3138c74d13439d1db867c106ec76029c3c9e458c11e18c3de25b2e",
+        "keep_locally": true
+      },
+      "hn_grafana": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_monitoring_agent": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      },
+      "hn_kafka_admin": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_traffic_management_ui": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_config_management": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_network_monitor": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_traffic_api": {
+        "name": "hn_traffic_api",
+        "image": "${docker_image.hn_traffic_api.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_public_zone.name}",
+            "aliases": [
+              "traffic_api"
+            ]
+          },
+          {
+            "name": "${docker_network.smart_city_infrastructure_data_zone.name}",
+            "aliases": [
+              "traffic_api"
+            ]
+          }
+        ],
+        "hostname": "traffic-api.public.smartcity.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1025,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_metrics_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_metrics_db": {
+        "name": "hn_metrics_db",
+        "image": "${docker_image.hn_metrics_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_data_zone.name}",
+            "aliases": [
+              "metrics_db"
+            ]
+          }
+        ],
+        "hostname": "metrics-db.data.smartcity.internal",
+        "env": [
+          "INFLUXDB_ADMIN_USER=admin",
+          "INFLUXDB_ADMIN_PASSWORD=password"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "influx",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_city_db": {
+        "name": "hn_city_db",
+        "image": "${docker_image.hn_city_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_data_zone.name}",
+            "aliases": [
+              "city_db"
+            ]
+          }
+        ],
+        "hostname": "city-db.data.smartcity.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123",
+          "MYSQL_DATABASE=city"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_citizen_portal": {
+        "name": "hn_citizen_portal",
+        "image": "${docker_image.hn_citizen_portal.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_public_zone.name}",
+            "aliases": [
+              "citizen_portal"
+            ]
+          },
+          {
+            "name": "${docker_network.smart_city_infrastructure_data_zone.name}",
+            "aliases": [
+              "citizen_portal"
+            ]
+          }
+        ],
+        "hostname": "citizen-portal.public.smartcity.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_city_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_event_bus": {
+        "name": "hn_event_bus",
+        "image": "${docker_image.hn_event_bus.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_dispatch_zone.name}",
+            "aliases": [
+              "event_bus"
+            ]
+          }
+        ],
+        "hostname": "event-bus.dispatch.smartcity.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "rabbitmqctl",
+              "status"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana": {
+        "name": "hn_grafana",
+        "image": "${docker_image.hn_grafana.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_ops_zone.name}",
+            "aliases": [
+              "grafana"
+            ]
+          }
+        ],
+        "hostname": "grafana.ops.smartcity.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_public_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api-gateway.public.smartcity.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_traffic_api",
+          "docker_container.hn_citizen_portal"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_data_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup-server.data.smartcity.internal",
+        "env": [
+          "MINIO_ROOT_USER=admin",
+          "MINIO_ROOT_PASSWORD=admin123"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_agent": {
+        "name": "hn_monitoring_agent",
+        "image": "${docker_image.hn_monitoring_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_ops_zone.name}",
+            "aliases": [
+              "monitoring_agent"
+            ]
+          }
+        ],
+        "hostname": "monitoring-agent.ops.smartcity.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_kafka_admin": {
+        "name": "hn_kafka_admin",
+        "image": "${docker_image.hn_kafka_admin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_dispatch_zone.name}",
+            "aliases": [
+              "kafka_admin"
+            ]
+          }
+        ],
+        "hostname": "kafka-admin.dispatch.smartcity.internal",
+        "depends_on": [
+          "docker_container.hn_event_bus"
+        ],
+        "command": [
+          "/etc/kafka/docker/run"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_traffic_management_ui": {
+        "name": "hn_traffic_management_ui",
+        "image": "${docker_image.hn_traffic_management_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_public_zone.name}",
+            "aliases": [
+              "traffic_management_ui"
+            ]
+          }
+        ],
+        "hostname": "traffic-ui.public.smartcity.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1030,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_traffic_api"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_config_management": {
+        "name": "hn_config_management",
+        "image": "${docker_image.hn_config_management.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_ops_zone.name}",
+            "aliases": [
+              "config_management"
+            ]
+          }
+        ],
+        "hostname": "config-management.ops.smartcity.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/api/health || wget -qO- http://localhost:3000/api/health || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_network_monitor": {
+        "name": "hn_network_monitor",
+        "image": "${docker_image.hn_network_monitor.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.smart_city_infrastructure_ops_zone.name}",
+            "aliases": [
+              "network_monitor"
+            ]
+          }
+        ],
+        "hostname": "network-monitor.ops.smartcity.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "smart_city_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

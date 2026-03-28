@@ -1,0 +1,729 @@
+organization:
+  business_units: []
+  name: cryptocurrency_exchange_platform
+  regions: []
+  type: ''
+secrets:
+  admin_password:
+    name: admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  api_key:
+    name: api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  db_password:
+    name: db_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  ldap_admin_password:
+    name: ldap_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  redis_password:
+    name: redis_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: admin-panel.exchange.cryptoplatform.internal
+      issues: []
+      role: Web interface for administrative tasks
+      secrets: []
+      services: []
+  alert_manager:
+    deploy:
+      depends_on:
+      - prometheus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: prom/alertmanager:v0.26.0
+      ports:
+      - 9093
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: alert_manager
+    simulate:
+      behaviors: []
+      hostname: alert-manager.monitoring.cryptoplatform.internal
+      issues: []
+      role: Service for managing alerts based on monitoring data
+      secrets: []
+      services: []
+  api_documentation:
+    deploy:
+      depends_on: []
+      env:
+      - HTTPD_PATCHES=none
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: api_documentation
+    simulate:
+      behaviors: []
+      hostname: api-docs.exchange.cryptoplatform.internal
+      issues: []
+      role: Documentation for public and internal APIs
+      secrets: []
+      services: []
+  api_gateway:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api-gateway.exchange.cryptoplatform.internal
+      issues: []
+      role: API Gateway for routing requests to internal services
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: vault_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup-server.vault.cryptoplatform.internal
+      issues: []
+      role: Server for backups of critical data
+      secrets: []
+      services: []
+  fake_backup_server:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: vault_zone
+    kind: storage
+    name: fake_backup_server
+    simulate:
+      behaviors: []
+      hostname: fake-backup.vault.cryptoplatform.internal
+      issues: []
+      role: Decoy backup server for security testing
+      secrets: []
+      services: []
+  fake_file_share:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: vault_zone
+    kind: storage
+    name: fake_file_share
+    simulate:
+      behaviors: []
+      hostname: fake-file-share.vault.cryptoplatform.internal
+      issues: []
+      role: Decoy file share for security testing
+      secrets: []
+      services: []
+  file_share:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: vault_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: file-share.vault.cryptoplatform.internal
+      issues: []
+      role: File sharing service for internal documents
+      secrets: []
+      services: []
+  grafana:
+    deploy:
+      depends_on:
+      - prometheus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.monitoring.cryptoplatform.internal
+      issues: []
+      role: Dashboard for visualizing monitoring data
+      secrets: []
+      services: []
+  honeypot_admin_panel:
+    deploy:
+      depends_on: []
+      env:
+      - HTTPD_PATCHES=none
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: honeypot_admin_panel
+    simulate:
+      behaviors: []
+      hostname: honeypot-admin.exchange.cryptoplatform.internal
+      issues: []
+      role: Decoy admin panel to attract and monitor unauthorized access
+      secrets: []
+      services: []
+  identity_ui:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: trading_zone
+    kind: web
+    name: identity_ui
+    simulate:
+      behaviors: []
+      hostname: identity-ui.trading.cryptoplatform.internal
+      issues: []
+      role: User interface for identity verification and management
+      secrets: []
+      services: []
+  ledger_db:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: vault_zone
+    kind: database
+    name: ledger_db
+    simulate:
+      behaviors: []
+      hostname: ledger-db.vault.cryptoplatform.internal
+      issues: []
+      role: PostgreSQL database for transaction history
+      secrets: []
+      services: []
+  load_balancer:
+    deploy:
+      depends_on:
+      - reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: traefik:v2.10
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: infra
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: load-balancer.exchange.cryptoplatform.internal
+      issues: []
+      role: Load balancer for distributing traffic across services
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: log-collector.monitoring.cryptoplatform.internal
+      issues: []
+      role: Centralized log collection service
+      secrets: []
+      services: []
+  monitoring_agent:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: monitoring_agent
+    simulate:
+      behaviors: []
+      hostname: monitoring-agent.monitoring.cryptoplatform.internal
+      issues: []
+      role: Agent for collecting and sending metrics to Prometheus
+      secrets: []
+      services: []
+  order_book:
+    deploy:
+      depends_on:
+      - redis
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: trading_zone
+    kind: database
+    name: order_book
+    simulate:
+      behaviors: []
+      hostname: order-book.trading.cryptoplatform.internal
+      issues: []
+      role: Redis-backed order book for real-time matching
+      secrets: []
+      services: []
+  pgadmin:
+    deploy:
+      depends_on:
+      - ledger_db
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@cryptoplatform.internal
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:latest
+      ports:
+      - 80
+      volumes: []
+      zone: vault_zone
+    kind: web
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.vault.cryptoplatform.internal
+      issues: []
+      role: Web-based administration tool for PostgreSQL databases
+      secrets: []
+      services: []
+  postgres_admin_ui:
+    deploy:
+      depends_on:
+      - ledger_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: vault_zone
+    kind: web
+    name: postgres_admin_ui
+    simulate:
+      behaviors: []
+      hostname: postgres-admin-ui.vault.cryptoplatform.internal
+      issues: []
+      role: Web interface for managing PostgreSQL databases
+      secrets: []
+      services: []
+  prometheus:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: prometheus
+    simulate:
+      behaviors: []
+      hostname: prometheus.monitoring.cryptoplatform.internal
+      issues: []
+      role: Monitoring system collecting metrics from services
+      secrets: []
+      services: []
+  redis:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: trading_zone
+    kind: database
+    name: redis
+    simulate:
+      behaviors: []
+      hostname: redis.trading.cryptoplatform.internal
+      issues: []
+      role: In-memory data structure store for caching and session management
+      secrets: []
+      services: []
+  redis_admin_ui:
+    deploy:
+      depends_on:
+      - redis
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: trading_zone
+    kind: web
+    name: redis_admin_ui
+    simulate:
+      behaviors: []
+      hostname: redis-admin-ui.trading.cryptoplatform.internal
+      issues: []
+      role: Web interface for managing Redis instances
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - api_gateway
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: reverse-proxy.exchange.cryptoplatform.internal
+      issues: []
+      role: Reverse proxy for load balancing and SSL termination
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      command:
+      - agent
+      - -dev
+      - -client
+      - 0.0.0.0
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - consul
+        - members
+        timeout: 10s
+      image: hashicorp/consul:1.17
+      ports:
+      - 8300
+      - 8301
+      - 8302
+      - 8500
+      - 8600
+      volumes: []
+      zone: trading_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: service-discovery.trading.cryptoplatform.internal
+      issues: []
+      role: Service discovery and configuration management
+      secrets: []
+      services: []
+zones:
+  monitoring_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: monitoring_zone
+    name: monitoring_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone
+  trading_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: trading_zone
+    name: trading_zone
+  vault_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: vault_zone
+    name: vault_zone

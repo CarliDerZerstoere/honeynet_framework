@@ -1,0 +1,474 @@
+organization:
+  business_units: []
+  name: national_government_citizen_portal
+  regions: []
+  type: ''
+secrets:
+  api_service_key:
+    name: api_service_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  case_worker_honeytoken:
+    name: case_worker_honeytoken
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  classified_store_key:
+    name: classified_store_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  db_replication_honeytoken:
+    name: db_replication_honeytoken
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  dms_access_key:
+    name: dms_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  esigning_admin_honeytoken:
+    name: esigning_admin_honeytoken
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  esigning_service_key:
+    name: esigning_service_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  ldap_admin_password:
+    name: ldap_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  retention_store_key:
+    name: retention_store_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+systems:
+  audit_trail_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: compliance_zone
+    kind: storage
+    name: audit_trail_service
+    simulate:
+      behaviors: []
+      hostname: audit.compliance.national.gov
+      issues: []
+      role: Service for audit trails
+      secrets: []
+      services: []
+  case_management_api:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports: []
+      volumes: []
+      zone: application_zone
+    kind: runtime
+    name: case_management_api
+    simulate:
+      behaviors: []
+      hostname: api.case.national.gov
+      issues: []
+      role: REST API for case management
+      secrets:
+      - api_service_key
+      services: []
+  citizen_portal:
+    deploy:
+      depends_on:
+      - case_management_api
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: wordpress:6.4-php8.2-apache
+      ports:
+      - 80
+      volumes: []
+      zone: public_dmz
+    kind: web
+    name: citizen_portal
+    simulate:
+      behaviors: []
+      hostname: portal.national.gov
+      issues: []
+      role: Public-facing citizen portal
+      secrets: []
+      services: []
+  classified_document_store:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: classified_document_store
+    simulate:
+      behaviors: []
+      hostname: classified.docs.national.gov
+      issues: []
+      role: Storage for classified documents
+      secrets:
+      - classified_store_key
+      services: []
+  data_retention_compliance_store:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: compliance_zone
+    kind: storage
+    name: data_retention_compliance_store
+    simulate:
+      behaviors: []
+      hostname: retention.compliance.national.gov
+      issues: []
+      role: Storage for compliance data retention
+      secrets:
+      - retention_store_key
+      services: []
+  document_retrieval_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports: []
+      volumes: []
+      zone: application_zone
+    kind: runtime
+    name: document_retrieval_service
+    simulate:
+      behaviors: []
+      hostname: retrieve.docs.national.gov
+      issues: []
+      role: Service for document retrieval
+      secrets: []
+      services: []
+  document_upload_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports: []
+      volumes: []
+      zone: application_zone
+    kind: runtime
+    name: document_upload_service
+    simulate:
+      behaviors: []
+      hostname: upload.docs.national.gov
+      issues: []
+      role: Service for document uploads
+      secrets: []
+      services: []
+  esigning_microservice:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports: []
+      volumes: []
+      zone: document_zone
+    kind: runtime
+    name: esigning_microservice
+    simulate:
+      behaviors: []
+      hostname: esign.docs.national.gov
+      issues: []
+      role: Microservice for electronic signatures
+      secrets:
+      - esigning_service_key
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:3000/health
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana.ops.national.gov
+      issues: []
+      role: Dashboard for monitoring metrics
+      secrets: []
+      services: []
+  honeytoken_esigning_admin_keys:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: document_zone
+    kind: unknown
+    name: honeytoken_esigning_admin_keys
+    simulate:
+      behaviors: []
+      hostname: honeytoken.esignadmin.national.gov
+      issues: []
+      role: Decoy keys for eSigning admin
+      secrets:
+      - esigning_admin_honeytoken
+      services: []
+  nginx_load_balancer:
+    deploy:
+      depends_on:
+      - citizen_portal
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_dmz
+    kind: web
+    name: nginx_load_balancer
+    simulate:
+      behaviors: []
+      hostname: lb.national.gov
+      issues: []
+      role: Load balancer for public web services
+      secrets: []
+      services: []
+  pgadmin:
+    deploy:
+      depends_on: []
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@national.gov
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:6.21
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: unknown
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.data.national.gov
+      issues: []
+      role: Database administration tool
+      secrets: []
+      services: []
+zones:
+  application_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: application_zone
+    name: application_zone
+  compliance_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: compliance_zone
+    name: compliance_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  document_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: document_zone
+    name: document_zone
+  identity_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: identity_zone
+    name: identity_zone
+  ops_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: ops_zone
+    name: ops_zone
+  public_dmz:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_dmz
+    name: public_dmz

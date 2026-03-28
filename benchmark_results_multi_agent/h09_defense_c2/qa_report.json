@@ -1,0 +1,261 @@
+{
+  "checks_run": 28,
+  "checks_passed": 28,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_command_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 165.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_command_portal:1026",
+      "passed": true,
+      "actual": "TCP connect to localhost:1026 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2199.3,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_command_portal:1026",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 408.5,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_tactical_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 151.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_intel_feed_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 146.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_audit_trail_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 141.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_siem_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 137.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_admin_ui",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 132.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_admin_ui:hn_tactical_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 127.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 122.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_alerting_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 117.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_alerting_service:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 112.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_sensor_feed_aggregator",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 107.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_threat_intelligence_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 101.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_threat_intelligence_service:hn_intel_feed_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 95.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_coordination_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 89.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_compliance_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 83.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_compliance_service:hn_audit_trail_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 78.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_mission_data_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 72.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_mission_data_service:hn_tactical_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 54.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_api_gateway",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 48.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_api_gateway:1027",
+      "passed": true,
+      "actual": "TCP connect to localhost:1027 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2081.0,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_api_gateway:1027",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 291.9,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_monitoring_agent",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 39.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_file_share_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 40.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_network_monitor",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 37.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_fluentd_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 31.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_fluentd_service:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 27.6,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "66babf11eedb4fa493b6cd09bc2ab276"
+}

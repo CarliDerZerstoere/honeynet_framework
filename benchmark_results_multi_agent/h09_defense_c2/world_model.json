@@ -1,0 +1,713 @@
+{
+  "zones": {
+    "command_zone": {
+      "name": "command_zone",
+      "deploy": {
+        "network_name": "command_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "tactical_zone": {
+      "name": "tactical_zone",
+      "deploy": {
+        "network_name": "tactical_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "intel_zone": {
+      "name": "intel_zone",
+      "deploy": {
+        "network_name": "intel_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "security_zone": {
+      "name": "security_zone",
+      "deploy": {
+        "network_name": "security_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "command_portal": {
+      "name": "command_portal",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "command_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "command-portal.command.military.internal",
+        "role": "Web-based command portal for officers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "tactical_db": {
+      "name": "tactical_db",
+      "kind": "database",
+      "deploy": {
+        "image": "mariadb:11",
+        "zone": "tactical_zone",
+        "ports": [
+          3306
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "tactical-db.tactical.military.internal",
+        "role": "PostgreSQL tactical database for mission data",
+        "issues": [],
+        "secrets": [
+          "tactical_db_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "intel_feed_service": {
+      "name": "intel_feed_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "nats:2.10",
+        "zone": "intel_zone",
+        "ports": [
+          4222,
+          6222,
+          8222
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "--config",
+          "nats-server.conf"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "nats",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "intel-feed.intel.military.internal",
+        "role": "Service ingesting threat data for intelligence analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "audit_trail_service": {
+      "name": "audit_trail_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "security_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:3000/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "audit-trail.security.military.internal",
+        "role": "Service for compliance and audit trail logging",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "siem_service": {
+      "name": "siem_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "security_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "siem.security.military.internal",
+        "role": "Security Information and Event Management (SIEM) system",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_ui": {
+      "name": "admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "adminer:4",
+        "zone": "tactical_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "tactical_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin-ui.tactical.military.internal",
+        "role": "Admin UI for database management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "security_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "log-collector.security.military.internal",
+        "role": "Log collection for security monitoring",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alerting_service": {
+      "name": "alerting_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "security_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alerting.security.military.internal",
+        "role": "Alerting service for monitoring alerts",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "sensor_feed_aggregator": {
+      "name": "sensor_feed_aggregator",
+      "kind": "runtime",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "intel_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "sensor-feed.intel.military.internal",
+        "role": "Aggregates sensor feeds for intelligence analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "threat_intelligence_service": {
+      "name": "threat_intelligence_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "intel_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "intel_feed_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:3000/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "threat-intel.intel.military.internal",
+        "role": "Service for threat intelligence analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "coordination_service": {
+      "name": "coordination_service",
+      "kind": "infra",
+      "deploy": {
+        "image": "nats:2.10",
+        "zone": "tactical_zone",
+        "ports": [
+          4222,
+          6222,
+          8222
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "--config",
+          "nats-server.conf"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "nats",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "coordination.tactical.military.internal",
+        "role": "Service coordination for tactical operations",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "compliance_service": {
+      "name": "compliance_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "security_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "audit_trail_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "compliance.security.military.internal",
+        "role": "Compliance service for security regulations",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "mission_data_service": {
+      "name": "mission_data_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "tactical_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "tactical_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:3000/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "mission-data.tactical.military.internal",
+        "role": "Service for managing mission data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "command_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api-gateway.command.military.internal",
+        "role": "API gateway for managing API requests",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_agent": {
+      "name": "monitoring_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "security_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:3000/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoring-agent.security.military.internal",
+        "role": "Agent for monitoring system health",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share_service": {
+      "name": "file_share_service",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "file-share.data.military.internal",
+        "role": "File sharing service for data exchange",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "network_monitor": {
+      "name": "network_monitor",
+      "kind": "monitor",
+      "deploy": {
+        "image": "nats:2.10",
+        "zone": "security_zone",
+        "ports": [
+          4222,
+          6222,
+          8222
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "--config",
+          "nats-server.conf"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:8222/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "network-monitor.security.military.internal",
+        "role": "Network monitoring for security analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fluentd_service": {
+      "name": "fluentd_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.14-1",
+        "zone": "security_zone",
+        "ports": [
+          24224
+        ],
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=default"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fluentd.security.military.internal",
+        "role": "Log collector for aggregating logs from various services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "military_command_and_control",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "tactical_db_admin_password": {
+      "name": "tactical_db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "vault_root_token": {
+      "name": "vault_root_token",
+      "type": "token",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

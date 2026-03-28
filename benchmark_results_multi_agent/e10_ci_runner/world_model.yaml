@@ -1,0 +1,479 @@
+organization:
+  business_units: []
+  name: continuous_integration_environment
+  regions: []
+  type: ''
+secrets:
+  jenkins_admin_password:
+    name: jenkins_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  minio_access_key:
+    name: minio_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  minio_secret_key:
+    name: minio_secret_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  postgres_user_password:
+    name: postgres_user_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_ui:
+    deploy:
+      depends_on:
+      - postgres_database
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true
+        timeout: 10s
+      image: adminer:4
+      ports:
+      - 8080
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: admin_ui
+    simulate:
+      behaviors: []
+      hostname: admin-ui.public.continuousintegration.internal
+      issues: []
+      role: Admin UI for database management
+      secrets: []
+      services: []
+  alerting_service:
+    deploy:
+      depends_on:
+      - monitoring_service
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: alerting_service
+    simulate:
+      behaviors: []
+      hostname: alerting.monitoring.continuousintegration.internal
+      issues: []
+      role: Alerting service for CI environment
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on:
+      - postgres_database
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup.data.continuousintegration.internal
+      issues: []
+      role: Backup server for CI data
+      secrets: []
+      services: []
+  ci_proxy:
+    deploy:
+      depends_on:
+      - ci_web_interface
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: ci_proxy
+    simulate:
+      behaviors: []
+      hostname: ci-proxy.public.continuousintegration.internal
+      issues: []
+      role: Proxy server for CI web interface
+      secrets: []
+      services: []
+  ci_runner:
+    deploy:
+      depends_on:
+      - minio_storage
+      - postgres_database
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true
+        timeout: 10s
+      image: jenkins/jenkins@sha256:c4098086090ca98491d4bf66182f5e3b015a8232f2acf2df209a212a5801aa8e
+      ports:
+      - 50000
+      - 8080
+      volumes: []
+      zone: build_zone
+    kind: runtime
+    name: ci_runner
+    simulate:
+      behaviors: []
+      hostname: ci-runner.build.continuousintegration.internal
+      issues: []
+      role: Build runner executing CI pipelines
+      secrets:
+      - jenkins_admin_password
+      services: []
+  ci_web_interface:
+    deploy:
+      depends_on:
+      - ci_runner
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: ci_web_interface
+    simulate:
+      behaviors: []
+      hostname: ci-web.public.continuousintegration.internal
+      issues: []
+      role: Web interface for CI system
+      secrets: []
+      services: []
+  load_balancer:
+    deploy:
+      depends_on:
+      - ci_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: infra
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: load-balancer.public.continuousintegration.internal
+      issues: []
+      role: Load balancer for distributing traffic
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on:
+      - ci_runner
+      - minio_storage
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost/
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      - 443
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logs.monitoring.continuousintegration.internal
+      issues: []
+      role: Log collector for CI environment
+      secrets: []
+      services: []
+  metrics_dashboard:
+    deploy:
+      command:
+      - httpd-foreground
+      depends_on:
+      - monitoring_service
+      env:
+      - HTTPD_PATCHES=
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost/
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: metrics_dashboard
+    simulate:
+      behaviors: []
+      hostname: dashboard.monitoring.continuousintegration.internal
+      issues: []
+      role: Metrics dashboard for monitoring CI environment
+      secrets: []
+      services: []
+  minio_storage:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: minio_storage
+    simulate:
+      behaviors: []
+      hostname: minio.data.continuousintegration.internal
+      issues: []
+      role: Object store for caching build artifacts
+      secrets:
+      - minio_access_key
+      - minio_secret_key
+      services: []
+  monitoring_service:
+    deploy:
+      depends_on:
+      - ci_runner
+      - postgres_database
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost/
+        timeout: 10s
+      image: matomo:4
+      ports:
+      - 80
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: monitoring_service
+    simulate:
+      behaviors: []
+      hostname: monitoring.monitoring.continuousintegration.internal
+      issues: []
+      role: Service for monitoring CI environment
+      secrets: []
+      services: []
+  pgadmin:
+    deploy:
+      depends_on:
+      - postgres_database
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@ci.internal
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: dpage/pgadmin4:latest
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.public.continuousintegration.internal
+      issues: []
+      role: Database administration interface for PostgreSQL
+      secrets: []
+      services: []
+  postgres_database:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: postgres_database
+    simulate:
+      behaviors: []
+      hostname: postgres.data.continuousintegration.internal
+      issues: []
+      role: Database tracking job results and pipeline metadata
+      secrets:
+      - postgres_user_password
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: build_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery.build.continuousintegration.internal
+      issues: []
+      role: Service discovery for build zone
+      secrets: []
+      services: []
+zones:
+  build_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: build_zone
+    name: build_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  monitoring_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: monitoring_zone
+    name: monitoring_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

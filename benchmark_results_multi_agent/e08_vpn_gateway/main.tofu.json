@@ -1,0 +1,651 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "corporate_remote_access_edge_zone": {
+        "name": "corporate_remote_access_edge_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "corporate_remote_access_internal_zone": {
+        "name": "corporate_remote_access_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_remote_access_monitoring_zone": {
+        "name": "corporate_remote_access_monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_remote_access_honeynet_backbone": {
+        "name": "corporate_remote_access_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_auth_proxy": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_internal_wiki": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "elasticsearch@sha256:2cadca6c21de5802b085f25532bba11cb893589b64ca8c94d62ac69eec923fad",
+        "keep_locally": true
+      },
+      "hn_grafana_dashboard": {
+        "name": "grafana/grafana@sha256:e932bd6ed0e026595b08483cd0141e5103e1ab7ff8604839ff899b8dc54cabcb",
+        "keep_locally": true
+      },
+      "hn_prometheus_server": {
+        "name": "prom/prometheus@sha256:4a61322ac1103a0e3aea2a61ef1718422a48fa046441f299d71e660a3bc71ae9",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_admin_panel": {
+        "name": "httpd@sha256:331548c5249bdeced0f048bc2fb8c6b6427d2ec6508bed9c1fec6c57d0b27a60",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "mariadb@sha256:31c1aa20ba2d78c4cbc45b2675e40ffd6a3cd59897a9767ce88fc284309f55ab",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_bait_database": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_bait_admin_ui": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_load_balancer": {
+        "name": "traefik@sha256:6341b98aec5ec8969b99e9730f4c5b22cca3103d42b6bbe4b7a3c910758fe565",
+        "keep_locally": true
+      },
+      "hn_pgadmin_ui": {
+        "name": "dpage/pgadmin4@sha256:d243a4bcc02d2ee6b447c601692813531d2d0fbca18b583d9f7f9658da835d81",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_auth_proxy": {
+        "name": "hn_auth_proxy",
+        "image": "${docker_image.hn_auth_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "auth_proxy"
+            ]
+          }
+        ],
+        "hostname": "auth.edge.corporate_remote_access.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_internal_wiki": {
+        "name": "hn_internal_wiki",
+        "image": "${docker_image.hn_internal_wiki.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "internal_wiki"
+            ]
+          }
+        ],
+        "hostname": "wiki.internal.corporate_remote_access.internal",
+        "depends_on": [
+          "docker_container.hn_auth_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_monitoring_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logs.monitoring.corporate_remote_access.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9200/_cluster/health || wget -qO- http://localhost:9200/_cluster/health || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana_dashboard": {
+        "name": "hn_grafana_dashboard",
+        "image": "${docker_image.hn_grafana_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_monitoring_zone.name}",
+            "aliases": [
+              "grafana_dashboard"
+            ]
+          }
+        ],
+        "hostname": "grafana.monitoring.corporate_remote_access.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus_server": {
+        "name": "hn_prometheus_server",
+        "image": "${docker_image.hn_prometheus_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_monitoring_zone.name}",
+            "aliases": [
+              "prometheus_server"
+            ]
+          }
+        ],
+        "hostname": "prometheus.monitoring.corporate_remote_access.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_edge_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy.edge.corporate_remote_access.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1026,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_auth_proxy",
+          "docker_container.hn_internal_wiki"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_panel": {
+        "name": "hn_admin_panel",
+        "image": "${docker_image.hn_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          }
+        ],
+        "hostname": "admin.internal.corporate_remote_access.internal",
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "depends_on": [
+          "docker_container.hn_internal_wiki"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup.internal.corporate_remote_access.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "files.internal.corporate_remote_access.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_database": {
+        "name": "hn_bait_database",
+        "image": "${docker_image.hn_bait_database.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "bait_database"
+            ]
+          }
+        ],
+        "hostname": "db.internal.corporate_remote_access.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_admin_ui": {
+        "name": "hn_bait_admin_ui",
+        "image": "${docker_image.hn_bait_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "bait_admin_ui"
+            ]
+          }
+        ],
+        "hostname": "dbadmin.internal.corporate_remote_access.internal",
+        "depends_on": [
+          "docker_container.hn_bait_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "discovery.internal.corporate_remote_access.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_load_balancer": {
+        "name": "hn_load_balancer",
+        "image": "${docker_image.hn_load_balancer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_edge_zone.name}",
+            "aliases": [
+              "load_balancer"
+            ]
+          }
+        ],
+        "hostname": "lb.edge.corporate_remote_access.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_reverse_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin_ui": {
+        "name": "hn_pgadmin_ui",
+        "image": "${docker_image.hn_pgadmin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_remote_access_internal_zone.name}",
+            "aliases": [
+              "pgadmin_ui"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.internal.corporate_remote_access.internal",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@corporate.com",
+          "PGADMIN_DEFAULT_PASSWORD=admin"
+        ],
+        "depends_on": [
+          "docker_container.hn_bait_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_remote_access"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

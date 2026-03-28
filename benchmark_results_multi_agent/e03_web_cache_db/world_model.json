@@ -1,0 +1,917 @@
+{
+  "zones": {
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "monitoring_zone": {
+      "name": "monitoring_zone",
+      "deploy": {
+        "network_name": "monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "web_server": {
+      "name": "web_server",
+      "kind": "web",
+      "deploy": {
+        "image": "ghost:5",
+        "zone": "data_zone",
+        "ports": [
+          2368
+        ],
+        "env": [
+          "database__client=mysql",
+          "database__connection__host=your-database-host",
+          "database__connection__user=your-database-user",
+          "database__connection__password=your-database-password",
+          "database__connection__database=your-database-name",
+          "NODE_ENV=production",
+          "GHOST_INSTALL=/var/lib/ghost",
+          "GHOST_CONTENT=/var/lib/ghost/content",
+          "GHOST_VERSION=5.130.6",
+          "GHOST_CLI_VERSION=1.28.4",
+          "GOSU_VERSION=1.19",
+          "YARN_VERSION=1.22.22",
+          "NODE_VERSION=20.20.0",
+          "DATABASE_HOST=your-database-host"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "redis_cache",
+          "postgres_db"
+        ],
+        "command": [
+          "node",
+          "current/index.js"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:2368 || wget -qO- http://localhost:2368 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "web01.public.three_tier_web_stack.internal",
+        "role": "Public-facing web application server",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "redis_cache": {
+      "name": "redis_cache",
+      "kind": "runtime",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "data_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "redis01.data.three_tier_web_stack.internal",
+        "role": "Redis caching layer",
+        "issues": [],
+        "secrets": [
+          "redis_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "postgres_db": {
+      "name": "postgres_db",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "data_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "db01.data.three_tier_web_stack.internal",
+        "role": "Primary PostgreSQL database",
+        "issues": [],
+        "secrets": [
+          "postgres_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fluentd_agent": {
+      "name": "fluentd_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.14-1",
+        "zone": "monitoring_zone",
+        "ports": [],
+        "env": [
+          "LD_PRELOAD=default"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fluentd01.monitoring.three_tier_web_stack.internal",
+        "role": "Log collection agent",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "nginx_reverse_proxy": {
+      "name": "nginx_reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "web_server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy01.public.three_tier_web_stack.internal",
+        "role": "Nginx reverse proxy for web traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "public_zone",
+        "ports": [
+          2019,
+          443,
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "web_server"
+        ],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api01.public.three_tier_web_stack.internal",
+        "role": "API gateway for routing requests",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_ui": {
+      "name": "admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "adminer:4",
+        "zone": "public_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "postgres_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "adminui01.public.three_tier_web_stack.internal",
+        "role": "Database admin UI",
+        "issues": [],
+        "secrets": [
+          "admin_ui_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "redis_admin_ui": {
+      "name": "redis_admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "redis_cache"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "redisadmin01.public.three_tier_web_stack.internal",
+        "role": "Redis admin UI",
+        "issues": [],
+        "secrets": [
+          "redis_admin_ui_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "fluentd_agent"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:3000/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana01.monitoring.three_tier_web_stack.internal",
+        "role": "Monitoring dashboard",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus_collector": {
+      "name": "prometheus_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "fluentd_agent"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9090/-/healthy"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus01.monitoring.three_tier_web_stack.internal",
+        "role": "Metrics collection service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "postgres_db"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup01.data.three_tier_web_stack.internal",
+        "role": "Data backup server",
+        "issues": [],
+        "secrets": [
+          "backup_server_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fileshare01.data.three_tier_web_stack.internal",
+        "role": "File sharing service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.14-1",
+        "zone": "monitoring_zone",
+        "ports": [
+          24224,
+          5140
+        ],
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "fluentd_agent"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logcollector01.monitoring.three_tier_web_stack.internal",
+        "role": "Centralized log collector",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alerting_service": {
+      "name": "alerting_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.41.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9090/-/healthy"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alerting01.monitoring.three_tier_web_stack.internal",
+        "role": "Alerting and notification service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "data_zone",
+        "ports": [
+          2019,
+          443,
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:2019/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "discovery01.data.three_tier_web_stack.internal",
+        "role": "Service discovery and routing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "nginx_reverse_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "loadbalancer01.public.three_tier_web_stack.internal",
+        "role": "Load balancer for distributing traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeypot_admin_panel": {
+      "name": "honeypot_admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypotadmin01.public.three_tier_web_stack.internal",
+        "role": "Decoy admin panel for honeypot",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "bait_file_server": {
+      "name": "bait_file_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "baitfileserver01.data.three_tier_web_stack.internal",
+        "role": "Decoy file server for honeypot",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_aggregator": {
+      "name": "log_aggregator",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.14-1",
+        "zone": "monitoring_zone",
+        "ports": [
+          24224,
+          5140
+        ],
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "fluentd_agent"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logaggregator01.monitoring.three_tier_web_stack.internal",
+        "role": "Log aggregation service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_agent": {
+      "name": "monitoring_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:9.4.3",
+        "zone": "monitoring_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:3000/api/health"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoringagent01.monitoring.three_tier_web_stack.internal",
+        "role": "Monitoring agent for system metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "staging_server": {
+      "name": "staging_server",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          8080
+        ],
+        "env": [
+          "STAGING=true"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "web_server",
+          "api_gateway"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "staging01.public.three_tier_web_stack.internal",
+        "role": "Staging server for testing deployments",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "debug_endpoint": {
+      "name": "debug_endpoint",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          9090
+        ],
+        "env": [
+          "DEBUG=true"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "web_server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "debug01.public.three_tier_web_stack.internal",
+        "role": "Debug endpoint for troubleshooting",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "three_tier_web_stack",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "redis_admin_password": {
+      "name": "redis_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "postgres_admin_password": {
+      "name": "postgres_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_ui_password": {
+      "name": "admin_ui_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "redis_admin_ui_password": {
+      "name": "redis_admin_ui_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_server_password": {
+      "name": "backup_server_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Honeynet Benchmark Report</title>
+<style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --line: #374151;
+      --accent: #38bdf8;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: Inter, 'Segoe UI', Arial, sans-serif; margin: 0; padding: 24px;
+           color: var(--text); background: radial-gradient(circle at top, #111827 0%, var(--bg) 60%); }
+    h1, h2, h3 { margin: 0 0 10px; }
+    .muted { color: var(--muted); font-size: 0.92rem; }
+    .section { margin-top: 28px; }
+    .panel { background: color-mix(in srgb, var(--panel) 92%, #000 8%);
+             border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+
+    /* Status banner */
+    .banner { border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;
+              font-size: 1.05rem; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+    .banner.ok  { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); color: #86efac; }
+    .banner.warn { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); color: #fcd34d; }
+    .banner.bad  { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; }
+    .banner .icon { font-size: 1.3rem; }
+
+    /* KPI cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr));
+                gap: 14px; margin: 16px 0 20px; }
+    .kpi-card { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+                background: var(--card); }
+    .kpi-card .label { color: var(--text); font-size: 0.92rem; font-weight: 600; }
+    .kpi-card .subtitle { color: var(--muted); font-size: 0.78rem; margin-top: 3px; line-height: 1.35; }
+    .kpi-card .value { font-size: 1.4rem; font-weight: 700; margin-top: 8px; display: flex;
+                       align-items: baseline; gap: 6px; }
+    .kpi-card .value .detail { font-size: 0.82rem; font-weight: 400; color: var(--muted); }
+    .kpi-card .value.ok { color: var(--ok); }
+    .kpi-card .value.warn { color: var(--warn); }
+    .kpi-card .value.bad { color: var(--bad); }
+
+    /* Tables */
+    table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 0.88rem;
+            background: var(--panel); border-radius: 8px; overflow: hidden; }
+    th, td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; }
+    th { background: #1f2937; font-weight: 600; font-size: 0.82rem; text-transform: uppercase;
+         letter-spacing: 0.02em; color: var(--muted); }
+    td { color: var(--text); }
+
+    /* Pipeline stage dots */
+    .stage-dots { display: flex; gap: 4px; align-items: center; }
+    .stage-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .stage-dot.pass { background: var(--ok); }
+    .stage-dot.fail { background: var(--bad); }
+    .stage-dot[title] { cursor: help; }
+
+    /* Charts */
+    .chart-row { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 20px; }
+    .chart-box { background: var(--panel); border: 1px solid var(--line);
+                 border-radius: 12px; padding: 14px; min-height: 300px; }
+    .chart-box h3 { font-size: 0.92rem; color: var(--muted); margin-bottom: 8px; }
+
+    /* Glossary */
+    .glossary dt { font-weight: 600; color: var(--accent); margin-top: 10px; }
+    .glossary dd { color: var(--muted); margin: 2px 0 0 0; font-size: 0.9rem; line-height: 1.5; }
+
+    code { background: #0b1220; border: 1px solid var(--line); padding: 1px 4px;
+           border-radius: 4px; color: #bfdbfe; }
+
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(200px, 1fr)); }
+    }
+    @media (max-width: 850px) {
+      .chart-row { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: 1fr; }
+    }
+    
+  tr:hover td { background: rgba(56,189,248,0.06); }
+</style>
+</head>
+<body>
+<h1>Honeynet Benchmark Report</h1>
+<p class="muted">Evaluates deployment scenarios against formal benchmark references.
+Each scenario defines required services, zones, and dependencies that must be present.</p>
+
+<div class="banner warn"><span class="icon">&#9888;</span>Benchmark partial: 7/30 passed. 22 deployed but failed coverage checks.</div>
+
+<div class="section">
+  <h2>How did the benchmark perform?</h2>
+  <div class="kpi-grid"><div class="kpi-card"><div class="label">Scenarios Passed</div><div class="subtitle">Deployed AND met 100% of benchmark service/zone/dependency requirements</div><div class="value bad">7/30 <span class="detail"></span></div></div><div class="kpi-card"><div class="label">Deploy Success</div><div class="subtitle">Scenarios where the infrastructure actually started running</div><div class="value ok">97% <span class="detail">29/30 scenarios</span></div></div><div class="kpi-card"><div class="label">Benchmark Coverage (Plan)</div><div class="subtitle">Average service coverage across all scenarios at plan level</div><div class="value warn">86% <span class="detail"></span></div></div><div class="kpi-card"><div class="label">Running Coverage</div><div class="subtitle">Average service coverage of actually running containers</div><div class="value warn">71% <span class="detail"></span></div></div><div class="kpi-card"><div class="label">Scenario Fit Score</div><div class="subtitle">Composite score (0-1) averaging service, zone, and dependency coverage</div><div class="value warn">0.61 <span class="detail"></span></div></div></div>
+</div>
+
+<div class="section panel">
+  <h2>Results by difficulty</h2>
+  <p class="muted">Scenarios are grouped into easy, medium, and hard based on the number of
+  required services, zones, and dependencies. Higher difficulty means more requirements to satisfy.</p>
+  <table>
+    <thead>
+    <tr><th>Difficulty</th><th>Scenarios</th><th>Passed</th><th>Deploy Rate</th>
+        <th title="Mean composite scenario-fit score">Fit Score</th>
+        <th title="Average fraction of required services present in the deployment plan">Svc Cov (Plan)</th>
+        <th title="Average fraction of required zones present in the deployment plan">Zone Cov (Plan)</th>
+        <th title="Average fraction of required services actually running post-deploy">Svc Cov (Running)</th>
+        <th>Avg Duration</th></tr>
+    </thead>
+    <tbody><tr><td><span style='color:#22c55e;font-weight:bold'>easy</span></td><td>10</td><td>2/10</td><td>100%</td><td>0.70</td><td>77%</td><td>85%</td><td>73%</td><td>527s</td></tr><tr><td><span style='color:#f59e0b;font-weight:bold'>medium</span></td><td>10</td><td>5/10</td><td>100%</td><td>0.73</td><td>98%</td><td>93%</td><td>90%</td><td>703s</td></tr><tr><td><span style='color:#ef4444;font-weight:bold'>hard</span></td><td>10</td><td>0/10</td><td>90%</td><td>0.42</td><td>82%</td><td>90%</td><td>51%</td><td>616s</td></tr></tbody>
+  </table>
+</div>
+
+<div class="section panel">
+  <h2>Results by complexity</h2>
+  <p class="muted">Scenarios grouped by total requirement count (services + zones + dependencies).
+  Small: &lt;10, Medium: 10–19, Large: 20+.</p>
+  <table>
+    <thead>
+    <tr><th>Complexity</th><th>Scenarios</th><th>Passed</th><th>Deploy Rate</th>
+        <th>Fit Score</th><th>Svc Cov (Plan)</th><th>Svc Cov (Running)</th><th>Avg Duration</th></tr>
+    </thead>
+    <tbody><tr><td><span style='color:#22c55e;font-weight:bold'>small</span></td><td>10</td><td>2/10</td><td>100%</td><td>0.70</td><td>77%</td><td>73%</td><td>527s</td></tr><tr><td><span style='color:#f59e0b;font-weight:bold'>medium</span></td><td>14</td><td>5/14</td><td>100%</td><td>0.63</td><td>95%</td><td>80%</td><td>728s</td></tr><tr><td><span style='color:#ef4444;font-weight:bold'>large</span></td><td>6</td><td>0/6</td><td>83%</td><td>0.45</td><td>78%</td><td>47%</td><td>500s</td></tr></tbody>
+  </table>
+</div>
+
+<div class="section panel">
+  <h2>Scenario details</h2>
+  <table>
+    <thead>
+    <tr>
+      <th title="Unique scenario identifier from the benchmark corpus">Scenario</th>
+      <th title="easy / medium / hard based on requirement complexity">Difficulty</th>
+      <th title="Did containers start running?">Deploy</th>
+      <th title="All coverage = 100% and zero placement violations">Benchmark</th>
+      <th title="Composite scenario-fit score (0-1)">Score</th>
+      <th title="Fraction of required services present in the deployment plan">Svc (Plan)</th>
+      <th title="Fraction of required network zones present in the deployment plan">Zone (Plan)</th>
+      <th title="Fraction of required service-to-service dependencies in the plan">Dep (Plan)</th>
+      <th title="Services placed in zones where they are forbidden">Violations</th>
+      <th title="Running containers out of planned containers">Containers</th>
+      <th title="Fraction of required services actually running after deployment">Svc (Running)</th>
+      <th>Duration</th>
+      <th title="Pipeline stage where this scenario failed (empty = success)">Failed At</th>
+    </tr>
+    </thead>
+    <tbody><tr><td>e01_web_db</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.90</td><td>100%</td><td>100%</td><td>100%</td><td>1</td><td>15/17  (2 dropped)</td><td>100%</td><td>522s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>e02_identity_only</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.56</td><td>67%</td><td>50%</td><td>50%</td><td>0</td><td>6/6</td><td>67%</td><td>314s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>e03_web_cache_db</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td>1.00</td><td>100%</td><td>100%</td><td>100%</td><td>0</td><td>21/22</td><td>100%</td><td>1071s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>e04_monitoring_stack</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.80</td><td>100%</td><td>100%</td><td>100%</td><td>2</td><td>20/22  (1 dropped)</td><td>100%</td><td>811s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>e05_message_queue</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.56</td><td>67%</td><td>50%</td><td>50%</td><td>0</td><td>7/7</td><td>67%</td><td>168s</td><td>completed</td></tr><tr><td>e06_object_storage</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.83</td><td>100%</td><td>50%</td><td>100%</td><td>0</td><td>16/21  (5 dropped)</td><td>100%</td><td>593s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>e07_dns_sinkhole</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.44</td><td>33%</td><td>100%</td><td>0%</td><td>0</td><td>17/18  (1 dropped)</td><td>33%</td><td>378s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>e08_vpn_gateway</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.44</td><td>33%</td><td>100%</td><td>0%</td><td>0</td><td>14/16  (2 dropped)</td><td>33%</td><td>532s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>e09_file_share</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.44</td><td>67%</td><td>100%</td><td>50%</td><td>0</td><td>16/17  (1 dropped)</td><td>33%</td><td>355s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>e10_ci_runner</td><td><span style='color:#22c55e'>easy</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td>1.00</td><td>100%</td><td>100%</td><td>100%</td><td>0</td><td>14/14</td><td>100%</td><td>530s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m01_ecommerce</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.50</td><td>100%</td><td>100%</td><td>100%</td><td>4</td><td>18/20  (1 dropped)</td><td>100%</td><td>804s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m02_corporate_email</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.80</td><td>100%</td><td>67%</td><td>100%</td><td>1</td><td>17/20  (3 dropped)</td><td>100%</td><td>614s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m03_healthcare</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td>0.92</td><td>100%</td><td>100%</td><td>100%</td><td>0</td><td>15/17  (2 dropped)</td><td>100%</td><td>588s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m04_devops_platform</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.50</td><td>100%</td><td>100%</td><td>100%</td><td>12</td><td>28/28</td><td>100%</td><td>881s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m05_supply_chain</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td>0.89</td><td>100%</td><td>100%</td><td>100%</td><td>0</td><td>20/21  (1 dropped)</td><td>100%</td><td>718s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m06_streaming_platform</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.89</td><td>100%</td><td>67%</td><td>100%</td><td>0</td><td>24/24</td><td>100%</td><td>644s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m07_scada_honeypot</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td>0.60</td><td>100%</td><td>100%</td><td>100%</td><td>0</td><td>10/12  (2 dropped)</td><td>80%</td><td>476s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m08_crypto_exchange</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td>0.67</td><td>100%</td><td>100%</td><td>100%</td><td>0</td><td>23/26  (3 dropped)</td><td>67%</td><td>614s</td><td>completed</td></tr><tr><td>m09_ad_network</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.78</td><td>83%</td><td>100%</td><td>75%</td><td>0</td><td>25/32  (7 dropped)</td><td>83%</td><td>949s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>m10_game_backend</td><td><span style='color:#f59e0b'>medium</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td>0.72</td><td>100%</td><td>100%</td><td>100%</td><td>0</td><td>13/28  (15 dropped)</td><td>67%</td><td>742s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>h01_banking_core</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.55</td><td>91%</td><td>100%</td><td>67%</td><td>0</td><td>7/15  (8 dropped)</td><td>64%</td><td>313s</td><td>completed</td></tr><tr><td>h02_telecom_mediation</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.24</td><td>100%</td><td>100%</td><td>60%</td><td>10</td><td>11/21  (9 dropped)</td><td>44%</td><td>552s</td><td>completed</td></tr><tr><td>h03_ml_platform</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.60</td><td>100%</td><td>100%</td><td>83%</td><td>0</td><td>15/36  (21 dropped)</td><td>80%</td><td>1021s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>h04_zerotrust_enterprise</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.44</td><td>89%</td><td>100%</td><td>50%</td><td>0</td><td>5/17  (12 dropped)</td><td>33%</td><td>518s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>h05_iot_platform</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.36</td><td>100%</td><td>100%</td><td>50%</td><td>6</td><td>5/17  (7 dropped)</td><td>33%</td><td>674s</td><td>partial_completed</td></tr><tr><td>h06_government_portal</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.74</td><td>91%</td><td>100%</td><td>83%</td><td>0</td><td>12/18  (6 dropped)</td><td>73%</td><td>386s</td><td>completed</td></tr><tr><td>h07_satellite_ground</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.35</td><td>88%</td><td>100%</td><td>40%</td><td>5</td><td>8/27  (16 dropped)</td><td>50%</td><td>761s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>h08_smart_city</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.36</td><td>75%</td><td>100%</td><td>40%</td><td>6</td><td>13/31  (18 dropped)</td><td>62%</td><td>909s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>h09_defense_c2</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#16a34a;font-weight:bold">PASS</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.56</td><td>89%</td><td>100%</td><td>80%</td><td>0</td><td>18/31  (13 dropped)</td><td>67%</td><td>943s</td><td>runtime_verify <small style='color:var(--muted)'>(unknown)</small></td></tr><tr><td>h10_pharma_research</td><td><span style='color:#ef4444'>hard</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td><span style="color:#dc2626;font-weight:bold">FAIL</span></td><td>0.00</td><td>0%</td><td>0%</td><td><span style="color:var(--muted)">n/a</span></td><td>0</td><td>0/35</td><td>0%</td><td>87s</td><td>world_model_validation <small style='color:var(--muted)'>(llm_schema_error)</small></td></tr></tbody>
+  </table>
+</div>
+
+<div class="section panel">
+  <h2>What do these metrics mean?</h2>
+  <dl class="glossary">
+    <dt>Service Coverage</dt>
+    <dd>How many services required by the benchmark reference are present in the deployment.
+    100% means all required services (e.g., database, web server, cache) were generated by the LLM.</dd>
+    <dt>Zone Coverage</dt>
+    <dd>How many network zones required by the benchmark are present. Zones define network
+    isolation boundaries (e.g., DMZ for public-facing services, internal for databases).</dd>
+    <dt>Dependency Coverage</dt>
+    <dd>Whether required connections between services exist in the deployment plan.
+    For example, a web server must depend on its database so they start in the correct order.
+    Shows <code>n/a</code> when the benchmark defines no dependency requirements.</dd>
+    <dt>Placement Violations</dt>
+    <dd>Services deployed in zones where they are forbidden by the benchmark reference.
+    For example, a database exposed in the DMZ instead of the internal zone. Zero is the target.</dd>
+    <dt>Benchmark Pass</dt>
+    <dd>True only when ALL of the above are satisfied: 100% service coverage, 100% zone coverage,
+    100% dependency coverage, and zero placement violations.</dd>
+    <dt>Scenario Fit Score</dt>
+    <dd>Composite score (0.0–1.0) computed as the equal-weight average of service, zone, and
+    dependency coverage. Halved when placement violations exist. Useful for ranking partially
+    correct results.</dd>
+    <dt>Error Class</dt>
+    <dd>Coarse classification of the failure cause (e.g., port_conflict, invalid_image, llm_schema_error).
+    Shown in parentheses after the failure stage.</dd>
+    <dt>Plan vs Running</dt>
+    <dd>"Plan" metrics evaluate the deployment model before containers start. "Running" metrics
+    evaluate against actually running containers. Running coverage can be lower if containers
+    crash on startup.</dd>
+  </dl>
+</div>
+
+<p class="muted" style="margin-top:2rem;">Generated by Honeynet Framework Benchmark Runner</p>
+</body>
+</html>

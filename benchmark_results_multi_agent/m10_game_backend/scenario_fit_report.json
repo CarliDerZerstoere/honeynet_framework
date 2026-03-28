@@ -1,0 +1,75 @@
+{
+  "benchmark_id": "m10_game_backend",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 0,
+  "benchmark_pass": true,
+  "scenario_fit_score": 1.0,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "game_api": [
+        "admin_api",
+        "admin_dashboard",
+        "api_documentation",
+        "api_gateway",
+        "chat_service",
+        "game_api",
+        "game_master_tools",
+        "inventory_management_service",
+        "matchmaker_service",
+        "matchmaking_ui",
+        "pgadmin",
+        "phpmyadmin",
+        "player_profile_service",
+        "player_stats_service",
+        "reverse_proxy",
+        "session_management_ui"
+      ],
+      "session_store": [
+        "redis_session_store"
+      ],
+      "player_db": [
+        "postgres_player_db"
+      ],
+      "matchmaker": [
+        "chat_service",
+        "inventory_management_service",
+        "matchmaker_service",
+        "player_profile_service",
+        "player_stats_service"
+      ],
+      "chat_broker": [
+        "nats_chat_broker"
+      ],
+      "admin_dashboard": [
+        "admin_api",
+        "admin_dashboard",
+        "pgadmin",
+        "phpmyadmin"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "public_zone"
+      ],
+      "game_zone": [
+        "data_zone",
+        "game_zone",
+        "monitoring_zone"
+      ],
+      "data_zone": [
+        "data_zone",
+        "game_zone",
+        "monitoring_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 4,
+      "total": 4
+    },
+    "placement_violations_detail": []
+  }
+}

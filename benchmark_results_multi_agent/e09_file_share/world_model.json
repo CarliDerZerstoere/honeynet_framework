@@ -1,0 +1,696 @@
+{
+  "zones": {
+    "dmz_zone": {
+      "name": "dmz_zone",
+      "deploy": {
+        "network_name": "dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "backend_zone": {
+      "name": "backend_zone",
+      "deploy": {
+        "network_name": "backend_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "monitoring_zone": {
+      "name": "monitoring_zone",
+      "deploy": {
+        "network_name": "monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "nextcloud_frontend": {
+      "name": "nextcloud_frontend",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "dmz_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "nextcloud_backend",
+          "ldap_server",
+          "clamav_scanner"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "nextcloud-web.dmz.corporatefilesharing.internal",
+        "role": "Nextcloud web frontend for file sharing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "nextcloud_backend": {
+      "name": "nextcloud_backend",
+      "kind": "storage",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "backend_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "ldap_server",
+          "clamav_scanner"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "nextcloud-db.backend.corporatefilesharing.internal",
+        "role": "PostgreSQL database for Nextcloud",
+        "issues": [],
+        "secrets": [
+          "db_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "ldap_server": {
+      "name": "ldap_server",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "backend_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [
+          "LDAP_ADMIN_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ldap.backend.corporatefilesharing.internal",
+        "role": "LDAP server for user authentication",
+        "issues": [],
+        "secrets": [
+          "ldap_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "clamav_scanner": {
+      "name": "clamav_scanner",
+      "kind": "monitor",
+      "deploy": {
+        "image": "jaegertracing/all-in-one:1.52",
+        "zone": "backend_zone",
+        "ports": [
+          14250,
+          14268,
+          16686,
+          4317,
+          4318,
+          5775,
+          5778,
+          6831,
+          6832,
+          9411
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 16686 || (echo > /dev/tcp/localhost/16686) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "clamav-scanner.backend.corporatefilesharing.internal",
+        "role": "Antivirus scanner for file uploads",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "dmz_zone",
+        "ports": [
+          80,
+          443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "nextcloud_frontend"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "reverse-proxy.dmz.corporatefilesharing.internal",
+        "role": "Reverse proxy for routing external traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "web",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "dmz_zone",
+        "ports": [
+          80,
+          443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "reverse_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "load-balancer.dmz.corporatefilesharing.internal",
+        "role": "Load balancer for distributing web traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_agent": {
+      "name": "monitoring_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          3000
+        ],
+        "env": [
+          "GF_SECURITY_ADMIN_USER=admin",
+          "GF_SECURITY_ADMIN_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoring-agent.monitoring.corporatefilesharing.internal",
+        "role": "Monitoring agent for system metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus": {
+      "name": "prometheus",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus.monitoring.corporatefilesharing.internal",
+        "role": "Prometheus server for metrics collection",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana": {
+      "name": "grafana",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          3000
+        ],
+        "env": [
+          "GF_SECURITY_ADMIN_USER=admin",
+          "GF_SECURITY_ADMIN_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.monitoring.corporatefilesharing.internal",
+        "role": "Grafana dashboard for visualizing metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          24224
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "log-collector.monitoring.corporatefilesharing.internal",
+        "role": "Log collector for aggregating system logs",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_interface": {
+      "name": "admin_interface",
+      "kind": "infra",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "backend_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "nextcloud_backend"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin-interface.backend.corporatefilesharing.internal",
+        "role": "Admin interface for database management",
+        "issues": [],
+        "secrets": [
+          "admin_interface_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "backend_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ROOT_USER=admin",
+          "MINIO_ROOT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "nextcloud_backend"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mc",
+            "alias",
+            "set",
+            "myminio",
+            "http://localhost:9000",
+            "admin",
+            "admin123"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup-server.backend.corporatefilesharing.internal",
+        "role": "Backup server for data redundancy",
+        "issues": [],
+        "secrets": [
+          "backup_access_key",
+          "backup_secret_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "bait_admin_panel": {
+      "name": "bait_admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "dmz_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "bait-admin-panel.dmz.corporatefilesharing.internal",
+        "role": "Decoy admin panel for honeypot purposes",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeypot_file_server": {
+      "name": "honeypot_file_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "backend_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ldap_server",
+          "clamav_scanner"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot-file-server.backend.corporatefilesharing.internal",
+        "role": "Decoy file server for honeypot purposes",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "infra",
+      "deploy": {
+        "image": "dpage/pgadmin4:latest",
+        "zone": "backend_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@corporatefilesharing.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "nextcloud_backend"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.backend.corporatefilesharing.internal",
+        "role": "Database administration interface for PostgreSQL",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "filebeat": {
+      "name": "filebeat",
+      "kind": "monitor",
+      "deploy": {
+        "image": "docker.elastic.co/beats/filebeat:7.15.2",
+        "zone": "monitoring_zone",
+        "ports": [],
+        "env": [
+          "ELASTIC_CONTAINER=true",
+          "GODEBUG=madvdontneed=1",
+          "LIBBEAT_MONITORING_CGROUPS_HIERARCHY_OVERRIDE=/"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "command": [
+          "/usr/bin/tini",
+          "--",
+          "/usr/local/bin/docker-entrypoint",
+          "-environment",
+          "container"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "filebeat.monitoring.corporatefilesharing.internal",
+        "role": "Log shipper for forwarding logs to log collector",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "corporate_file_sharing",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "db_admin_password": {
+      "name": "db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "ldap_admin_password": {
+      "name": "ldap_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_interface_password": {
+      "name": "admin_interface_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_access_key": {
+      "name": "backup_access_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_secret_key": {
+      "name": "backup_secret_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

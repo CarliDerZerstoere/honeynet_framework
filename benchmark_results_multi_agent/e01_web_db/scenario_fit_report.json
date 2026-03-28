@@ -1,0 +1,60 @@
+{
+  "benchmark_id": "e01_web_db",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 1,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.9,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "web_frontend": [
+        "admin_panel",
+        "honeypot_admin_panel",
+        "load_balancer",
+        "pgadmin",
+        "reverse_proxy",
+        "staging_web_frontend",
+        "web_frontend"
+      ],
+      "postgres_db": [
+        "postgres_db"
+      ],
+      "admin_panel": [
+        "admin_panel",
+        "honeypot_admin_panel",
+        "pgadmin"
+      ],
+      "log_collector": [
+        "fluentd_agent"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "public_zone"
+      ],
+      "data_zone": [
+        "data_zone",
+        "mgmt_zone"
+      ],
+      "mgmt_zone": [
+        "data_zone",
+        "mgmt_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 2,
+      "total": 2
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "admin_panel",
+        "zone_id": "public_zone",
+        "system": "honeypot_admin_panel",
+        "deployed_zone": "public_zone"
+      }
+    ]
+  }
+}

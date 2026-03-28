@@ -1,0 +1,405 @@
+{
+  "checks_run": 44,
+  "checks_passed": 44,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_webmail_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 252.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_webmail_portal:1030",
+      "passed": true,
+      "actual": "TCP connect to localhost:1030 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2277.6,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_webmail_portal:1030",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 504.6,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_webmail_portal:hn_mail_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 235.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_mail_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 228.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_mail_server:hn_ldap_directory",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 222.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_mail_server:hn_file_storage",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 215.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_ldap_directory",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 209.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_file_storage",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 204.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_antispam_filter",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 199.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_antispam_filter:hn_mail_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 194.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_calendar_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 188.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_calendar_service:hn_ldap_directory",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 182.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 174.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1031",
+      "passed": true,
+      "actual": "TCP connect to localhost:1031 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2199.5,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1031",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 426.7,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_reverse_proxy:hn_webmail_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 158.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_load_balancer",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 151.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_load_balancer:1032",
+      "passed": true,
+      "actual": "TCP connect to localhost:1032 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2177.6,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_load_balancer:1032",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 406.5,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_load_balancer:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 138.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_monitoring_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 132.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_monitoring_service:hn_mail_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 126.0,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_monitoring_service:hn_webmail_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 120.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_logging_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 115.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_logging_service:hn_mail_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 108.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_logging_service:hn_webmail_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 103.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 97.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_admin_panel:1033",
+      "passed": true,
+      "actual": "TCP connect to localhost:1033 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2123.5,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_admin_panel:1033",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 354.9,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_admin_panel:hn_mail_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 85.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_api_gateway",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 78.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_api_gateway:1034",
+      "passed": true,
+      "actual": "TCP connect to localhost:1034 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2103.1,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_api_gateway:1034",
+      "passed": true,
+      "actual": "HTTP 404",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 333.3,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_api_gateway:hn_calendar_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 64.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_honeypot_ldap_directory",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 58.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_honeypot_file_storage",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 51.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_honeypot_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 45.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_honeypot_admin_panel:1035",
+      "passed": true,
+      "actual": "TCP connect to localhost:1035 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2070.7,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_honeypot_admin_panel:1035",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 302.4,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_pgadmin",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 40.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_pgadmin:hn_file_storage",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 36.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_grafana",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 32.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_grafana:hn_monitoring_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 28.9,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "8ba401cbd35846bbb5beabe95c29f47c"
+}

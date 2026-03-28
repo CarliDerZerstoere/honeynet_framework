@@ -1,0 +1,750 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "continuous_integration_environment_build_zone": {
+        "name": "continuous_integration_environment_build_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "continuous_integration_environment_data_zone": {
+        "name": "continuous_integration_environment_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "continuous_integration_environment_monitoring_zone": {
+        "name": "continuous_integration_environment_monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "continuous_integration_environment_public_zone": {
+        "name": "continuous_integration_environment_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "continuous_integration_environment_honeynet_backbone": {
+        "name": "continuous_integration_environment_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_ci_runner": {
+        "name": "jenkins/jenkins@sha256:c4098086090ca98491d4bf66182f5e3b015a8232f2acf2df209a212a5801aa8e",
+        "keep_locally": true
+      },
+      "hn_minio_storage": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_postgres_database": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_ci_web_interface": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_ci_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_monitoring_service": {
+        "name": "matomo@sha256:788933d1e3eaa1da653ac69d7cdf7815b766f77e70eb7667f06cf955eae349c7",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_metrics_dashboard": {
+        "name": "httpd@sha256:331548c5249bdeced0f048bc2fb8c6b6427d2ec6508bed9c1fec6c57d0b27a60",
+        "keep_locally": true
+      },
+      "hn_alerting_service": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_admin_ui": {
+        "name": "adminer@sha256:aedd36aebf9352b435a2657f0a1e51fc6ac054dd838f42aee2a79ce059a1d796",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_load_balancer": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d243a4bcc02d2ee6b447c601692813531d2d0fbca18b583d9f7f9658da835d81",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_ci_runner": {
+        "name": "hn_ci_runner",
+        "image": "${docker_image.hn_ci_runner.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_build_zone.name}",
+            "aliases": [
+              "ci_runner"
+            ]
+          },
+          {
+            "name": "${docker_network.continuous_integration_environment_data_zone.name}",
+            "aliases": [
+              "ci_runner"
+            ]
+          }
+        ],
+        "hostname": "ci-runner.build.continuousintegration.internal",
+        "depends_on": [
+          "docker_container.hn_minio_storage",
+          "docker_container.hn_postgres_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_minio_storage": {
+        "name": "hn_minio_storage",
+        "image": "${docker_image.hn_minio_storage.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_data_zone.name}",
+            "aliases": [
+              "minio_storage"
+            ]
+          }
+        ],
+        "hostname": "minio.data.continuousintegration.internal",
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_postgres_database": {
+        "name": "hn_postgres_database",
+        "image": "${docker_image.hn_postgres_database.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_data_zone.name}",
+            "aliases": [
+              "postgres_database"
+            ]
+          }
+        ],
+        "hostname": "postgres.data.continuousintegration.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_ci_web_interface": {
+        "name": "hn_ci_web_interface",
+        "image": "${docker_image.hn_ci_web_interface.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_public_zone.name}",
+            "aliases": [
+              "ci_web_interface"
+            ]
+          },
+          {
+            "name": "${docker_network.continuous_integration_environment_build_zone.name}",
+            "aliases": [
+              "ci_web_interface"
+            ]
+          }
+        ],
+        "hostname": "ci-web.public.continuousintegration.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_ci_runner"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_ci_proxy": {
+        "name": "hn_ci_proxy",
+        "image": "${docker_image.hn_ci_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_public_zone.name}",
+            "aliases": [
+              "ci_proxy"
+            ]
+          }
+        ],
+        "hostname": "ci-proxy.public.continuousintegration.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_ci_web_interface"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_service": {
+        "name": "hn_monitoring_service",
+        "image": "${docker_image.hn_monitoring_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_monitoring_zone.name}",
+            "aliases": [
+              "monitoring_service"
+            ]
+          },
+          {
+            "name": "${docker_network.continuous_integration_environment_build_zone.name}",
+            "aliases": [
+              "monitoring_service"
+            ]
+          },
+          {
+            "name": "${docker_network.continuous_integration_environment_data_zone.name}",
+            "aliases": [
+              "monitoring_service"
+            ]
+          }
+        ],
+        "hostname": "monitoring.monitoring.continuousintegration.internal",
+        "depends_on": [
+          "docker_container.hn_ci_runner",
+          "docker_container.hn_postgres_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_monitoring_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          },
+          {
+            "name": "${docker_network.continuous_integration_environment_build_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          },
+          {
+            "name": "${docker_network.continuous_integration_environment_data_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logs.monitoring.continuousintegration.internal",
+        "depends_on": [
+          "docker_container.hn_ci_runner",
+          "docker_container.hn_minio_storage"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_metrics_dashboard": {
+        "name": "hn_metrics_dashboard",
+        "image": "${docker_image.hn_metrics_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_monitoring_zone.name}",
+            "aliases": [
+              "metrics_dashboard"
+            ]
+          }
+        ],
+        "hostname": "dashboard.monitoring.continuousintegration.internal",
+        "env": [
+          "HTTPD_PATCHES="
+        ],
+        "depends_on": [
+          "docker_container.hn_monitoring_service"
+        ],
+        "command": [
+          "httpd-foreground"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alerting_service": {
+        "name": "hn_alerting_service",
+        "image": "${docker_image.hn_alerting_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_monitoring_zone.name}",
+            "aliases": [
+              "alerting_service"
+            ]
+          }
+        ],
+        "hostname": "alerting.monitoring.continuousintegration.internal",
+        "depends_on": [
+          "docker_container.hn_monitoring_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_data_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup.data.continuousintegration.internal",
+        "depends_on": [
+          "docker_container.hn_postgres_database"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_ui": {
+        "name": "hn_admin_ui",
+        "image": "${docker_image.hn_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_public_zone.name}",
+            "aliases": [
+              "admin_ui"
+            ]
+          },
+          {
+            "name": "${docker_network.continuous_integration_environment_data_zone.name}",
+            "aliases": [
+              "admin_ui"
+            ]
+          }
+        ],
+        "hostname": "admin-ui.public.continuousintegration.internal",
+        "ports": [
+          {
+            "internal": 8080,
+            "external": 8081,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_postgres_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_build_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "discovery.build.continuousintegration.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_load_balancer": {
+        "name": "hn_load_balancer",
+        "image": "${docker_image.hn_load_balancer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_public_zone.name}",
+            "aliases": [
+              "load_balancer"
+            ]
+          }
+        ],
+        "hostname": "load-balancer.public.continuousintegration.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1030,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_ci_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.continuous_integration_environment_public_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          },
+          {
+            "name": "${docker_network.continuous_integration_environment_data_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.public.continuousintegration.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1031,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@ci.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_postgres_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "continuous_integration_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

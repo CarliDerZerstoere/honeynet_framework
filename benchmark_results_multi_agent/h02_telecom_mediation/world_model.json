@@ -1,0 +1,510 @@
+{
+  "zones": {
+    "signaling_zone": {
+      "name": "signaling_zone",
+      "deploy": {
+        "network_name": "signaling_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "identity_zone": {
+      "name": "identity_zone",
+      "deploy": {
+        "network_name": "identity_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "compliance_zone": {
+      "name": "compliance_zone",
+      "deploy": {
+        "network_name": "compliance_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "core_zone": {
+      "name": "core_zone",
+      "deploy": {
+        "network_name": "core_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "ops_zone": {
+      "name": "ops_zone",
+      "deploy": {
+        "network_name": "ops_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "kafka_broker_1": {
+      "name": "kafka_broker_1",
+      "kind": "queue",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "signaling_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "nc",
+            "-z",
+            "localhost",
+            "9092"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "kafka01.signaling.telecomcarrier.internal",
+        "role": "Kafka broker for signaling events",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "kafka_broker_2": {
+      "name": "kafka_broker_2",
+      "kind": "queue",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "signaling_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "nc",
+            "-z",
+            "localhost",
+            "9092"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "kafka02.signaling.telecomcarrier.internal",
+        "role": "Kafka broker for signaling events",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "kafka_broker_3": {
+      "name": "kafka_broker_3",
+      "kind": "queue",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "signaling_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "nc",
+            "-z",
+            "localhost",
+            "9092"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "kafka03.signaling.telecomcarrier.internal",
+        "role": "Kafka broker for signaling events",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "billing_api": {
+      "name": "billing_api",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "core_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "cdr_archive"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "billing.core.telecomcarrier.internal",
+        "role": "Billing REST API",
+        "issues": [],
+        "secrets": [
+          "billing_api_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "cdr_archive": {
+      "name": "cdr_archive",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "cdr.data.telecomcarrier.internal",
+        "role": "CDR Archive for long-term storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "compliance_audit_log": {
+      "name": "compliance_audit_log",
+      "kind": "storage",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "compliance_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "auditlog.compliance.telecomcarrier.internal",
+        "role": "Compliance audit log storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "ops_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.ops.telecomcarrier.internal",
+        "role": "Grafana dashboard for monitoring visualization",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "lawful_intercept_export": {
+      "name": "lawful_intercept_export",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "compliance_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ACCESS_KEY=export",
+          "MINIO_SECRET_KEY=export123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "interceptexport.compliance.telecomcarrier.internal",
+        "role": "Storage for lawful intercept exports",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "clickhouse_admin_ui": {
+      "name": "clickhouse_admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "data_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "cdr_archive"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "chadmin.data.telecomcarrier.internal",
+        "role": "Admin UI for ClickHouse database",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeytoken_compliance_keys": {
+      "name": "honeytoken_compliance_keys",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "compliance_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeycompliance.compliance.telecomcarrier.internal",
+        "role": "Honeytoken for compliance keys",
+        "issues": [],
+        "secrets": [
+          "honey_compliance_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fluentd_log_collector": {
+      "name": "fluentd_log_collector",
+      "kind": "unknown",
+      "deploy": {
+        "image": "fluent/fluentd:v1.14",
+        "zone": "ops_zone",
+        "ports": [
+          24224
+        ],
+        "env": [
+          "FLUENT_ELASTICSEARCH_HOST=elasticsearch",
+          "LD_PRELOAD=default"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "grafana_dashboard"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fluentd.ops.telecomcarrier.internal",
+        "role": "Fluentd log collector for centralized logging",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "telecommunications_carrier",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "billing_api_key": {
+      "name": "billing_api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "subscriber_db_password": {
+      "name": "subscriber_db_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "intercept_admin_key": {
+      "name": "intercept_admin_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "honey_billing_api_key": {
+      "name": "honey_billing_api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "honey_compliance_key": {
+      "name": "honey_compliance_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

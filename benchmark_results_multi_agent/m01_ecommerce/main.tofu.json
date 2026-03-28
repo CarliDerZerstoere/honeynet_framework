@@ -1,0 +1,894 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "mid_size_ecommerce_company_public_zone": {
+        "name": "mid_size_ecommerce_company_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "mid_size_ecommerce_company_internal_zone": {
+        "name": "mid_size_ecommerce_company_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "mid_size_ecommerce_company_data_zone": {
+        "name": "mid_size_ecommerce_company_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "mid_size_ecommerce_company_payment_zone": {
+        "name": "mid_size_ecommerce_company_payment_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "mid_size_ecommerce_company_honeynet_backbone": {
+        "name": "mid_size_ecommerce_company_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_web_storefront": {
+        "name": "ghost@sha256:3ffcb8f2f1f808806e7a0f694a2b130cd78652a26b4337b33fe7e249ce58665a",
+        "keep_locally": true
+      },
+      "hn_redis_cart": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_orders_db": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_payment_service": {
+        "name": "drupal@sha256:42b3811155c952269b18766dfdb7f12457a7db21b197fc46fb595d7fc0b1f31d",
+        "keep_locally": true
+      },
+      "hn_search_service": {
+        "name": "elasticsearch@sha256:2cadca6c21de5802b085f25532bba11cb893589b64ca8c94d62ac69eec923fad",
+        "keep_locally": true
+      },
+      "hn_notification_service": {
+        "name": "nats@sha256:5498ba57b9471840be3d15b033a4eec554d1c02fa6c2cc0ca2d888637f6c6e2f",
+        "keep_locally": true
+      },
+      "hn_monitoring_dashboard": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_admin_panel": {
+        "name": "adminer@sha256:aedd36aebf9352b435a2657f0a1e51fc6ac054dd838f42aee2a79ce059a1d796",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_elasticsearch": {
+        "name": "elasticsearch@sha256:2cadca6c21de5802b085f25532bba11cb893589b64ca8c94d62ac69eec923fad",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_identity_service": {
+        "name": "hashicorp/consul@sha256:fa5020e2307bc941e4317207de1ab55f2c7a8cd6b02c0592cce1cd20ec8a7f87",
+        "keep_locally": true
+      },
+      "hn_alerting_service": {
+        "name": "prom/alertmanager@sha256:361db356b33041437517f1cd298462055580585f26555c317df1a3caf2868552",
+        "keep_locally": true
+      },
+      "hn_bait_admin_panel": {
+        "name": "drupal@sha256:42b3811155c952269b18766dfdb7f12457a7db21b197fc46fb595d7fc0b1f31d",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "couchdb@sha256:307a3f5276f64c0db28f226b7b5c180b8f2c851afa681cfb4fbb1b1fe7fd5587",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d914d35dc1a5cf86f65c29d44451c05b73e283529e19ffcc25f45f939c579bd9",
+        "keep_locally": true
+      },
+      "hn_filebeat": {
+        "name": "docker.elastic.co/beats/filebeat@sha256:d98f0d0a01b99e639a2c2bcb3021d87dd0c73f4c0852e9f81b4e7d3d85c1613e",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_web_storefront": {
+        "name": "hn_web_storefront",
+        "image": "${docker_image.hn_web_storefront.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "web_storefront"
+            ]
+          }
+        ],
+        "hostname": "storefront.midshop.internal",
+        "env": [
+          "database__client=mysql",
+          "database__connection__host=mysql",
+          "database__connection__user=root",
+          "database__connection__password=weakpassword",
+          "database__connection__database=ghost_db",
+          "NODE_ENV=production",
+          "GHOST_INSTALL=/var/lib/ghost",
+          "GHOST_CONTENT=/var/lib/ghost",
+          "GHOST_VERSION=5.130.6",
+          "GHOST_CLI_VERSION=1.28.4",
+          "NODE_VERSION=20.20.0",
+          "YARN_VERSION=1.22.22",
+          "GOSU_VERSION=1.19",
+          "DATABASE_HOST=mysql"
+        ],
+        "depends_on": [
+          "docker_container.hn_redis_cart"
+        ],
+        "command": [
+          "node",
+          "current/index.js"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:2368"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_redis_cart": {
+        "name": "hn_redis_cart",
+        "image": "${docker_image.hn_redis_cart.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "redis_cart"
+            ]
+          }
+        ],
+        "hostname": "redis.cart.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_orders_db": {
+        "name": "hn_orders_db",
+        "image": "${docker_image.hn_orders_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_data_zone.name}",
+            "aliases": [
+              "orders_db"
+            ]
+          }
+        ],
+        "hostname": "db.orders.midshop.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_payment_service": {
+        "name": "hn_payment_service",
+        "image": "${docker_image.hn_payment_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_payment_zone.name}",
+            "aliases": [
+              "payment_service"
+            ]
+          }
+        ],
+        "hostname": "payment.service.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_search_service": {
+        "name": "hn_search_service",
+        "image": "${docker_image.hn_search_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "search_service"
+            ]
+          }
+        ],
+        "hostname": "search.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9200"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_notification_service": {
+        "name": "hn_notification_service",
+        "image": "${docker_image.hn_notification_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "notification_service"
+            ]
+          }
+        ],
+        "hostname": "notification.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 4222 || (echo > /dev/tcp/localhost/4222) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_dashboard": {
+        "name": "hn_monitoring_dashboard",
+        "image": "${docker_image.hn_monitoring_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "monitoring_dashboard"
+            ]
+          }
+        ],
+        "hostname": "monitoring.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3000 || (echo > /dev/tcp/localhost/3000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logs.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_panel": {
+        "name": "hn_admin_panel",
+        "image": "${docker_image.hn_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_public_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          }
+        ],
+        "hostname": "admin.midshop.internal",
+        "ports": [
+          {
+            "internal": 8080,
+            "external": 8081,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:8080"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_data_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "clickhouse-client --query 'SELECT 1'"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_elasticsearch": {
+        "name": "hn_elasticsearch",
+        "image": "${docker_image.hn_elasticsearch.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_data_zone.name}",
+            "aliases": [
+              "elasticsearch"
+            ]
+          }
+        ],
+        "hostname": "elasticsearch.data.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9200/_cluster/health || wget -qO- http://localhost:9200/_cluster/health || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_public_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          },
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "gateway.midshop.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_web_storefront"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_public_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy.midshop.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_api_gateway"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_identity_service": {
+        "name": "hn_identity_service",
+        "image": "${docker_image.hn_identity_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "identity_service"
+            ]
+          }
+        ],
+        "hostname": "identity.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "consul members | grep -q alive"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alerting_service": {
+        "name": "hn_alerting_service",
+        "image": "${docker_image.hn_alerting_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "alerting_service"
+            ]
+          }
+        ],
+        "hostname": "alerting.midshop.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_admin_panel": {
+        "name": "hn_bait_admin_panel",
+        "image": "${docker_image.hn_bait_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_public_zone.name}",
+            "aliases": [
+              "bait_admin_panel"
+            ]
+          }
+        ],
+        "hostname": "bait.admin.midshop.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_data_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "fileshare.midshop.internal",
+        "env": [
+          "COUCHDB_USER=admin",
+          "COUCHDB_PASSWORD=weakpassword"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:5984/_up || exit 1"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          },
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_data_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.midshop.internal",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@midshop.internal",
+          "PGADMIN_DEFAULT_PASSWORD=pgadminpass"
+        ],
+        "depends_on": [
+          "docker_container.hn_orders_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_filebeat": {
+        "name": "hn_filebeat",
+        "image": "${docker_image.hn_filebeat.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.mid_size_ecommerce_company_internal_zone.name}",
+            "aliases": [
+              "filebeat"
+            ]
+          }
+        ],
+        "hostname": "filebeat.midshop.internal",
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "mid_size_ecommerce_company"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,1023 @@
+organization:
+  business_units: []
+  name: internal_developer_platform
+  regions: []
+  type: ''
+secrets:
+  admin_ui_password:
+    name: admin_ui_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  artifact_store_access_key:
+    name: artifact_store_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  artifact_store_secret_key:
+    name: artifact_store_secret_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  backup_service_access_key:
+    name: backup_service_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  backup_service_secret_key:
+    name: backup_service_secret_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  build_cache_access_key:
+    name: build_cache_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  build_cache_secret_key:
+    name: build_cache_secret_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  ci_db_password:
+    name: ci_db_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  gitea_admin_password:
+    name: gitea_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  grafana_admin_password:
+    name: grafana_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  jenkins_admin_password:
+    name: jenkins_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  neo4j_password:
+    name: neo4j_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  pgadmin_password:
+    name: pgadmin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  registry_access_key:
+    name: registry_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  registry_secret_key:
+    name: registry_secret_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_ui:
+    deploy:
+      depends_on:
+      - ci_database
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9000/ || wget -qO- http://localhost:9000/ || true
+        timeout: 10s
+      image: portainer/portainer-ce:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: admin_ui
+    simulate:
+      behaviors: []
+      hostname: admin.internal_developer_platform.internal
+      issues: []
+      role: Administrative user interface for managing services
+      secrets:
+      - admin_ui_password
+      services:
+      - http
+  alert_manager:
+    deploy:
+      depends_on:
+      - prometheus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: prom/alertmanager:v0.26.0
+      ports:
+      - 9093
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: alert_manager
+    simulate:
+      behaviors: []
+      hostname: alerts.internal_developer_platform.internal
+      issues: []
+      role: Alert management for monitoring stack
+      secrets: []
+      services:
+      - http
+  api_gateway:
+    deploy:
+      depends_on:
+      - nginx_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api.internal_developer_platform.internal
+      issues: []
+      role: API gateway for internal services
+      secrets: []
+      services:
+      - http
+  artifact_store:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8086/health || wget -qO- http://localhost:8086/health
+          || true
+        timeout: 10s
+      image: influxdb:2.7
+      ports:
+      - 8086
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: artifact_store
+    simulate:
+      behaviors: []
+      hostname: artifacts.data.internal_developer_platform.internal
+      issues: []
+      role: Artifact repository for build artifacts
+      secrets:
+      - artifact_store_access_key
+      - artifact_store_secret_key
+      services:
+      - http
+  backup_service:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on:
+      - ci_database
+      - artifact_store
+      env:
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_service
+    simulate:
+      behaviors: []
+      hostname: backup.data.internal_developer_platform.internal
+      issues: []
+      role: Backup service for data storage
+      secrets:
+      - backup_service_access_key
+      - backup_service_secret_key
+      services:
+      - http
+  build_cache:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: build_zone
+    kind: storage
+    name: build_cache
+    simulate:
+      behaviors: []
+      hostname: buildcache.build.internal_developer_platform.internal
+      issues: []
+      role: Cache for build artifacts
+      secrets:
+      - build_cache_access_key
+      - build_cache_secret_key
+      services:
+      - http
+  cache_service:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: cache_service
+    simulate:
+      behaviors: []
+      hostname: cache.internal_developer_platform.internal
+      issues: []
+      role: Cache service for internal data
+      secrets: []
+      services:
+      - http
+  ci_agent:
+    deploy:
+      depends_on:
+      - jenkins_runner
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: build_zone
+    kind: runtime
+    name: ci_agent
+    simulate:
+      behaviors: []
+      hostname: agent.build.internal_developer_platform.internal
+      issues: []
+      role: Agent for CI/CD tasks
+      secrets: []
+      services:
+      - http
+  ci_database:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_USER=admin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - admin
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: ci_database
+    simulate:
+      behaviors: []
+      hostname: db.data.internal_developer_platform.internal
+      issues: []
+      role: Database for CI/CD data storage
+      secrets:
+      - ci_db_password
+      services:
+      - postgres
+  ci_scheduler:
+    deploy:
+      depends_on:
+      - jenkins_runner
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: build_zone
+    kind: runtime
+    name: ci_scheduler
+    simulate:
+      behaviors: []
+      hostname: scheduler.build.internal_developer_platform.internal
+      issues: []
+      role: Scheduler for CI/CD tasks
+      secrets: []
+      services:
+      - http
+  config_management:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true
+        timeout: 10s
+      image: portainer/portainer-ce:latest
+      ports:
+      - 8000
+      - 9000
+      - 9443
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: config_management
+    simulate:
+      behaviors: []
+      hostname: config.internal_developer_platform.internal
+      issues: []
+      role: Configuration management for services
+      secrets: []
+      services:
+      - http
+  container_registry:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: internal_zone
+    kind: storage
+    name: container_registry
+    simulate:
+      behaviors: []
+      hostname: registry.internal_developer_platform.internal
+      issues: []
+      role: Private Docker container registry
+      secrets:
+      - registry_access_key
+      - registry_secret_key
+      services:
+      - http
+  coordination_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: coordination_service
+    simulate:
+      behaviors: []
+      hostname: coordination.internal_developer_platform.internal
+      issues: []
+      role: Service coordination and management
+      secrets: []
+      services:
+      - http
+  dashboard_service:
+    deploy:
+      depends_on:
+      - grafana
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: dashboard_service
+    simulate:
+      behaviors: []
+      hostname: dashboard.internal_developer_platform.internal
+      issues: []
+      role: Service for monitoring dashboards
+      secrets: []
+      services:
+      - http
+  file_share:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: files.data.internal_developer_platform.internal
+      issues: []
+      role: File sharing service for data storage
+      secrets: []
+      services:
+      - http
+  gitea:
+    deploy:
+      depends_on:
+      - ci_database
+      env:
+      - GITEA__database__DB_TYPE=sqlite3
+      - GITEA__database__PATH=data/gitea.db
+      - GITEA__security__INSTALL_LOCK=true
+      - GITEA__security__SECRET_KEY=weaksecretkey
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: gitea/gitea:latest
+      ports:
+      - 3000
+      - 22
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: gitea
+    simulate:
+      behaviors: []
+      hostname: gitea.internal_developer_platform.internal
+      issues: []
+      role: Source code hosting and version control
+      secrets:
+      - gitea_admin_password
+      services:
+      - http
+      - ssh
+  grafana:
+    deploy:
+      depends_on:
+      - prometheus
+      env:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.internal_developer_platform.internal
+      issues: []
+      role: Monitoring dashboard and visualization
+      secrets:
+      - grafana_admin_password
+      services:
+      - http
+  identity_service:
+    deploy:
+      depends_on: []
+      env:
+      - NEO4J_AUTH=neo4j/weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - cypher-shell
+        - -u
+        - neo4j
+        - -p
+        - admin123
+        - RETURN 1
+        timeout: 10s
+      image: neo4j:5.15
+      ports:
+      - 7473
+      - 7474
+      - 7687
+      volumes: []
+      zone: internal_zone
+    kind: identity
+    name: identity_service
+    simulate:
+      behaviors: []
+      hostname: identity.internal_developer_platform.internal
+      issues: []
+      role: Identity and access management service
+      secrets:
+      - neo4j_password
+      services:
+      - http
+  jenkins_runner:
+    deploy:
+      depends_on:
+      - gitea
+      - container_registry
+      - ci_database
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080/login || wget -qO- http://localhost:8080/login
+          || true
+        timeout: 10s
+      image: jenkins/jenkins:lts
+      ports:
+      - 50000
+      - 8080
+      volumes: []
+      zone: build_zone
+    kind: runtime
+    name: jenkins_runner
+    simulate:
+      behaviors: []
+      hostname: jenkins.build.internal_developer_platform.internal
+      issues: []
+      role: Continuous Integration/Continuous Deployment runner
+      secrets:
+      - jenkins_admin_password
+      services:
+      - http
+      - agent
+  load_balancer:
+    deploy:
+      depends_on:
+      - nginx_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: lb.internal_developer_platform.internal
+      issues: []
+      role: Load balancing for internal services
+      secrets: []
+      services:
+      - http
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logs.internal_developer_platform.internal
+      issues: []
+      role: Log collection and aggregation
+      secrets: []
+      services:
+      - http
+  metrics_collector:
+    deploy:
+      depends_on:
+      - prometheus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: metrics_collector
+    simulate:
+      behaviors: []
+      hostname: metrics.internal_developer_platform.internal
+      issues: []
+      role: Metrics collection for monitoring
+      secrets: []
+      services:
+      - http
+  nginx_proxy:
+    deploy:
+      depends_on:
+      - gitea
+      - jenkins_runner
+      - grafana
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: nginx_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy.internal_developer_platform.internal
+      issues: []
+      role: Reverse proxy for internal services
+      secrets: []
+      services:
+      - http
+  pgadmin:
+    deploy:
+      depends_on:
+      - ci_database
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=pgadmin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:latest
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: web
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.data.internal_developer_platform.internal
+      issues: []
+      role: Web-based administration tool for PostgreSQL
+      secrets: []
+      services: []
+  postgres_admin:
+    deploy:
+      depends_on:
+      - ci_database
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true
+        timeout: 10s
+      image: portainer/portainer-ce:latest
+      ports:
+      - 8000
+      - 9000
+      - 9443
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: postgres_admin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.internal_developer_platform.internal
+      issues: []
+      role: PostgreSQL administration interface
+      secrets:
+      - pgadmin_password
+      services:
+      - http
+  prometheus:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9090/metrics
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: prometheus
+    simulate:
+      behaviors: []
+      hostname: prometheus.internal_developer_platform.internal
+      issues: []
+      role: Monitoring and alerting toolkit
+      secrets: []
+      services:
+      - http
+  security_scanner:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: security_scanner
+    simulate:
+      behaviors: []
+      hostname: scanner.internal_developer_platform.internal
+      issues: []
+      role: Security scanning for vulnerabilities
+      secrets: []
+      services:
+      - http
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:16686 || wget -qO- http://localhost:16686 || true
+        timeout: 10s
+      image: jaegertracing/all-in-one:1.52
+      ports:
+      - 14250
+      - 14268
+      - 16686
+      - 4317
+      - 4318
+      - 5775
+      - 5778
+      - 6831
+      - 6832
+      - 9411
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery.internal_developer_platform.internal
+      issues: []
+      role: Service discovery and tracing
+      secrets: []
+      services:
+      - http
+zones:
+  build_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: build_zone
+    name: build_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  internal_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: internal_zone
+    name: internal_zone

@@ -1,0 +1,927 @@
+{
+  "zones": {
+    "internal_zone": {
+      "name": "internal_zone",
+      "deploy": {
+        "network_name": "internal_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "api_zone": {
+      "name": "api_zone",
+      "deploy": {
+        "network_name": "api_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    }
+  },
+  "systems": {
+    "zookeeper": {
+      "name": "zookeeper",
+      "kind": "infra",
+      "deploy": {
+        "image": "zookeeper:3.8",
+        "zone": "internal_zone",
+        "ports": [
+          2181
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 2181 || (echo > /dev/tcp/localhost/2181) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "zookeeper01.internal.realtimeplatform.internal",
+        "role": "Coordination service for Kafka cluster",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "kafka_broker": {
+      "name": "kafka_broker",
+      "kind": "queue",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "internal_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "zookeeper"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "kafka-broker-api-versions",
+            "--bootstrap-server",
+            "localhost:9092"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "kafka01.internal.realtimeplatform.internal",
+        "role": "Main message broker for event streaming",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "stream_processor": {
+      "name": "stream_processor",
+      "kind": "runtime",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "internal_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "kafka_broker",
+          "clickhouse"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "clickhouse-client",
+            "--query",
+            "SELECT 1"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "streamproc01.internal.realtimeplatform.internal",
+        "role": "Processes streaming data from Kafka",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "clickhouse": {
+      "name": "clickhouse",
+      "kind": "database",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "data_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:8123/ || exit 1"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "clickhouse01.data.realtimeplatform.internal",
+        "role": "Analytics database for processed stream data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "internal_api": {
+      "name": "internal_api",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "api_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "stream_processor"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api.internal.realtimeplatform.internal",
+        "role": "Internal REST API for downstream consumers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "analytics_dashboard": {
+      "name": "analytics_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "matomo:4",
+        "zone": "api_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "clickhouse"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "dashboard.api.realtimeplatform.internal",
+        "role": "Provides analytics and monitoring dashboards",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "traefik:v2.10",
+        "zone": "api_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "internal_api"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy.api.realtimeplatform.internal",
+        "role": "Handles routing and load balancing for APIs",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "drupal:10-apache",
+        "zone": "api_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "reverse_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "gateway.api.realtimeplatform.internal",
+        "role": "API gateway for managing access to services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus": {
+      "name": "prometheus",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:latest",
+        "zone": "internal_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9090/-/healthy"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus.internal.realtimeplatform.internal",
+        "role": "Monitoring and alerting toolkit",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana": {
+      "name": "grafana",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:latest",
+        "zone": "internal_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:3000/api/health"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.internal.realtimeplatform.internal",
+        "role": "Visualization and analytics dashboards",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.15",
+        "zone": "internal_zone",
+        "ports": [
+          24224,
+          5140
+        ],
+        "env": [
+          "LD_PRELOAD=default"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logs.internal.realtimeplatform.internal",
+        "role": "Centralized log collection and aggregation",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_ui": {
+      "name": "admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "kafka_broker"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin.internal.realtimeplatform.internal",
+        "role": "Administrative interface for internal management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "data_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup.data.realtimeplatform.internal",
+        "role": "Primary backup server for data storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=default_patch"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "httpd-foreground"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/ || exit 1"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fileshare.data.realtimeplatform.internal",
+        "role": "Shared file storage for internal use",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "consul:1.14",
+        "zone": "internal_zone",
+        "ports": [
+          8500
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "consul",
+            "members"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "discovery.internal.realtimeplatform.internal",
+        "role": "Service discovery and configuration management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "coordination_service": {
+      "name": "coordination_service",
+      "kind": "infra",
+      "deploy": {
+        "image": "nats:2.10",
+        "zone": "internal_zone",
+        "ports": [
+          4222,
+          6222,
+          8222
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "nats",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "coordination.internal.realtimeplatform.internal",
+        "role": "Coordinates distributed services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alerting_service": {
+      "name": "alerting_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "kibana:8.11.0",
+        "zone": "internal_zone",
+        "ports": [
+          5601
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:5601/ || exit 1"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alerts.internal.realtimeplatform.internal",
+        "role": "Alerting and incident management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "metrics_collector": {
+      "name": "metrics_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "internal_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "nc",
+            "-z",
+            "localhost",
+            "9092"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "metrics.internal.realtimeplatform.internal",
+        "role": "Collects and aggregates metrics from services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "bait_admin_panel": {
+      "name": "bait_admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "wordpress:6.4-php8.2-apache",
+        "zone": "api_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "baitpanel.api.realtimeplatform.internal",
+        "role": "Decoy admin panel for intrusion detection",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "weak_credential_db": {
+      "name": "weak_credential_db",
+      "kind": "database",
+      "deploy": {
+        "image": "mysql:8.0",
+        "zone": "data_zone",
+        "ports": [
+          3306,
+          33060
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "weakcreds.data.realtimeplatform.internal",
+        "role": "Database with intentionally weak credentials",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeypot_service": {
+      "name": "honeypot_service",
+      "kind": "web",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "api_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=default"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot.api.realtimeplatform.internal",
+        "role": "Decoy service to attract and monitor attackers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fake_backup_server": {
+      "name": "fake_backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "mysql:8.0",
+        "zone": "data_zone",
+        "ports": [
+          3306,
+          33060
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=password"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fakebackup.data.realtimeplatform.internal",
+        "role": "Decoy backup server to mislead attackers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "web",
+      "deploy": {
+        "image": "dpage/pgadmin4:latest",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@realtimeplatform.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "clickhouse"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.data.realtimeplatform.internal",
+        "role": "Database administration interface for ClickHouse",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "filebeat": {
+      "name": "filebeat",
+      "kind": "monitor",
+      "deploy": {
+        "image": "docker.elastic.co/beats/filebeat:8.11.0",
+        "zone": "internal_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "filebeat.internal.realtimeplatform.internal",
+        "role": "Filebeat agent for forwarding logs to log collector",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "real_time_event_streaming_platform",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "kafka_admin_password": {
+      "name": "kafka_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "clickhouse_user_password": {
+      "name": "clickhouse_user_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "api_key_internal": {
+      "name": "api_key_internal",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "weak_db_password": {
+      "name": "weak_db_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

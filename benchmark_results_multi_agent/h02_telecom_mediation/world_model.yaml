@@ -1,0 +1,408 @@
+organization:
+  business_units: []
+  name: telecommunications_carrier
+  regions: []
+  type: ''
+secrets:
+  billing_api_key:
+    name: billing_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  honey_billing_api_key:
+    name: honey_billing_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  honey_compliance_key:
+    name: honey_compliance_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  intercept_admin_key:
+    name: intercept_admin_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  subscriber_db_password:
+    name: subscriber_db_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  billing_api:
+    deploy:
+      depends_on:
+      - cdr_archive
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: core_zone
+    kind: web
+    name: billing_api
+    simulate:
+      behaviors: []
+      hostname: billing.core.telecomcarrier.internal
+      issues: []
+      role: Billing REST API
+      secrets:
+      - billing_api_key
+      services: []
+  cdr_archive:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: cdr_archive
+    simulate:
+      behaviors: []
+      hostname: cdr.data.telecomcarrier.internal
+      issues: []
+      role: CDR Archive for long-term storage
+      secrets: []
+      services: []
+  clickhouse_admin_ui:
+    deploy:
+      depends_on:
+      - cdr_archive
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: data_zone
+    kind: web
+    name: clickhouse_admin_ui
+    simulate:
+      behaviors: []
+      hostname: chadmin.data.telecomcarrier.internal
+      issues: []
+      role: Admin UI for ClickHouse database
+      secrets: []
+      services: []
+  compliance_audit_log:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: compliance_zone
+    kind: storage
+    name: compliance_audit_log
+    simulate:
+      behaviors: []
+      hostname: auditlog.compliance.telecomcarrier.internal
+      issues: []
+      role: Compliance audit log storage
+      secrets: []
+      services: []
+  fluentd_log_collector:
+    deploy:
+      depends_on:
+      - grafana_dashboard
+      env:
+      - FLUENT_ELASTICSEARCH_HOST=elasticsearch
+      - LD_PRELOAD=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: fluent/fluentd:v1.14
+      ports:
+      - 24224
+      volumes: []
+      zone: ops_zone
+    kind: unknown
+    name: fluentd_log_collector
+    simulate:
+      behaviors: []
+      hostname: fluentd.ops.telecomcarrier.internal
+      issues: []
+      role: Fluentd log collector for centralized logging
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana.ops.telecomcarrier.internal
+      issues: []
+      role: Grafana dashboard for monitoring visualization
+      secrets: []
+      services: []
+  honeytoken_compliance_keys:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: compliance_zone
+    kind: web
+    name: honeytoken_compliance_keys
+    simulate:
+      behaviors: []
+      hostname: honeycompliance.compliance.telecomcarrier.internal
+      issues: []
+      role: Honeytoken for compliance keys
+      secrets:
+      - honey_compliance_key
+      services: []
+  kafka_broker_1:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - nc
+        - -z
+        - localhost
+        - '9092'
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: signaling_zone
+    kind: queue
+    name: kafka_broker_1
+    simulate:
+      behaviors: []
+      hostname: kafka01.signaling.telecomcarrier.internal
+      issues: []
+      role: Kafka broker for signaling events
+      secrets: []
+      services: []
+  kafka_broker_2:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - nc
+        - -z
+        - localhost
+        - '9092'
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: signaling_zone
+    kind: queue
+    name: kafka_broker_2
+    simulate:
+      behaviors: []
+      hostname: kafka02.signaling.telecomcarrier.internal
+      issues: []
+      role: Kafka broker for signaling events
+      secrets: []
+      services: []
+  kafka_broker_3:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - nc
+        - -z
+        - localhost
+        - '9092'
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: signaling_zone
+    kind: queue
+    name: kafka_broker_3
+    simulate:
+      behaviors: []
+      hostname: kafka03.signaling.telecomcarrier.internal
+      issues: []
+      role: Kafka broker for signaling events
+      secrets: []
+      services: []
+  lawful_intercept_export:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ACCESS_KEY=export
+      - MINIO_SECRET_KEY=export123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: compliance_zone
+    kind: storage
+    name: lawful_intercept_export
+    simulate:
+      behaviors: []
+      hostname: interceptexport.compliance.telecomcarrier.internal
+      issues: []
+      role: Storage for lawful intercept exports
+      secrets: []
+      services: []
+zones:
+  compliance_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: compliance_zone
+    name: compliance_zone
+  core_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: core_zone
+    name: core_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  identity_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: identity_zone
+    name: identity_zone
+  ops_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: ops_zone
+    name: ops_zone
+  signaling_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: signaling_zone
+    name: signaling_zone

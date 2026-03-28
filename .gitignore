@@ -76,8 +76,11 @@ benchmark_result.json
 *.env.local
 secrets.yaml
 
-# Benchmark results (generated, large binaries)
-benchmark_results*/
+# Benchmark results (generated, large binaries).
+# Do not use benchmark_results*/ here — it would also ignore benchmark_results_multi_agent/,
+# and Git cannot re-include paths under an ignored parent. That directory is tracked; use
+# benchmark_results/ for the generic single-level output folder only.
+benchmark_results/
 
 # Claude / Cursor IDE
 .claude/
@@ -90,3 +93,7 @@ benchmark_results*/
 # OS
 .DS_Store
 Thumbs.db
+
+# benchmark_results_multi_agent/ — tracked in-repo (overrides global patterns like summary.json)
+!benchmark_results_multi_agent/
+!benchmark_results_multi_agent/**/*

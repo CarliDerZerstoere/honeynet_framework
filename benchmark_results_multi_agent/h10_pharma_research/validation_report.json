@@ -1,0 +1,16 @@
+{
+  "passed": false,
+  "total_errors": 1,
+  "total_warnings": 0,
+  "errors": [
+    {
+      "rule": "REF_DEPENDS_ON",
+      "details": "System 'lims_api' depends on undefined system 'identity_service'",
+      "failure_type": "reference",
+      "severity": "error",
+      "fix_hint": "Check for typos in depends_on. Available systems: lab_portal, lims_api, compound_db, celery_analysis_pipeline, minio_document_vault, regulatory_api, audit_service, keycloak_identity_service, prometheus_monitoring, grafana_dashboard, reverse_proxy, load_balancer, pgadmin, portainer, backup_server, log_collector, alert_manager, api_gateway, service_discovery, kafka_broker, rabbitmq_broker, nats_broker, ldap_service, vault_service, file_share, admin_panel, honeypot_service, fake_backup_server, fake_admin_panel, fake_database, fake_document_vault, fake_identity_service, fluentd_log_forwarder, grafana_alerting, staging_endpoint. Note: fixing a typo here may expose a circular dependency (CIRCULAR_DEPENDENCY) \u2014 re-run validation after correcting the name."
+    }
+  ],
+  "warnings": [],
+  "run_id": "27eaccada21d46e582943ce4974ca3e1"
+}

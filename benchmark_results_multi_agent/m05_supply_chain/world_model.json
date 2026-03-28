@@ -1,0 +1,749 @@
+{
+  "zones": {
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "internal_zone": {
+      "name": "internal_zone",
+      "deploy": {
+        "network_name": "internal_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "vendor_portal": {
+      "name": "vendor_portal",
+      "kind": "web",
+      "deploy": {
+        "image": "drupal:10-apache",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "vendorportal.corporate_supply_chain.com",
+        "role": "Public vendor self-service portal",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "erp_db": {
+      "name": "erp_db",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "data_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "erpdb.data.corporate_supply_chain.com",
+        "role": "ERP-style PostgreSQL database for purchase orders and supplier data",
+        "issues": [],
+        "secrets": [
+          "erp_db_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "redis_cache": {
+      "name": "redis_cache",
+      "kind": "runtime",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "data_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "rediscache.data.corporate_supply_chain.com",
+        "role": "Redis cache for inventory look-ups",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "document_storage": {
+      "name": "document_storage",
+      "kind": "storage",
+      "deploy": {
+        "image": "mongo:7.0",
+        "zone": "data_zone",
+        "ports": [
+          27017
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mongo",
+            "--eval",
+            "db.adminCommand('ping')"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "documentstorage.data.corporate_supply_chain.com",
+        "role": "Document storage for contracts and invoices",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "notification_service": {
+      "name": "notification_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "python:3.12-slim",
+        "zone": "internal_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "python3",
+          "-m",
+          "http.server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8000/ || wget -qO- http://localhost:8000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "notificationservice.internal.corporate_supply_chain.com",
+        "role": "Internal notification service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "mailer_service": {
+      "name": "mailer_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "python:3.12-slim",
+        "zone": "internal_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "python3",
+          "-m",
+          "http.server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8000/ || wget -qO- http://localhost:8000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "mailerservice.internal.corporate_supply_chain.com",
+        "role": "Internal mailer service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_collector": {
+      "name": "monitoring_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "internal_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoringcollector.internal.corporate_supply_chain.com",
+        "role": "Monitoring data collector",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_dashboard": {
+      "name": "monitoring_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "internal_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "monitoring_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoringdashboard.internal.corporate_supply_chain.com",
+        "role": "Monitoring dashboard",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "internal_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logcollector.internal.corporate_supply_chain.com",
+        "role": "Log collection service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "vendor_portal"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "reverseproxy.corporate_supply_chain.com",
+        "role": "Public reverse proxy for web services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "traefik:v2.10",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "apigateway.corporate_supply_chain.com",
+        "role": "Public API gateway",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_panel": {
+      "name": "admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "adminer:4",
+        "zone": "internal_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "erp_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 8080 || (echo > /dev/tcp/localhost/8080) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "adminpanel.internal.corporate_supply_chain.com",
+        "role": "Internal admin panel for database management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ROOT_USER=admin",
+          "MINIO_ROOT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backupserver.data.corporate_supply_chain.com",
+        "role": "Backup server for data storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "couchdb:3.3",
+        "zone": "data_zone",
+        "ports": [
+          4369,
+          5984,
+          9100
+        ],
+        "env": [
+          "COUCHDB_USER=admin",
+          "COUCHDB_PASSWORD=password"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "/opt/couchdb/bin/couchdb"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:5984/_up"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fileshare.data.corporate_supply_chain.com",
+        "role": "File sharing service for internal use",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "hashicorp/consul:1.17",
+        "zone": "internal_zone",
+        "ports": [
+          8300,
+          8301,
+          8302,
+          8500,
+          8600
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "consul members | grep -q alive"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "servicediscovery.internal.corporate_supply_chain.com",
+        "role": "Service discovery for internal services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "coordination_service": {
+      "name": "coordination_service",
+      "kind": "infra",
+      "deploy": {
+        "image": "hashicorp/consul:1.17",
+        "zone": "internal_zone",
+        "ports": [
+          8300,
+          8301,
+          8302,
+          8500,
+          8600
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "consul members | grep -q alive"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "coordinationservice.internal.corporate_supply_chain.com",
+        "role": "Coordination service for internal services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeytoken_service": {
+      "name": "honeytoken_service",
+      "kind": "unknown",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeytokenservice.internal.corporate_supply_chain.com",
+        "role": "Honeytoken service for security monitoring",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "supplier_api_keys": {
+      "name": "supplier_api_keys",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "supplierapikeys.internal.corporate_supply_chain.com",
+        "role": "Supplier API keys management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "web",
+      "deploy": {
+        "image": "dpage/pgadmin4:6.21",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@example.com",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "erp_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.internal.corporate_supply_chain.com",
+        "role": "Admin UI for ERP database management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fluentd": {
+      "name": "fluentd",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.14-1",
+        "zone": "internal_zone",
+        "ports": [
+          24224
+        ],
+        "env": [
+          "LD_PRELOAD=default"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fluentd.internal.corporate_supply_chain.com",
+        "role": "Log collector for monitoring and analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "corporate_supply_chain",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "erp_db_admin_password": {
+      "name": "erp_db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

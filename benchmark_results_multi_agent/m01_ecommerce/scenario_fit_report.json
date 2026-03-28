@@ -1,0 +1,116 @@
+{
+  "benchmark_id": "m01_ecommerce",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 4,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.6,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "storefront": [
+        "admin_panel",
+        "api_gateway",
+        "bait_admin_panel",
+        "payment_service",
+        "pgadmin",
+        "product_api",
+        "reverse_proxy",
+        "web_storefront"
+      ],
+      "product_api": [
+        "admin_panel",
+        "api_gateway",
+        "bait_admin_panel",
+        "elasticsearch",
+        "notification_service",
+        "payment_service",
+        "pgadmin",
+        "product_api",
+        "redis_cart",
+        "reverse_proxy",
+        "search_service",
+        "web_storefront"
+      ],
+      "redis_cart": [
+        "redis_cart"
+      ],
+      "orders_db": [
+        "orders_db"
+      ],
+      "payment_service": [
+        "admin_panel",
+        "api_gateway",
+        "bait_admin_panel",
+        "elasticsearch",
+        "notification_service",
+        "payment_service",
+        "pgadmin",
+        "product_api",
+        "redis_cart",
+        "reverse_proxy",
+        "search_service",
+        "web_storefront"
+      ],
+      "search_service": [
+        "elasticsearch",
+        "search_service"
+      ],
+      "notification_service": [
+        "notification_service"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "public_zone"
+      ],
+      "internal_zone": [
+        "data_zone",
+        "internal_zone",
+        "payment_zone"
+      ],
+      "data_zone": [
+        "data_zone",
+        "internal_zone",
+        "payment_zone"
+      ],
+      "payment_zone": [
+        "data_zone",
+        "internal_zone",
+        "payment_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 4,
+      "total": 4
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "payment_service",
+        "zone_id": "public_zone",
+        "system": "api_gateway",
+        "deployed_zone": "public_zone"
+      },
+      {
+        "service_id": "payment_service",
+        "zone_id": "public_zone",
+        "system": "bait_admin_panel",
+        "deployed_zone": "public_zone"
+      },
+      {
+        "service_id": "payment_service",
+        "zone_id": "public_zone",
+        "system": "reverse_proxy",
+        "deployed_zone": "public_zone"
+      },
+      {
+        "service_id": "payment_service",
+        "zone_id": "public_zone",
+        "system": "admin_panel",
+        "deployed_zone": "public_zone"
+      }
+    ]
+  }
+}

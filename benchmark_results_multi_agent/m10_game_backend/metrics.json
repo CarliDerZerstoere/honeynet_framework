@@ -1,0 +1,95 @@
+{
+  "schema_version": 3,
+  "recorded_at_utc": "2026-03-28T13:38:35.399279+00:00",
+  "envelope": {
+    "metrics_schema_version": 3
+  },
+  "observability": {
+    "run_id": "dac74c6867fd47fb92148decf8691b26",
+    "work_dir": "C:\\Users\\nibbi\\workflow_analysis\\benchmark_results_multi_agent\\m10_game_backend",
+    "tofu_version": "OpenTofu v1.11.5",
+    "started_at_utc": "2026-03-28T13:26:13.445216+00:00",
+    "failure_stage": "runtime_verify",
+    "error_class": "unknown",
+    "deploy_completed": true,
+    "repair_incident_count": 1,
+    "repair_actions": [
+      {
+        "stage": "runtime_repair",
+        "action": "container_restart",
+        "target": "alert_manager"
+      }
+    ],
+    "deterministic_dep_additions": [],
+    "deterministic_placement_fixes": [],
+    "stage_durations": {
+      "extraction": 55.88,
+      "validation": 0.004,
+      "image_resolution": 0.257,
+      "compilation": 0.337,
+      "render": 0.001,
+      "deploy": 49.916,
+      "runtime_verify": 180.68
+    },
+    "path_a": {
+      "diagnostics_collected": false,
+      "diagnostics_artifact": "",
+      "failing_resources_count": 0,
+      "docker_targets_count": 0,
+      "error_class": ""
+    }
+  },
+  "deployability": {
+    "world_model_valid": true,
+    "validation_first_pass_success": true,
+    "validation_repair_attempted": false,
+    "validation_repair_success": false,
+    "config_validation_pass": true,
+    "plan_success": true,
+    "deploy_success": true,
+    "deploy_first_attempt": true,
+    "deploy_retried": true,
+    "deploy_retry_count": 2,
+    "runtime_verification_success": false,
+    "health_check_rate": 1.0,
+    "container_start_rate": 1.0,
+    "expected_containers": 13,
+    "planned_containers": 28,
+    "dropped_containers": 15,
+    "running_containers": 13,
+    "health_checks_total": 23,
+    "health_checks_passed": 23,
+    "health_check_status": "measured",
+    "container_health_status": "measured",
+    "health_check_rate_by_type": {
+      "container_running": 1.0,
+      "depends_on_running": 1.0,
+      "http_status": 1.0,
+      "tcp_connect": 1.0
+    }
+  },
+  "scenario_fit": {
+    "zone_count": 4,
+    "system_count": 28,
+    "model_dep_rate": 1.0,
+    "image_check_rate": 1.0,
+    "planned_service_coverage": 1.0,
+    "running_service_coverage": 0.6667,
+    "planned_zone_coverage": 1.0,
+    "running_zone_coverage": 1.0,
+    "planned_dep_coverage": 1.0,
+    "running_dep_coverage": 0.5,
+    "benchmark_dep_required": 4,
+    "placement_violations": 0,
+    "benchmark_pass": true,
+    "benchmark_status": "measured",
+    "benchmark_id": "m10_game_backend",
+    "benchmark_ref": "benchmarks\\corpus_v1\\medium\\m10_game_backend.yaml",
+    "scenario_fit_score": 0.7222
+  },
+  "pipeline_kpis": {
+    "blocked_before_deploy": false,
+    "deploy_eligible": true
+  },
+  "errors": []
+}

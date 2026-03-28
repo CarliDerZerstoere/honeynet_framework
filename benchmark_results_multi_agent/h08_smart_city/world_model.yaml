@@ -1,0 +1,446 @@
+organization:
+  business_units: []
+  name: smart_city_infrastructure
+  regions: []
+  type: ''
+secrets:
+  influxdb_admin_password:
+    name: influxdb_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  mariadb_root_password:
+    name: mariadb_root_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  rabbitmq_admin_password:
+    name: rabbitmq_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  api_gateway:
+    deploy:
+      depends_on:
+      - traffic_api
+      - citizen_portal
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api-gateway.public.smartcity.internal
+      issues: []
+      role: Gateway for routing API requests
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup-server.data.smartcity.internal
+      issues: []
+      role: Server for data backup and recovery
+      secrets: []
+      services: []
+  citizen_portal:
+    deploy:
+      depends_on:
+      - city_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost/
+        timeout: 10s
+      image: drupal:10-apache
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: citizen_portal
+    simulate:
+      behaviors: []
+      hostname: citizen-portal.public.smartcity.internal
+      issues: []
+      role: Public portal for citizen access
+      secrets: []
+      services: []
+  city_db:
+    deploy:
+      depends_on: []
+      env:
+      - MYSQL_ROOT_PASSWORD=admin123
+      - MYSQL_DATABASE=city
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mariadb:11
+      ports:
+      - 3306
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: city_db
+    simulate:
+      behaviors: []
+      hostname: city-db.data.smartcity.internal
+      issues: []
+      role: MariaDB for storing city records
+      secrets:
+      - mariadb_root_password
+      services: []
+  config_management:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/api/health || wget -qO- http://localhost:3000/api/health
+          || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: infra
+    name: config_management
+    simulate:
+      behaviors: []
+      hostname: config-management.ops.smartcity.internal
+      issues: []
+      role: System for managing configuration across services
+      secrets: []
+      services: []
+  event_bus:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - rabbitmqctl
+        - status
+        timeout: 10s
+      image: rabbitmq:3.12-management
+      ports:
+      - 15671
+      - 15672
+      - 15691
+      - 15692
+      - 25672
+      - 4369
+      - 5671
+      - 5672
+      volumes: []
+      zone: dispatch_zone
+    kind: queue
+    name: event_bus
+    simulate:
+      behaviors: []
+      hostname: event-bus.dispatch.smartcity.internal
+      issues: []
+      role: RabbitMQ event bus for cross-system notifications
+      secrets:
+      - rabbitmq_admin_password
+      services: []
+  grafana:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.ops.smartcity.internal
+      issues: []
+      role: Grafana dashboard for visualizing monitoring data
+      secrets: []
+      services: []
+  kafka_admin:
+    deploy:
+      command:
+      - /etc/kafka/docker/run
+      depends_on:
+      - event_bus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: dispatch_zone
+    kind: infra
+    name: kafka_admin
+    simulate:
+      behaviors: []
+      hostname: kafka-admin.dispatch.smartcity.internal
+      issues: []
+      role: Admin interface for Kafka management
+      secrets: []
+      services: []
+  metrics_db:
+    deploy:
+      depends_on: []
+      env:
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=password
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - influx
+        - ping
+        timeout: 10s
+      image: influxdb:2.7
+      ports:
+      - 8086
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: metrics_db
+    simulate:
+      behaviors: []
+      hostname: metrics-db.data.smartcity.internal
+      issues: []
+      role: InfluxDB for storing time-series metrics
+      secrets:
+      - influxdb_admin_password
+      services: []
+  monitoring_agent:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: monitoring_agent
+    simulate:
+      behaviors: []
+      hostname: monitoring-agent.ops.smartcity.internal
+      issues: []
+      role: Agent for collecting monitoring data
+      secrets: []
+      services: []
+  network_monitor:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy
+          || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: network_monitor
+    simulate:
+      behaviors: []
+      hostname: network-monitor.ops.smartcity.internal
+      issues: []
+      role: Monitoring system for network performance
+      secrets: []
+      services: []
+  traffic_api:
+    deploy:
+      depends_on:
+      - metrics_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: traffic_api
+    simulate:
+      behaviors: []
+      hostname: traffic-api.public.smartcity.internal
+      issues: []
+      role: REST API for traffic signal coordination
+      secrets: []
+      services: []
+  traffic_management_ui:
+    deploy:
+      depends_on:
+      - traffic_api
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: traffic_management_ui
+    simulate:
+      behaviors: []
+      hostname: traffic-ui.public.smartcity.internal
+      issues: []
+      role: User interface for traffic management
+      secrets: []
+      services: []
+zones:
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  dispatch_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: dispatch_zone
+    name: dispatch_zone
+  iot_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: iot_zone
+    name: iot_zone
+  ops_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: ops_zone
+    name: ops_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

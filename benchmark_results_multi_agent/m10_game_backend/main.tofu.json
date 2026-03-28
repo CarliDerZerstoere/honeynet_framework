@@ -1,0 +1,608 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "multiplayer_online_game_public_zone": {
+        "name": "multiplayer_online_game_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "multiplayer_online_game_game_zone": {
+        "name": "multiplayer_online_game_game_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "multiplayer_online_game_data_zone": {
+        "name": "multiplayer_online_game_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "multiplayer_online_game_monitoring_zone": {
+        "name": "multiplayer_online_game_monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "multiplayer_online_game_honeynet_backbone": {
+        "name": "multiplayer_online_game_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_redis_session_store": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_postgres_player_db": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_admin_dashboard": {
+        "name": "adminer@sha256:aedd36aebf9352b435a2657f0a1e51fc6ac054dd838f42aee2a79ce059a1d796",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_grafana_dashboard": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_alert_manager": {
+        "name": "prom/alertmanager@sha256:361db356b33041437517f1cd298462055580585f26555c317df1a3caf2868552",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_coordination_service": {
+        "name": "hashicorp/consul@sha256:fa5020e2307bc941e4317207de1ab55f2c7a8cd6b02c0592cce1cd20ec8a7f87",
+        "keep_locally": true
+      },
+      "hn_admin_api": {
+        "name": "adminer@sha256:aedd36aebf9352b435a2657f0a1e51fc6ac054dd838f42aee2a79ce059a1d796",
+        "keep_locally": true
+      },
+      "hn_game_master_tools": {
+        "name": "adminer@sha256:aedd36aebf9352b435a2657f0a1e51fc6ac054dd838f42aee2a79ce059a1d796",
+        "keep_locally": true
+      },
+      "hn_session_management_ui": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_redis_session_store": {
+        "name": "hn_redis_session_store",
+        "image": "${docker_image.hn_redis_session_store.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_game_zone.name}",
+            "aliases": [
+              "redis_session_store"
+            ]
+          }
+        ],
+        "hostname": "redis-session-store.game.multiplayergame.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_postgres_player_db": {
+        "name": "hn_postgres_player_db",
+        "image": "${docker_image.hn_postgres_player_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_data_zone.name}",
+            "aliases": [
+              "postgres_player_db"
+            ]
+          }
+        ],
+        "hostname": "postgres-player-db.data.multiplayergame.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_dashboard": {
+        "name": "hn_admin_dashboard",
+        "image": "${docker_image.hn_admin_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_data_zone.name}",
+            "aliases": [
+              "admin_dashboard"
+            ]
+          }
+        ],
+        "hostname": "admin-dashboard.data.multiplayergame.internal",
+        "depends_on": [
+          "docker_container.hn_postgres_player_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_public_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "reverse-proxy.public.multiplayergame.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1026,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_public_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api-gateway.public.multiplayergame.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_reverse_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana_dashboard": {
+        "name": "hn_grafana_dashboard",
+        "image": "${docker_image.hn_grafana_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_monitoring_zone.name}",
+            "aliases": [
+              "grafana_dashboard"
+            ]
+          }
+        ],
+        "hostname": "grafana-dashboard.monitoring.multiplayergame.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3000/healthz"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alert_manager": {
+        "name": "hn_alert_manager",
+        "image": "${docker_image.hn_alert_manager.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_monitoring_zone.name}",
+            "aliases": [
+              "alert_manager"
+            ]
+          }
+        ],
+        "hostname": "alert-manager.monitoring.multiplayergame.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9093/-/ready"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_data_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup-server.data.multiplayergame.internal",
+        "depends_on": [
+          "docker_container.hn_postgres_player_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_data_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "file-share.data.multiplayergame.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_coordination_service": {
+        "name": "hn_coordination_service",
+        "image": "${docker_image.hn_coordination_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_game_zone.name}",
+            "aliases": [
+              "coordination_service"
+            ]
+          }
+        ],
+        "hostname": "coordination-service.game.multiplayergame.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "consul",
+              "members"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_api": {
+        "name": "hn_admin_api",
+        "image": "${docker_image.hn_admin_api.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_data_zone.name}",
+            "aliases": [
+              "admin_api"
+            ]
+          }
+        ],
+        "hostname": "admin-api.data.multiplayergame.internal",
+        "depends_on": [
+          "docker_container.hn_postgres_player_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_game_master_tools": {
+        "name": "hn_game_master_tools",
+        "image": "${docker_image.hn_game_master_tools.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_data_zone.name}",
+            "aliases": [
+              "game_master_tools"
+            ]
+          }
+        ],
+        "hostname": "game-master-tools.data.multiplayergame.internal",
+        "depends_on": [
+          "docker_container.hn_admin_dashboard"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_session_management_ui": {
+        "name": "hn_session_management_ui",
+        "image": "${docker_image.hn_session_management_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.multiplayer_online_game_data_zone.name}",
+            "aliases": [
+              "session_management_ui"
+            ]
+          },
+          {
+            "name": "${docker_network.multiplayer_online_game_game_zone.name}",
+            "aliases": [
+              "session_management_ui"
+            ]
+          }
+        ],
+        "hostname": "session-management-ui.data.multiplayergame.internal",
+        "depends_on": [
+          "docker_container.hn_redis_session_store"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "multiplayer_online_game"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

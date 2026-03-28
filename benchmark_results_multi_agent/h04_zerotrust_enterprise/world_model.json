@@ -1,0 +1,303 @@
+{
+  "zones": {
+    "dmz_zone": {
+      "name": "dmz_zone",
+      "deploy": {
+        "network_name": "dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "secrets_zone": {
+      "name": "secrets_zone",
+      "deploy": {
+        "network_name": "secrets_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "security_zone": {
+      "name": "security_zone",
+      "deploy": {
+        "network_name": "security_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "service_zone_a": {
+      "name": "service_zone_a",
+      "deploy": {
+        "network_name": "service_zone_a",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "service_zone_b": {
+      "name": "service_zone_b",
+      "deploy": {
+        "network_name": "service_zone_b",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "vault_audit_log_consumer": {
+      "name": "vault_audit_log_consumer",
+      "kind": "unknown",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "security_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "vault-audit.security.zero_trust_enterprise.internal",
+        "role": "Consumes and processes Vault audit logs",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "postgresql_primary": {
+      "name": "postgresql_primary",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "data_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "db-primary.data.zero_trust_enterprise.internal",
+        "role": "Primary PostgreSQL database",
+        "issues": [],
+        "secrets": [
+          "db_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "siem_audit_log_aggregator": {
+      "name": "siem_audit_log_aggregator",
+      "kind": "unknown",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "security_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "siem-aggregator.security.zero_trust_enterprise.internal",
+        "role": "Aggregates audit logs for SIEM",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana": {
+      "name": "grafana",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "security_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3000 || (echo > /dev/tcp/localhost/3000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.security.zero_trust_enterprise.internal",
+        "role": "Dashboard for monitoring metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeytoken_vault_root": {
+      "name": "honeytoken_vault_root",
+      "kind": "unknown",
+      "deploy": {
+        "image": "hashicorp/vault:1.15",
+        "zone": "secrets_zone",
+        "ports": [
+          8200
+        ],
+        "env": [
+          "VERSION=1.15.6"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "server",
+          "-dev"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "vault",
+            "status"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeytoken-vault.secrets.zero_trust_enterprise.internal",
+        "role": "Decoy Vault root token",
+        "issues": [],
+        "secrets": [
+          "honeytoken_vault_root_token"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "zero_trust_enterprise",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "vault_root_token": {
+      "name": "vault_root_token",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "db_admin_password": {
+      "name": "db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "service_account_credential": {
+      "name": "service_account_credential",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "honeytoken_vault_root_token": {
+      "name": "honeytoken_vault_root_token",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "honeytoken_service_account_credential": {
+      "name": "honeytoken_service_account_credential",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "honeytoken_db_admin_password": {
+      "name": "honeytoken_db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

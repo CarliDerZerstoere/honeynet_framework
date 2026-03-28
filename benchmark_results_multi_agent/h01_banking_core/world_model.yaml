@@ -1,0 +1,269 @@
+organization:
+  business_units: []
+  name: financial_institution
+  regions: []
+  type: ''
+secrets:
+  admin_db_credentials:
+    name: admin_db_credentials
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  compliance_officer_credentials:
+    name: compliance_officer_credentials
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  core_banking_api_key:
+    name: core_banking_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+systems:
+  audit_logging_service:
+    deploy:
+      depends_on: []
+      env:
+      - LD_PRELOAD=/usr/lib/libjemalloc.so.2
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:v1.16
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: compliance_zone
+    kind: storage
+    name: audit_logging_service
+    simulate:
+      behaviors: []
+      hostname: audit-logs.compliance.financialinstitution.internal
+      issues: []
+      role: Service for collecting and storing audit logs
+      secrets: []
+      services: []
+  honeytoken_admin_db_credentials:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: unknown
+    name: honeytoken_admin_db_credentials
+    simulate:
+      behaviors: []
+      hostname: honeytoken-db-credentials.data.financialinstitution.internal
+      issues: []
+      role: Decoy system for detecting unauthorized database access
+      secrets: []
+      services: []
+  kafka_event_bus:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: data_zone
+    kind: queue
+    name: kafka_event_bus
+    simulate:
+      behaviors: []
+      hostname: event-bus.data.financialinstitution.internal
+      issues: []
+      role: Event bus for handling transaction events
+      secrets: []
+      services: []
+  nginx_api_gateway:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: nginx_api_gateway
+    simulate:
+      behaviors: []
+      hostname: api-gateway.dmz.financialinstitution.internal
+      issues: []
+      role: API Gateway for routing external requests to internal services
+      secrets: []
+      services: []
+  postgresql_ledger_db:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: postgresql_ledger_db
+    simulate:
+      behaviors: []
+      hostname: ledger-db.data.financialinstitution.internal
+      issues: []
+      role: Database for storing financial transaction records
+      secrets:
+      - admin_db_credentials
+      services: []
+  prometheus_monitoring:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy
+          || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: prometheus_monitoring
+    simulate:
+      behaviors: []
+      hostname: prometheus.ops.financialinstitution.internal
+      issues: []
+      role: Monitoring system for collecting metrics
+      secrets: []
+      services: []
+  public_web_banking_portal:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: public_web_banking_portal
+    simulate:
+      behaviors: []
+      hostname: web-banking.dmz.financialinstitution.internal
+      issues: []
+      role: Public-facing web portal for customer banking access
+      secrets: []
+      services: []
+zones:
+  compliance_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: compliance_zone
+    name: compliance_zone
+  core_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: core_zone
+    name: core_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  dmz_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: dmz_zone
+    name: dmz_zone
+  identity_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: identity_zone
+    name: identity_zone
+  ops_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: ops_zone
+    name: ops_zone

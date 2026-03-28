@@ -1,0 +1,287 @@
+{
+  "zones": {
+    "edge_zone": {
+      "name": "edge_zone",
+      "deploy": {
+        "network_name": "edge_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "ingestion_zone": {
+      "name": "ingestion_zone",
+      "deploy": {
+        "network_name": "ingestion_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "application_zone": {
+      "name": "application_zone",
+      "deploy": {
+        "network_name": "application_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "identity_zone": {
+      "name": "identity_zone",
+      "deploy": {
+        "network_name": "identity_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "ops_zone": {
+      "name": "ops_zone",
+      "deploy": {
+        "network_name": "ops_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "kafka_cluster": {
+      "name": "kafka_cluster",
+      "kind": "queue",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "ingestion_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "kafka-cluster.ingestion.industrial-iot-platform.internal",
+        "role": "Kafka cluster for high-throughput event ingestion",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "influxdb": {
+      "name": "influxdb",
+      "kind": "database",
+      "deploy": {
+        "image": "influxdb:2.7",
+        "zone": "data_zone",
+        "ports": [
+          8086
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "influx",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "influxdb.data.industrial-iot-platform.internal",
+        "role": "InfluxDB time-series store for telemetry data",
+        "issues": [],
+        "secrets": [
+          "influxdb_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus": {
+      "name": "prometheus",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "ops_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9090/-/healthy"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus.ops.industrial-iot-platform.internal",
+        "role": "Monitoring system for collecting metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana": {
+      "name": "grafana",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "ops_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:3000/api/health"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.ops.industrial-iot-platform.internal",
+        "role": "Dashboard for visualizing monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "filebeat": {
+      "name": "filebeat",
+      "kind": "unknown",
+      "deploy": {
+        "image": "docker.elastic.co/beats/filebeat:8.10.0",
+        "zone": "ops_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus",
+          "grafana"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "filebeat.ops.industrial-iot-platform.internal",
+        "role": "Log collector for system logs",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "industrial_iot_platform",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "mqtt_broker_admin_password": {
+      "name": "mqtt_broker_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "influxdb_admin_password": {
+      "name": "influxdb_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "postgresql_admin_password": {
+      "name": "postgresql_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "fleet_admin_password": {
+      "name": "fleet_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "device_master_api_key": {
+      "name": "device_master_api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

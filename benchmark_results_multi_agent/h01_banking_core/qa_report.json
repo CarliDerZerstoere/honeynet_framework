@@ -1,0 +1,108 @@
+{
+  "checks_run": 11,
+  "checks_passed": 11,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_nginx_api_gateway",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 93.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_nginx_api_gateway:1024",
+      "passed": true,
+      "actual": "TCP connect to localhost:1024 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2129.8,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_nginx_api_gateway:1024",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 323.9,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_public_web_banking_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 67.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_public_web_banking_portal:1025",
+      "passed": true,
+      "actual": "TCP connect to localhost:1025 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2072.3,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_public_web_banking_portal:1025",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 301.5,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_postgresql_ledger_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 53.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_kafka_event_bus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 48.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_audit_logging_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 43.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_prometheus_monitoring",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 35.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_honeytoken_admin_db_credentials",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 30.8,
+      "check_type": "container_running"
+    }
+  ],
+  "run_id": "b4f4111bce084803a3b651ea7780c3e6"
+}

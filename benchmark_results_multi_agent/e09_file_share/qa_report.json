@@ -1,0 +1,396 @@
+{
+  "checks_run": 43,
+  "checks_passed": 41,
+  "checks_failed": 2,
+  "pass_rate": 0.9535,
+  "results": [
+    {
+      "check_id": "running:hn_nextcloud_frontend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 263.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_nextcloud_frontend:1024",
+      "passed": true,
+      "actual": "TCP connect to localhost:1024 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2290.1,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_nextcloud_frontend:1024",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 504.9,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_nextcloud_frontend:hn_nextcloud_backend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 242.9,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_nextcloud_frontend:hn_ldap_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 235.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_nextcloud_frontend:hn_clamav_scanner",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 230.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_nextcloud_backend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 224.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_nextcloud_backend:hn_ldap_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 219.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_nextcloud_backend:hn_clamav_scanner",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 214.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_ldap_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 209.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_clamav_scanner",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 204.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 196.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1025",
+      "passed": true,
+      "actual": "TCP connect to localhost:1025 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2224.0,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1025",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 442.3,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1026",
+      "passed": true,
+      "actual": "TCP connect to localhost:1026 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2214.8,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1026",
+      "passed": false,
+      "actual": "",
+      "expected": "HTTP response",
+      "error": "HTTP request to http://localhost:1026/ failed: ",
+      "duration_ms": 430.2,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_reverse_proxy:hn_nextcloud_frontend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 170.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_load_balancer",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 162.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_load_balancer:1027",
+      "passed": true,
+      "actual": "TCP connect to localhost:1027 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2191.1,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_load_balancer:1027",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 411.6,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "tcp:hn_load_balancer:1028",
+      "passed": true,
+      "actual": "TCP connect to localhost:1028 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2184.2,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_load_balancer:1028",
+      "passed": false,
+      "actual": "Server disconnected without sending a response.",
+      "expected": "HTTP response",
+      "error": "HTTP request to http://localhost:1028/ failed: Server disconnected without sending a response.",
+      "duration_ms": 402.2,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_load_balancer:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 142.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_monitoring_agent",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 135.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_monitoring_agent:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 129.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 123.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 118.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_grafana:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 112.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 107.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_admin_interface",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 101.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_admin_interface:hn_nextcloud_backend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 95.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_backup_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 89.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_backup_server:hn_nextcloud_backend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 83.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_bait_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 77.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_bait_admin_panel:1029",
+      "passed": true,
+      "actual": "TCP connect to localhost:1029 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2104.9,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_bait_admin_panel:1029",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 323.9,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_honeypot_file_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 64.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_honeypot_file_server:hn_ldap_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 57.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_honeypot_file_server:hn_clamav_scanner",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 51.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_pgadmin",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 54.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_pgadmin:hn_nextcloud_backend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 49.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_filebeat",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 43.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_filebeat:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 37.4,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "7cc6d83b72ab4f26996b70d4cff7bfe4"
+}

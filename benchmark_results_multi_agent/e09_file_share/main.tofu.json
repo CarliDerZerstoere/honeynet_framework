@@ -1,0 +1,807 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "corporate_file_sharing_dmz_zone": {
+        "name": "corporate_file_sharing_dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "corporate_file_sharing_backend_zone": {
+        "name": "corporate_file_sharing_backend_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_file_sharing_monitoring_zone": {
+        "name": "corporate_file_sharing_monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_file_sharing_honeynet_backbone": {
+        "name": "corporate_file_sharing_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_nextcloud_frontend": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_nextcloud_backend": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_ldap_server": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_clamav_scanner": {
+        "name": "jaegertracing/all-in-one@sha256:7885400a153ac908d8bfbf72c27e3389dbab1942a35dd0ce3228611dc48cbf9f",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_load_balancer": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_monitoring_agent": {
+        "name": "grafana/grafana@sha256:e932bd6ed0e026595b08483cd0141e5103e1ab7ff8604839ff899b8dc54cabcb",
+        "keep_locally": true
+      },
+      "hn_prometheus": {
+        "name": "prom/prometheus@sha256:4a61322ac1103a0e3aea2a61ef1718422a48fa046441f299d71e660a3bc71ae9",
+        "keep_locally": true
+      },
+      "hn_grafana": {
+        "name": "grafana/grafana@sha256:e932bd6ed0e026595b08483cd0141e5103e1ab7ff8604839ff899b8dc54cabcb",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "fluent/fluentd@sha256:bf96ad1cdf366327ce84bafe5a9c7621a07887efc025aa23e68f98357a8d3997",
+        "keep_locally": true
+      },
+      "hn_admin_interface": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_bait_admin_panel": {
+        "name": "httpd@sha256:331548c5249bdeced0f048bc2fb8c6b6427d2ec6508bed9c1fec6c57d0b27a60",
+        "keep_locally": true
+      },
+      "hn_honeypot_file_server": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d243a4bcc02d2ee6b447c601692813531d2d0fbca18b583d9f7f9658da835d81",
+        "keep_locally": true
+      },
+      "hn_filebeat": {
+        "name": "docker.elastic.co/beats/filebeat@sha256:ed61cc4bebd82f7d8085483610fd95c345f19599c8bd362e3923574905e6f279",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_nextcloud_frontend": {
+        "name": "hn_nextcloud_frontend",
+        "image": "${docker_image.hn_nextcloud_frontend.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_dmz_zone.name}",
+            "aliases": [
+              "nextcloud_frontend"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_file_sharing_backend_zone.name}",
+            "aliases": [
+              "nextcloud_frontend"
+            ]
+          }
+        ],
+        "hostname": "nextcloud-web.dmz.corporatefilesharing.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1024,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_nextcloud_backend",
+          "docker_container.hn_ldap_server",
+          "docker_container.hn_clamav_scanner"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_nextcloud_backend": {
+        "name": "hn_nextcloud_backend",
+        "image": "${docker_image.hn_nextcloud_backend.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_backend_zone.name}",
+            "aliases": [
+              "nextcloud_backend"
+            ]
+          }
+        ],
+        "hostname": "nextcloud-db.backend.corporatefilesharing.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_ldap_server",
+          "docker_container.hn_clamav_scanner"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_ldap_server": {
+        "name": "hn_ldap_server",
+        "image": "${docker_image.hn_ldap_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_backend_zone.name}",
+            "aliases": [
+              "ldap_server"
+            ]
+          }
+        ],
+        "hostname": "ldap.backend.corporatefilesharing.internal",
+        "env": [
+          "LDAP_ADMIN_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_clamav_scanner": {
+        "name": "hn_clamav_scanner",
+        "image": "${docker_image.hn_clamav_scanner.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_backend_zone.name}",
+            "aliases": [
+              "clamav_scanner"
+            ]
+          }
+        ],
+        "hostname": "clamav-scanner.backend.corporatefilesharing.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 16686 || (echo > /dev/tcp/localhost/16686) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_dmz_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "reverse-proxy.dmz.corporatefilesharing.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1025,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 443,
+            "external": 1026,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_nextcloud_frontend"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_load_balancer": {
+        "name": "hn_load_balancer",
+        "image": "${docker_image.hn_load_balancer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_dmz_zone.name}",
+            "aliases": [
+              "load_balancer"
+            ]
+          }
+        ],
+        "hostname": "load-balancer.dmz.corporatefilesharing.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 443,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_reverse_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_agent": {
+        "name": "hn_monitoring_agent",
+        "image": "${docker_image.hn_monitoring_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_monitoring_zone.name}",
+            "aliases": [
+              "monitoring_agent"
+            ]
+          }
+        ],
+        "hostname": "monitoring-agent.monitoring.corporatefilesharing.internal",
+        "env": [
+          "GF_SECURITY_ADMIN_USER=admin",
+          "GF_SECURITY_ADMIN_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus": {
+        "name": "hn_prometheus",
+        "image": "${docker_image.hn_prometheus.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_monitoring_zone.name}",
+            "aliases": [
+              "prometheus"
+            ]
+          }
+        ],
+        "hostname": "prometheus.monitoring.corporatefilesharing.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana": {
+        "name": "hn_grafana",
+        "image": "${docker_image.hn_grafana.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_monitoring_zone.name}",
+            "aliases": [
+              "grafana"
+            ]
+          }
+        ],
+        "hostname": "grafana.monitoring.corporatefilesharing.internal",
+        "env": [
+          "GF_SECURITY_ADMIN_USER=admin",
+          "GF_SECURITY_ADMIN_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_monitoring_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "log-collector.monitoring.corporatefilesharing.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_interface": {
+        "name": "hn_admin_interface",
+        "image": "${docker_image.hn_admin_interface.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_backend_zone.name}",
+            "aliases": [
+              "admin_interface"
+            ]
+          }
+        ],
+        "hostname": "admin-interface.backend.corporatefilesharing.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_nextcloud_backend"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_backend_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup-server.backend.corporatefilesharing.internal",
+        "env": [
+          "MINIO_ROOT_USER=admin",
+          "MINIO_ROOT_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_nextcloud_backend"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mc",
+              "alias",
+              "set",
+              "myminio",
+              "http://localhost:9000",
+              "admin",
+              "admin123"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_admin_panel": {
+        "name": "hn_bait_admin_panel",
+        "image": "${docker_image.hn_bait_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_dmz_zone.name}",
+            "aliases": [
+              "bait_admin_panel"
+            ]
+          }
+        ],
+        "hostname": "bait-admin-panel.dmz.corporatefilesharing.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_file_server": {
+        "name": "hn_honeypot_file_server",
+        "image": "${docker_image.hn_honeypot_file_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_backend_zone.name}",
+            "aliases": [
+              "honeypot_file_server"
+            ]
+          }
+        ],
+        "hostname": "honeypot-file-server.backend.corporatefilesharing.internal",
+        "depends_on": [
+          "docker_container.hn_ldap_server",
+          "docker_container.hn_clamav_scanner"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_backend_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.backend.corporatefilesharing.internal",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@corporatefilesharing.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_nextcloud_backend"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_filebeat": {
+        "name": "hn_filebeat",
+        "image": "${docker_image.hn_filebeat.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_file_sharing_monitoring_zone.name}",
+            "aliases": [
+              "filebeat"
+            ]
+          }
+        ],
+        "hostname": "filebeat.monitoring.corporatefilesharing.internal",
+        "env": [
+          "ELASTIC_CONTAINER=true",
+          "GODEBUG=madvdontneed=1",
+          "LIBBEAT_MONITORING_CGROUPS_HIERARCHY_OVERRIDE=/"
+        ],
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "command": [
+          "/usr/bin/tini",
+          "--",
+          "/usr/local/bin/docker-entrypoint",
+          "-environment",
+          "container"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_file_sharing"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

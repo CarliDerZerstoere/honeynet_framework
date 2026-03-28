@@ -1,0 +1,862 @@
+{
+  "zones": {
+    "ops_zone": {
+      "name": "ops_zone",
+      "deploy": {
+        "network_name": "ops_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "logging_zone": {
+      "name": "logging_zone",
+      "deploy": {
+        "network_name": "logging_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "database_zone": {
+      "name": "database_zone",
+      "deploy": {
+        "network_name": "database_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "security_zone": {
+      "name": "security_zone",
+      "deploy": {
+        "network_name": "security_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "prometheus_server": {
+      "name": "prometheus_server",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "logging_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9090/-/healthy"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus01.logging.operations_monitoring_stack.internal",
+        "role": "Metrics collection and monitoring",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "ops_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus_server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:3000/api/health"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana01.ops.operations_monitoring_stack.internal",
+        "role": "Visualization and dashboarding",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alertmanager_service": {
+      "name": "alertmanager_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "logging_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus_server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9093/-/healthy"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alertmanager01.logging.operations_monitoring_stack.internal",
+        "role": "Alert management and routing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "loki_logging_agent": {
+      "name": "loki_logging_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "logging_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:3100/ready"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "loki01.logging.operations_monitoring_stack.internal",
+        "role": "Log aggregation and storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "elasticsearch_logging_agent": {
+      "name": "elasticsearch_logging_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "kibana:8.11.0",
+        "zone": "logging_zone",
+        "ports": [
+          5601
+        ],
+        "env": [
+          "ELASTICSEARCH_HOSTS=http://elasticsearch:9200"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "/usr/local/bin/kibana-docker"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:5601/status"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "elasticsearch01.logging.operations_monitoring_stack.internal",
+        "role": "Log indexing and search",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "web_frontend": {
+      "name": "web_frontend",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "web01.public.operations_monitoring_stack.internal",
+        "role": "Public-facing web interface",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "public_zone",
+        "ports": [
+          80,
+          443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "web_frontend"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy01.public.operations_monitoring_stack.internal",
+        "role": "Reverse proxy for web services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "kong:3.4",
+        "zone": "public_zone",
+        "ports": [
+          8000,
+          8443
+        ],
+        "env": [
+          "KONG_DATABASE=off",
+          "KONG_PG_HOST=postgres_host",
+          "KONG_PG_PORT=5432",
+          "KONG_PG_USER=kong",
+          "KONG_PG_PASSWORD=kong_password",
+          "KONG_PG_DATABASE=kong",
+          "KONG_DECLARATIVE_CONFIG=/path/to/kong.yml"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "reverse_proxy"
+        ],
+        "command": [
+          "kong",
+          "docker-start"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:8001"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api01.public.operations_monitoring_stack.internal",
+        "role": "API gateway and traffic management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "database_primary": {
+      "name": "database_primary",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "database_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "db-primary01.database.operations_monitoring_stack.internal",
+        "role": "Primary database server",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "database_replica": {
+      "name": "database_replica",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "database_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "database_primary"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "db-replica01.database.operations_monitoring_stack.internal",
+        "role": "Replica database server",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "cache_service": {
+      "name": "cache_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "database_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "cache01.database.operations_monitoring_stack.internal",
+        "role": "In-memory data caching",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "identity_service": {
+      "name": "identity_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "security_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "identity01.security.operations_monitoring_stack.internal",
+        "role": "User identity and authentication service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "jaegertracing/all-in-one:1.52",
+        "zone": "logging_zone",
+        "ports": [
+          14250,
+          14268,
+          16686,
+          4317,
+          4318,
+          5775,
+          5778,
+          6831,
+          6832,
+          9411
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 16686 || (echo > /dev/tcp/localhost/16686) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logcollector01.logging.operations_monitoring_stack.internal",
+        "role": "Centralized log collection",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "database_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup01.database.operations_monitoring_stack.internal",
+        "role": "Database backup and recovery",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_panel": {
+      "name": "admin_panel",
+      "kind": "infra",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "ops_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin01.ops.operations_monitoring_stack.internal",
+        "role": "Administrative interface for system management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_collector": {
+      "name": "monitoring_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "influxdb:2.7",
+        "zone": "ops_zone",
+        "ports": [
+          8086
+        ],
+        "env": [
+          "DOCKER_INFLUXDB_INIT_MODE=setup",
+          "DOCKER_INFLUXDB_INIT_USERNAME=admin",
+          "DOCKER_INFLUXDB_INIT_PASSWORD=admin123",
+          "DOCKER_INFLUXDB_INIT_ORG=myorg",
+          "DOCKER_INFLUXDB_INIT_BUCKET=mybucket"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "influxd"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:8086/health"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "collector01.ops.operations_monitoring_stack.internal",
+        "role": "Data collection for monitoring",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alerting_service": {
+      "name": "alerting_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "ops_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "monitoring_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9093/api/v1/status"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alerting01.ops.operations_monitoring_stack.internal",
+        "role": "Alerting and notification service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "consul:1.14",
+        "zone": "ops_zone",
+        "ports": [
+          8500
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:8500/v1/status/leader"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "discovery01.ops.operations_monitoring_stack.internal",
+        "role": "Service discovery and configuration management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "database_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fileshare01.database.operations_monitoring_stack.internal",
+        "role": "Shared file storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeypot_admin_panel": {
+      "name": "honeypot_admin_panel",
+      "kind": "infra",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "public_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:3000/login"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot01.public.operations_monitoring_stack.internal",
+        "role": "Decoy administrative interface",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "kibana_dashboard": {
+      "name": "kibana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "kibana:8.11.0",
+        "zone": "logging_zone",
+        "ports": [
+          5601
+        ],
+        "env": [
+          "ELASTICSEARCH_HOSTS=http://elasticsearch01.logging.operations_monitoring_stack.internal:9200"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "elasticsearch_logging_agent"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:5601/ || wget -qO- http://localhost:5601/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "kibana01.logging.operations_monitoring_stack.internal",
+        "role": "Log visualization and analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "operations_monitoring_stack",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "db_admin_password": {
+      "name": "db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "api_gateway_key": {
+      "name": "api_gateway_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "grafana_admin_password": {
+      "name": "grafana_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "prometheus_scrape_token": {
+      "name": "prometheus_scrape_token",
+      "type": "token",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

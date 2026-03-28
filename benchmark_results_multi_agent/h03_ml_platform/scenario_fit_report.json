@@ -1,0 +1,129 @@
+{
+  "benchmark_id": "h03_ml_platform",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.8333333333333334,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.9444444444444445,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "inference_api": [
+        "admin_panel",
+        "api_gateway",
+        "bait_feature_store_ui",
+        "bait_grafana_ui",
+        "bait_kafka_ui",
+        "bait_minio_ui",
+        "bait_model_registry_ui",
+        "bait_postgresql_ui",
+        "bait_prometheus_ui",
+        "data_ingestion_service",
+        "data_pipeline",
+        "inference_api",
+        "mlflow_experiment_tracker",
+        "pgadmin_ui",
+        "reverse_proxy",
+        "training_scheduler"
+      ],
+      "feature_store": [
+        "data_ingestion_service",
+        "data_pipeline",
+        "decoy_database",
+        "postgresql_metadata_db",
+        "training_scheduler"
+      ],
+      "model_registry": [
+        "config_management",
+        "data_ingestion_service",
+        "data_pipeline",
+        "security_scanner",
+        "service_discovery",
+        "training_scheduler"
+      ],
+      "training_scheduler": [
+        "config_management",
+        "data_ingestion_service",
+        "data_pipeline",
+        "security_scanner",
+        "service_discovery",
+        "training_scheduler"
+      ],
+      "experiment_tracker": [
+        "admin_panel",
+        "api_gateway",
+        "bait_feature_store_ui",
+        "bait_grafana_ui",
+        "bait_kafka_ui",
+        "bait_minio_ui",
+        "bait_model_registry_ui",
+        "bait_postgresql_ui",
+        "bait_prometheus_ui",
+        "data_ingestion_service",
+        "data_pipeline",
+        "inference_api",
+        "mlflow_experiment_tracker",
+        "pgadmin_ui",
+        "reverse_proxy",
+        "training_scheduler"
+      ],
+      "object_storage": [
+        "backup_service",
+        "fake_data_service",
+        "feature_store",
+        "minio_storage",
+        "model_registry"
+      ],
+      "metadata_db": [
+        "decoy_database",
+        "postgresql_metadata_db"
+      ],
+      "pipeline_events": [
+        "kafka_broker"
+      ],
+      "grafana_dashboard": [
+        "bait_feature_store_ui",
+        "bait_grafana_ui",
+        "bait_model_registry_ui",
+        "grafana_dashboard",
+        "log_collector",
+        "mlflow_experiment_tracker",
+        "monitoring_agent"
+      ],
+      "monitoring": [
+        "alerting_service",
+        "grafana_dashboard",
+        "log_collector",
+        "monitoring_agent",
+        "prometheus_monitoring"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "public_zone"
+      ],
+      "internal_zone": [
+        "data_zone",
+        "internal_zone",
+        "ops_zone"
+      ],
+      "data_zone": [
+        "data_zone",
+        "internal_zone",
+        "ops_zone"
+      ],
+      "ops_zone": [
+        "data_zone",
+        "internal_zone",
+        "ops_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 5,
+      "total": 6
+    },
+    "placement_violations_detail": []
+  }
+}

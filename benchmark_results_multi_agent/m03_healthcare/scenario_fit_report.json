@@ -1,0 +1,75 @@
+{
+  "benchmark_id": "m03_healthcare",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 0,
+  "benchmark_pass": true,
+  "scenario_fit_score": 1.0,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "patient_portal": [
+        "admin_panel",
+        "api_gateway",
+        "ehr_api",
+        "fhir_service",
+        "honeypot_admin_panel",
+        "patient_portal",
+        "pgadmin",
+        "reverse_proxy"
+      ],
+      "ehr_api": [
+        "admin_panel",
+        "api_gateway",
+        "ehr_api",
+        "fhir_service",
+        "honeypot_admin_panel",
+        "patient_portal",
+        "pgadmin",
+        "reverse_proxy"
+      ],
+      "patient_db": [
+        "patient_db"
+      ],
+      "document_storage": [
+        "backup_service",
+        "document_storage",
+        "fake_backup_server"
+      ],
+      "fhir_service": [
+        "api_gateway",
+        "ehr_api",
+        "fhir_service"
+      ],
+      "audit_log": [
+        "audit_logging_service",
+        "backup_service",
+        "document_storage",
+        "fake_backup_server",
+        "log_collector",
+        "monitoring_service",
+        "patient_db"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "public_zone"
+      ],
+      "internal_zone": [
+        "data_zone",
+        "internal_zone"
+      ],
+      "data_zone": [
+        "data_zone",
+        "internal_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 4,
+      "total": 4
+    },
+    "placement_violations_detail": []
+  }
+}

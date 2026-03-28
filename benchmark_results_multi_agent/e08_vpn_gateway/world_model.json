@@ -1,0 +1,572 @@
+{
+  "zones": {
+    "edge_zone": {
+      "name": "edge_zone",
+      "deploy": {
+        "network_name": "edge_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "internal_zone": {
+      "name": "internal_zone",
+      "deploy": {
+        "network_name": "internal_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "monitoring_zone": {
+      "name": "monitoring_zone",
+      "deploy": {
+        "network_name": "monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "auth_proxy": {
+      "name": "auth_proxy",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "auth.edge.corporate_remote_access.internal",
+        "role": "Authentication proxy for validating credentials",
+        "issues": [],
+        "secrets": [
+          "ldap_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "internal_wiki": {
+      "name": "internal_wiki",
+      "kind": "web",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "internal_zone",
+        "ports": [
+          80,
+          443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "auth_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "wiki.internal.corporate_remote_access.internal",
+        "role": "Internal wiki with corporate documents",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "elasticsearch:8.11.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          9200,
+          9300
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9200/_cluster/health || wget -qO- http://localhost:9200/_cluster/health || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logs.monitoring.corporate_remote_access.internal",
+        "role": "Centralized log collection service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.monitoring.corporate_remote_access.internal",
+        "role": "Monitoring dashboard for visualizing metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus_server": {
+      "name": "prometheus_server",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:latest",
+        "zone": "monitoring_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus.monitoring.corporate_remote_access.internal",
+        "role": "Metrics collection and alerting",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "edge_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "auth_proxy",
+          "internal_wiki"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy.edge.corporate_remote_access.internal",
+        "role": "Reverse proxy for routing external requests",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_panel": {
+      "name": "admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "internal_wiki"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin.internal.corporate_remote_access.internal",
+        "role": "Administrative panel for internal management",
+        "issues": [],
+        "secrets": [
+          "admin_panel_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "mariadb:11",
+        "zone": "internal_zone",
+        "ports": [
+          3306
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup.internal.corporate_remote_access.internal",
+        "role": "Backup server for data storage",
+        "issues": [],
+        "secrets": [
+          "backup_db_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "internal_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "files.internal.corporate_remote_access.internal",
+        "role": "File sharing service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "bait_database": {
+      "name": "bait_database",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "internal_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "db.internal.corporate_remote_access.internal",
+        "role": "Bait database with fake data",
+        "issues": [],
+        "secrets": [
+          "db_user_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "bait_admin_ui": {
+      "name": "bait_admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "bait_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "dbadmin.internal.corporate_remote_access.internal",
+        "role": "Admin UI for bait database",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "discovery.internal.corporate_remote_access.internal",
+        "role": "Service discovery for internal services",
+        "issues": [],
+        "secrets": [
+          "ldap_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "infra",
+      "deploy": {
+        "image": "traefik:v2.10",
+        "zone": "edge_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "reverse_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "lb.edge.corporate_remote_access.internal",
+        "role": "Load balancer for distributing traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin_ui": {
+      "name": "pgadmin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "dpage/pgadmin4:latest",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@corporate.com",
+          "PGADMIN_DEFAULT_PASSWORD=admin"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "bait_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.internal.corporate_remote_access.internal",
+        "role": "Database administration UI for bait database",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "corporate_remote_access",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "ldap_admin_password": {
+      "name": "ldap_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_panel_password": {
+      "name": "admin_panel_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_db_password": {
+      "name": "backup_db_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "db_user_password": {
+      "name": "db_user_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

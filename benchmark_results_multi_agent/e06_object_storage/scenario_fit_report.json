@@ -1,0 +1,38 @@
+{
+  "benchmark_id": "e06_object_storage",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 0.5,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.8333333333333334,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "object_storage": [
+        "backup_service",
+        "object_storage"
+      ],
+      "api_gateway": [
+        "api_gateway"
+      ],
+      "metadata_db": [
+        "metadata_db"
+      ]
+    },
+    "matched_zones": {
+      "app_zone": [],
+      "data_zone": [
+        "data_zone",
+        "monitoring_zone",
+        "security_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 2,
+      "total": 2
+    },
+    "placement_violations_detail": []
+  }
+}

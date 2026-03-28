@@ -1,0 +1,735 @@
+organization:
+  business_units: []
+  name: three_tier_web_stack
+  regions: []
+  type: ''
+secrets:
+  admin_ui_password:
+    name: admin_ui_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  backup_server_password:
+    name: backup_server_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  postgres_admin_password:
+    name: postgres_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  redis_admin_password:
+    name: redis_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  redis_admin_ui_password:
+    name: redis_admin_ui_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_ui:
+    deploy:
+      depends_on:
+      - postgres_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true
+        timeout: 10s
+      image: adminer:4
+      ports:
+      - 8080
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: admin_ui
+    simulate:
+      behaviors: []
+      hostname: adminui01.public.three_tier_web_stack.internal
+      issues: []
+      role: Database admin UI
+      secrets:
+      - admin_ui_password
+      services: []
+  alerting_service:
+    deploy:
+      depends_on:
+      - prometheus_collector
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9090/-/healthy
+        timeout: 10s
+      image: prom/prometheus:v2.41.0
+      ports:
+      - 9090
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: alerting_service
+    simulate:
+      behaviors: []
+      hostname: alerting01.monitoring.three_tier_web_stack.internal
+      issues: []
+      role: Alerting and notification service
+      secrets: []
+      services: []
+  api_gateway:
+    deploy:
+      command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/Caddyfile
+      - --adapter
+      - caddyfile
+      depends_on:
+      - web_server
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 2019
+      - 443
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api01.public.three_tier_web_stack.internal
+      issues: []
+      role: API gateway for routing requests
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on:
+      - postgres_db
+      env:
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup01.data.three_tier_web_stack.internal
+      issues: []
+      role: Data backup server
+      secrets:
+      - backup_server_password
+      services: []
+  bait_file_server:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: bait_file_server
+    simulate:
+      behaviors: []
+      hostname: baitfileserver01.data.three_tier_web_stack.internal
+      issues: []
+      role: Decoy file server for honeypot
+      secrets: []
+      services: []
+  debug_endpoint:
+    deploy:
+      depends_on:
+      - web_server
+      env:
+      - DEBUG=true
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 9090
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: debug_endpoint
+    simulate:
+      behaviors: []
+      hostname: debug01.public.three_tier_web_stack.internal
+      issues: []
+      role: Debug endpoint for troubleshooting
+      secrets: []
+      services: []
+  file_share:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: fileshare01.data.three_tier_web_stack.internal
+      issues: []
+      role: File sharing service
+      secrets: []
+      services: []
+  fluentd_agent:
+    deploy:
+      depends_on: []
+      env:
+      - LD_PRELOAD=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: fluent/fluentd:v1.14-1
+      ports: []
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: fluentd_agent
+    simulate:
+      behaviors: []
+      hostname: fluentd01.monitoring.three_tier_web_stack.internal
+      issues: []
+      role: Log collection agent
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on:
+      - fluentd_agent
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:3000/
+        timeout: 10s
+      image: grafana/grafana:latest
+      ports:
+      - 3000
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana01.monitoring.three_tier_web_stack.internal
+      issues: []
+      role: Monitoring dashboard
+      secrets: []
+      services: []
+  honeypot_admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: honeypot_admin_panel
+    simulate:
+      behaviors: []
+      hostname: honeypotadmin01.public.three_tier_web_stack.internal
+      issues: []
+      role: Decoy admin panel for honeypot
+      secrets: []
+      services: []
+  load_balancer:
+    deploy:
+      depends_on:
+      - nginx_reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: loadbalancer01.public.three_tier_web_stack.internal
+      issues: []
+      role: Load balancer for distributing traffic
+      secrets: []
+      services: []
+  log_aggregator:
+    deploy:
+      depends_on:
+      - fluentd_agent
+      env:
+      - FLUENTD_CONF=fluent.conf
+      - LD_PRELOAD=/usr/lib/preload.so
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:v1.14-1
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: log_aggregator
+    simulate:
+      behaviors: []
+      hostname: logaggregator01.monitoring.three_tier_web_stack.internal
+      issues: []
+      role: Log aggregation service
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on:
+      - fluentd_agent
+      env:
+      - FLUENTD_CONF=fluent.conf
+      - LD_PRELOAD=/usr/lib/preload.so
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:v1.14-1
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logcollector01.monitoring.three_tier_web_stack.internal
+      issues: []
+      role: Centralized log collector
+      secrets: []
+      services: []
+  monitoring_agent:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3000/api/health
+        timeout: 10s
+      image: grafana/grafana:9.4.3
+      ports:
+      - 3000
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: monitoring_agent
+    simulate:
+      behaviors: []
+      hostname: monitoringagent01.monitoring.three_tier_web_stack.internal
+      issues: []
+      role: Monitoring agent for system metrics
+      secrets: []
+      services: []
+  nginx_reverse_proxy:
+    deploy:
+      depends_on:
+      - web_server
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: nginx_reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy01.public.three_tier_web_stack.internal
+      issues: []
+      role: Nginx reverse proxy for web traffic
+      secrets: []
+      services: []
+  postgres_db:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: postgres_db
+    simulate:
+      behaviors: []
+      hostname: db01.data.three_tier_web_stack.internal
+      issues: []
+      role: Primary PostgreSQL database
+      secrets:
+      - postgres_admin_password
+      services: []
+  prometheus_collector:
+    deploy:
+      depends_on:
+      - fluentd_agent
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9090/-/healthy
+        timeout: 10s
+      image: prom/prometheus:latest
+      ports:
+      - 9090
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: prometheus_collector
+    simulate:
+      behaviors: []
+      hostname: prometheus01.monitoring.three_tier_web_stack.internal
+      issues: []
+      role: Metrics collection service
+      secrets: []
+      services: []
+  redis_admin_ui:
+    deploy:
+      depends_on:
+      - redis_cache
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: redis_admin_ui
+    simulate:
+      behaviors: []
+      hostname: redisadmin01.public.three_tier_web_stack.internal
+      issues: []
+      role: Redis admin UI
+      secrets:
+      - redis_admin_ui_password
+      services: []
+  redis_cache:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: data_zone
+    kind: runtime
+    name: redis_cache
+    simulate:
+      behaviors: []
+      hostname: redis01.data.three_tier_web_stack.internal
+      issues: []
+      role: Redis caching layer
+      secrets:
+      - redis_admin_password
+      services: []
+  service_discovery:
+    deploy:
+      command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/Caddyfile
+      - --adapter
+      - caddyfile
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:2019/
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 2019
+      - 443
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery01.data.three_tier_web_stack.internal
+      issues: []
+      role: Service discovery and routing
+      secrets: []
+      services: []
+  staging_server:
+    deploy:
+      depends_on:
+      - web_server
+      - api_gateway
+      env:
+      - STAGING=true
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 8080
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: staging_server
+    simulate:
+      behaviors: []
+      hostname: staging01.public.three_tier_web_stack.internal
+      issues: []
+      role: Staging server for testing deployments
+      secrets: []
+      services: []
+  web_server:
+    deploy:
+      command:
+      - node
+      - current/index.js
+      depends_on:
+      - redis_cache
+      - postgres_db
+      env:
+      - database__client=mysql
+      - database__connection__host=your-database-host
+      - database__connection__user=your-database-user
+      - database__connection__password=your-database-password
+      - database__connection__database=your-database-name
+      - NODE_ENV=production
+      - GHOST_INSTALL=/var/lib/ghost
+      - GHOST_CONTENT=/var/lib/ghost/content
+      - GHOST_VERSION=5.130.6
+      - GHOST_CLI_VERSION=1.28.4
+      - GOSU_VERSION=1.19
+      - YARN_VERSION=1.22.22
+      - NODE_VERSION=20.20.0
+      - DATABASE_HOST=your-database-host
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:2368 || wget -qO- http://localhost:2368 || true
+        timeout: 10s
+      image: ghost:5
+      ports:
+      - 2368
+      volumes: []
+      zone: data_zone
+    kind: web
+    name: web_server
+    simulate:
+      behaviors: []
+      hostname: web01.public.three_tier_web_stack.internal
+      issues: []
+      role: Public-facing web application server
+      secrets: []
+      services: []
+zones:
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  monitoring_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: monitoring_zone
+    name: monitoring_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

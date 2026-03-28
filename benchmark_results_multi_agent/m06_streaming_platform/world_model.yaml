@@ -1,0 +1,747 @@
+organization:
+  business_units: []
+  name: real_time_event_streaming_platform
+  regions: []
+  type: ''
+secrets:
+  api_key_internal:
+    name: api_key_internal
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  clickhouse_user_password:
+    name: clickhouse_user_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  kafka_admin_password:
+    name: kafka_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  weak_db_password:
+    name: weak_db_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_ui:
+    deploy:
+      depends_on:
+      - kafka_broker
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: admin_ui
+    simulate:
+      behaviors: []
+      hostname: admin.internal.realtimeplatform.internal
+      issues: []
+      role: Administrative interface for internal management
+      secrets: []
+      services: []
+  alerting_service:
+    deploy:
+      depends_on:
+      - prometheus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:5601/ || exit 1
+        timeout: 10s
+      image: kibana:8.11.0
+      ports:
+      - 5601
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: alerting_service
+    simulate:
+      behaviors: []
+      hostname: alerts.internal.realtimeplatform.internal
+      issues: []
+      role: Alerting and incident management
+      secrets: []
+      services: []
+  analytics_dashboard:
+    deploy:
+      depends_on:
+      - clickhouse
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: matomo:4
+      ports:
+      - 80
+      volumes: []
+      zone: api_zone
+    kind: monitor
+    name: analytics_dashboard
+    simulate:
+      behaviors: []
+      hostname: dashboard.api.realtimeplatform.internal
+      issues: []
+      role: Provides analytics and monitoring dashboards
+      secrets: []
+      services: []
+  api_gateway:
+    deploy:
+      depends_on:
+      - reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: drupal:10-apache
+      ports:
+      - 80
+      volumes: []
+      zone: api_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: gateway.api.realtimeplatform.internal
+      issues: []
+      role: API gateway for managing access to services
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup.data.realtimeplatform.internal
+      issues: []
+      role: Primary backup server for data storage
+      secrets: []
+      services: []
+  bait_admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: wordpress:6.4-php8.2-apache
+      ports:
+      - 80
+      volumes: []
+      zone: api_zone
+    kind: web
+    name: bait_admin_panel
+    simulate:
+      behaviors: []
+      hostname: baitpanel.api.realtimeplatform.internal
+      issues: []
+      role: Decoy admin panel for intrusion detection
+      secrets: []
+      services: []
+  clickhouse:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8123/ || exit 1
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: clickhouse
+    simulate:
+      behaviors: []
+      hostname: clickhouse01.data.realtimeplatform.internal
+      issues: []
+      role: Analytics database for processed stream data
+      secrets: []
+      services: []
+  coordination_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - nats
+        - ping
+        timeout: 10s
+      image: nats:2.10
+      ports:
+      - 4222
+      - 6222
+      - 8222
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: coordination_service
+    simulate:
+      behaviors: []
+      hostname: coordination.internal.realtimeplatform.internal
+      issues: []
+      role: Coordinates distributed services
+      secrets: []
+      services: []
+  fake_backup_server:
+    deploy:
+      depends_on: []
+      env:
+      - MYSQL_ROOT_PASSWORD=password
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mysql:8.0
+      ports:
+      - 3306
+      - 33060
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: fake_backup_server
+    simulate:
+      behaviors: []
+      hostname: fakebackup.data.realtimeplatform.internal
+      issues: []
+      role: Decoy backup server to mislead attackers
+      secrets: []
+      services: []
+  file_share:
+    deploy:
+      command:
+      - httpd-foreground
+      depends_on: []
+      env:
+      - HTTPD_PATCHES=default_patch
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/ || exit 1
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: fileshare.data.realtimeplatform.internal
+      issues: []
+      role: Shared file storage for internal use
+      secrets: []
+      services: []
+  filebeat:
+    deploy:
+      depends_on:
+      - log_collector
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: docker.elastic.co/beats/filebeat:8.11.0
+      ports: []
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: filebeat
+    simulate:
+      behaviors: []
+      hostname: filebeat.internal.realtimeplatform.internal
+      issues: []
+      role: Filebeat agent for forwarding logs to log collector
+      secrets: []
+      services: []
+  grafana:
+    deploy:
+      depends_on:
+      - prometheus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3000/api/health
+        timeout: 10s
+      image: grafana/grafana:latest
+      ports:
+      - 3000
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.internal.realtimeplatform.internal
+      issues: []
+      role: Visualization and analytics dashboards
+      secrets: []
+      services: []
+  honeypot_service:
+    deploy:
+      depends_on: []
+      env:
+      - HTTPD_PATCHES=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: api_zone
+    kind: web
+    name: honeypot_service
+    simulate:
+      behaviors: []
+      hostname: honeypot.api.realtimeplatform.internal
+      issues: []
+      role: Decoy service to attract and monitor attackers
+      secrets: []
+      services: []
+  internal_api:
+    deploy:
+      depends_on:
+      - stream_processor
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: api_zone
+    kind: web
+    name: internal_api
+    simulate:
+      behaviors: []
+      hostname: api.internal.realtimeplatform.internal
+      issues: []
+      role: Internal REST API for downstream consumers
+      secrets: []
+      services: []
+  kafka_broker:
+    deploy:
+      depends_on:
+      - zookeeper
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - kafka-broker-api-versions
+        - --bootstrap-server
+        - localhost:9092
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: internal_zone
+    kind: queue
+    name: kafka_broker
+    simulate:
+      behaviors: []
+      hostname: kafka01.internal.realtimeplatform.internal
+      issues: []
+      role: Main message broker for event streaming
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env:
+      - LD_PRELOAD=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:v1.15
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logs.internal.realtimeplatform.internal
+      issues: []
+      role: Centralized log collection and aggregation
+      secrets: []
+      services: []
+  metrics_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - nc
+        - -z
+        - localhost
+        - '9092'
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: metrics_collector
+    simulate:
+      behaviors: []
+      hostname: metrics.internal.realtimeplatform.internal
+      issues: []
+      role: Collects and aggregates metrics from services
+      secrets: []
+      services: []
+  pgadmin:
+    deploy:
+      depends_on:
+      - clickhouse
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@realtimeplatform.internal
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:latest
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: web
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.data.realtimeplatform.internal
+      issues: []
+      role: Database administration interface for ClickHouse
+      secrets: []
+      services: []
+  prometheus:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9090/-/healthy
+        timeout: 10s
+      image: prom/prometheus:latest
+      ports:
+      - 9090
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: prometheus
+    simulate:
+      behaviors: []
+      hostname: prometheus.internal.realtimeplatform.internal
+      issues: []
+      role: Monitoring and alerting toolkit
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - internal_api
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: traefik:v2.10
+      ports:
+      - 80
+      volumes: []
+      zone: api_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy.api.realtimeplatform.internal
+      issues: []
+      role: Handles routing and load balancing for APIs
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - consul
+        - members
+        timeout: 10s
+      image: consul:1.14
+      ports:
+      - 8500
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery.internal.realtimeplatform.internal
+      issues: []
+      role: Service discovery and configuration management
+      secrets: []
+      services: []
+  stream_processor:
+    deploy:
+      depends_on:
+      - kafka_broker
+      - clickhouse
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - clickhouse-client
+        - --query
+        - SELECT 1
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: internal_zone
+    kind: runtime
+    name: stream_processor
+    simulate:
+      behaviors: []
+      hostname: streamproc01.internal.realtimeplatform.internal
+      issues: []
+      role: Processes streaming data from Kafka
+      secrets: []
+      services: []
+  weak_credential_db:
+    deploy:
+      depends_on: []
+      env:
+      - MYSQL_ROOT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mysql:8.0
+      ports:
+      - 3306
+      - 33060
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: weak_credential_db
+    simulate:
+      behaviors: []
+      hostname: weakcreds.data.realtimeplatform.internal
+      issues: []
+      role: Database with intentionally weak credentials
+      secrets: []
+      services: []
+  zookeeper:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 2181 || (echo > /dev/tcp/localhost/2181) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: zookeeper:3.8
+      ports:
+      - 2181
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: zookeeper
+    simulate:
+      behaviors: []
+      hostname: zookeeper01.internal.realtimeplatform.internal
+      issues: []
+      role: Coordination service for Kafka cluster
+      secrets: []
+      services: []
+zones:
+  api_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: api_zone
+    name: api_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  internal_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: internal_zone
+    name: internal_zone

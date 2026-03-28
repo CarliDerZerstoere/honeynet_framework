@@ -1,0 +1,1287 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "internal_developer_platform_internal_zone": {
+        "name": "internal_developer_platform_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "internal_developer_platform_build_zone": {
+        "name": "internal_developer_platform_build_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "internal_developer_platform_data_zone": {
+        "name": "internal_developer_platform_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "internal_developer_platform_honeynet_backbone": {
+        "name": "internal_developer_platform_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_gitea": {
+        "name": "gitea/gitea@sha256:f846d26a4fc389c5806a580a765e00bfdd1fd181e6f2060da98ea2669d914472",
+        "keep_locally": true
+      },
+      "hn_jenkins_runner": {
+        "name": "jenkins/jenkins@sha256:c4098086090ca98491d4bf66182f5e3b015a8232f2acf2df209a212a5801aa8e",
+        "keep_locally": true
+      },
+      "hn_container_registry": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_artifact_store": {
+        "name": "influxdb@sha256:5355c90249dac331bbcd1fdf3c31c7782400cd0ec5225145fc50b9aa026e9342",
+        "keep_locally": true
+      },
+      "hn_ci_database": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_prometheus": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      },
+      "hn_grafana": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_nginx_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_alert_manager": {
+        "name": "prom/alertmanager@sha256:361db356b33041437517f1cd298462055580585f26555c317df1a3caf2868552",
+        "keep_locally": true
+      },
+      "hn_backup_service": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_admin_ui": {
+        "name": "portainer/portainer-ce@sha256:1ae8e65d50ca5498cb2c33e617495a1e3ef245b0d2392b4a44c70ae09b822891",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "jaegertracing/all-in-one@sha256:7885400a153ac908d8bfbf72c27e3389dbab1942a35dd0ce3228611dc48cbf9f",
+        "keep_locally": true
+      },
+      "hn_load_balancer": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_ci_agent": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_metrics_collector": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      },
+      "hn_dashboard_service": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_postgres_admin": {
+        "name": "portainer/portainer-ce@sha256:1ae8e65d50ca5498cb2c33e617495a1e3ef245b0d2392b4a44c70ae09b822891",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_cache_service": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_ci_scheduler": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      },
+      "hn_build_cache": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_security_scanner": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_identity_service": {
+        "name": "neo4j@sha256:d9e2fb1ba398536e50d22ebc3d5d585baa086c1c0cf8e5b96bdc9e11e87e002a",
+        "keep_locally": true
+      },
+      "hn_coordination_service": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_config_management": {
+        "name": "portainer/portainer-ce@sha256:1ae8e65d50ca5498cb2c33e617495a1e3ef245b0d2392b4a44c70ae09b822891",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d243a4bcc02d2ee6b447c601692813531d2d0fbca18b583d9f7f9658da835d81",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_gitea": {
+        "name": "hn_gitea",
+        "image": "${docker_image.hn_gitea.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "gitea"
+            ]
+          },
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "gitea"
+            ]
+          }
+        ],
+        "hostname": "gitea.internal_developer_platform.internal",
+        "env": [
+          "GITEA__database__DB_TYPE=sqlite3",
+          "GITEA__database__PATH=data/gitea.db",
+          "GITEA__security__INSTALL_LOCK=true",
+          "GITEA__security__SECRET_KEY=weaksecretkey"
+        ],
+        "depends_on": [
+          "docker_container.hn_ci_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_jenkins_runner": {
+        "name": "hn_jenkins_runner",
+        "image": "${docker_image.hn_jenkins_runner.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_build_zone.name}",
+            "aliases": [
+              "jenkins_runner"
+            ]
+          },
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "jenkins_runner"
+            ]
+          },
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "jenkins_runner"
+            ]
+          }
+        ],
+        "hostname": "jenkins.build.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_gitea",
+          "docker_container.hn_container_registry",
+          "docker_container.hn_ci_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080/login || wget -qO- http://localhost:8080/login || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_container_registry": {
+        "name": "hn_container_registry",
+        "image": "${docker_image.hn_container_registry.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "container_registry"
+            ]
+          }
+        ],
+        "hostname": "registry.internal_developer_platform.internal",
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_artifact_store": {
+        "name": "hn_artifact_store",
+        "image": "${docker_image.hn_artifact_store.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "artifact_store"
+            ]
+          }
+        ],
+        "hostname": "artifacts.data.internal_developer_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8086/health || wget -qO- http://localhost:8086/health || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_ci_database": {
+        "name": "hn_ci_database",
+        "image": "${docker_image.hn_ci_database.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "ci_database"
+            ]
+          }
+        ],
+        "hostname": "db.data.internal_developer_platform.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123",
+          "POSTGRES_USER=admin"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "admin"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus": {
+        "name": "hn_prometheus",
+        "image": "${docker_image.hn_prometheus.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "prometheus"
+            ]
+          }
+        ],
+        "hostname": "prometheus.internal_developer_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:9090/metrics"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana": {
+        "name": "hn_grafana",
+        "image": "${docker_image.hn_grafana.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "grafana"
+            ]
+          }
+        ],
+        "hostname": "grafana.internal_developer_platform.internal",
+        "env": [
+          "GF_SECURITY_ADMIN_USER=admin",
+          "GF_SECURITY_ADMIN_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_nginx_proxy": {
+        "name": "hn_nginx_proxy",
+        "image": "${docker_image.hn_nginx_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "nginx_proxy"
+            ]
+          },
+          {
+            "name": "${docker_network.internal_developer_platform_build_zone.name}",
+            "aliases": [
+              "nginx_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_gitea",
+          "docker_container.hn_jenkins_runner",
+          "docker_container.hn_grafana"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logs.internal_developer_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alert_manager": {
+        "name": "hn_alert_manager",
+        "image": "${docker_image.hn_alert_manager.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "alert_manager"
+            ]
+          }
+        ],
+        "hostname": "alerts.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_service": {
+        "name": "hn_backup_service",
+        "image": "${docker_image.hn_backup_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "backup_service"
+            ]
+          }
+        ],
+        "hostname": "backup.data.internal_developer_platform.internal",
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_ci_database",
+          "docker_container.hn_artifact_store"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_ui": {
+        "name": "hn_admin_ui",
+        "image": "${docker_image.hn_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "admin_ui"
+            ]
+          },
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "admin_ui"
+            ]
+          }
+        ],
+        "hostname": "admin.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_ci_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9000/ || wget -qO- http://localhost:9000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "discovery.internal_developer_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:16686 || wget -qO- http://localhost:16686 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_load_balancer": {
+        "name": "hn_load_balancer",
+        "image": "${docker_image.hn_load_balancer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "load_balancer"
+            ]
+          }
+        ],
+        "hostname": "lb.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_nginx_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_ci_agent": {
+        "name": "hn_ci_agent",
+        "image": "${docker_image.hn_ci_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_build_zone.name}",
+            "aliases": [
+              "ci_agent"
+            ]
+          }
+        ],
+        "hostname": "agent.build.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_jenkins_runner"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_metrics_collector": {
+        "name": "hn_metrics_collector",
+        "image": "${docker_image.hn_metrics_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "metrics_collector"
+            ]
+          }
+        ],
+        "hostname": "metrics.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_dashboard_service": {
+        "name": "hn_dashboard_service",
+        "image": "${docker_image.hn_dashboard_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "dashboard_service"
+            ]
+          }
+        ],
+        "hostname": "dashboard.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_grafana"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_nginx_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_postgres_admin": {
+        "name": "hn_postgres_admin",
+        "image": "${docker_image.hn_postgres_admin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "postgres_admin"
+            ]
+          },
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "postgres_admin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_ci_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "files.data.internal_developer_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_cache_service": {
+        "name": "hn_cache_service",
+        "image": "${docker_image.hn_cache_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "cache_service"
+            ]
+          }
+        ],
+        "hostname": "cache.internal_developer_platform.internal",
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_ci_scheduler": {
+        "name": "hn_ci_scheduler",
+        "image": "${docker_image.hn_ci_scheduler.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_build_zone.name}",
+            "aliases": [
+              "ci_scheduler"
+            ]
+          }
+        ],
+        "hostname": "scheduler.build.internal_developer_platform.internal",
+        "depends_on": [
+          "docker_container.hn_jenkins_runner"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_build_cache": {
+        "name": "hn_build_cache",
+        "image": "${docker_image.hn_build_cache.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_build_zone.name}",
+            "aliases": [
+              "build_cache"
+            ]
+          }
+        ],
+        "hostname": "buildcache.build.internal_developer_platform.internal",
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_security_scanner": {
+        "name": "hn_security_scanner",
+        "image": "${docker_image.hn_security_scanner.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "security_scanner"
+            ]
+          }
+        ],
+        "hostname": "scanner.internal_developer_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_identity_service": {
+        "name": "hn_identity_service",
+        "image": "${docker_image.hn_identity_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "identity_service"
+            ]
+          }
+        ],
+        "hostname": "identity.internal_developer_platform.internal",
+        "env": [
+          "NEO4J_AUTH=neo4j/weakpassword"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "cypher-shell",
+              "-u",
+              "neo4j",
+              "-p",
+              "admin123",
+              "RETURN 1"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_coordination_service": {
+        "name": "hn_coordination_service",
+        "image": "${docker_image.hn_coordination_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "coordination_service"
+            ]
+          }
+        ],
+        "hostname": "coordination.internal_developer_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_config_management": {
+        "name": "hn_config_management",
+        "image": "${docker_image.hn_config_management.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_internal_zone.name}",
+            "aliases": [
+              "config_management"
+            ]
+          }
+        ],
+        "hostname": "config.internal_developer_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.internal_developer_platform_data_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.data.internal_developer_platform.internal",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@example.com",
+          "PGADMIN_DEFAULT_PASSWORD=pgadmin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_ci_database"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "internal_developer_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

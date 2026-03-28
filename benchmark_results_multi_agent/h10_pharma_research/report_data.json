@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "generated_at_utc": "2026-03-28T15:22:54.367013+00:00",
+  "total_runs": 1,
+  "runs": [
+    {
+      "run_id": "27eaccada21d46e582943ce4974ca3e1",
+      "recorded_at_utc": "2026-03-28T15:22:54.367001+00:00",
+      "failure_stage": "world_model_validation",
+      "error_class": "llm_schema_error",
+      "stage_durations": {
+        "extraction": 86.992
+      },
+      "repair_actions": [],
+      "tofu_version": "OpenTofu v1.11.5",
+      "sources": {
+        "qa_report": {
+          "mode": "absent",
+          "run_id_match": false
+        },
+        "validation_report": {
+          "mode": "inline",
+          "run_id_match": true
+        }
+      },
+      "deployability": {
+        "world_model_valid": false,
+        "config_validation_pass": false,
+        "plan_success": false,
+        "deploy_success": false,
+        "runtime_verification_success": false,
+        "health_check_rate": null,
+        "container_start_rate": null,
+        "expected_containers": 0,
+        "planned_containers": 35,
+        "dropped_containers": 0,
+        "running_containers": 0,
+        "health_checks_total": 0,
+        "health_checks_passed": 0,
+        "health_check_status": "not_run",
+        "container_health_status": "not_run",
+        "health_check_rate_by_type": {}
+      },
+      "scenario_fit": {
+        "zone_count": 5,
+        "system_count": 35,
+        "model_dep_rate": 0.0,
+        "image_check_rate": 0.0,
+        "planned_service_coverage": 0.0,
+        "running_service_coverage": 0.0,
+        "planned_zone_coverage": 0.0,
+        "running_zone_coverage": 0.0,
+        "planned_dep_coverage": 0.0,
+        "running_dep_coverage": 0.0,
+        "placement_violations": 0,
+        "benchmark_pass": null,
+        "benchmark_status": "not_configured",
+        "benchmark_id": "",
+        "benchmark_ref": "",
+        "scenario_fit_score": 0.0
+      },
+      "validation_summary": {
+        "error_count": 1,
+        "warning_count": 0
+      },
+      "qa_summary": {
+        "checks_run": 0,
+        "checks_passed": 0,
+        "checks_failed": 0,
+        "pass_rate": null,
+        "derived_from": "metrics_only"
+      },
+      "pipeline_kpis": {
+        "blocked_before_deploy": true,
+        "deploy_eligible": false
+      },
+      "errors": [
+        "REF_DEPENDS_ON: System 'lims_api' depends on undefined system 'identity_service'"
+      ]
+    }
+  ]
+}

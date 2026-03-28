@@ -1,0 +1,61 @@
+{
+  "benchmark_id": "e04_monitoring_stack",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 2,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.8,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "prometheus": [
+        "prometheus_server"
+      ],
+      "grafana": [
+        "grafana_dashboard",
+        "loki_logging_agent"
+      ],
+      "alertmanager": [
+        "alerting_service",
+        "alertmanager_service"
+      ],
+      "log_aggregator": [
+        "loki_logging_agent"
+      ]
+    },
+    "matched_zones": {
+      "ops_zone": [
+        "database_zone",
+        "logging_zone",
+        "ops_zone",
+        "security_zone"
+      ],
+      "logging_zone": [
+        "database_zone",
+        "logging_zone",
+        "ops_zone",
+        "security_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 2,
+      "total": 2
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "prometheus",
+        "zone_id": "ops_zone",
+        "system": "prometheus_server",
+        "deployed_zone": "logging_zone"
+      },
+      {
+        "service_id": "log_aggregator",
+        "zone_id": "ops_zone",
+        "system": "loki_logging_agent",
+        "deployed_zone": "logging_zone"
+      }
+    ]
+  }
+}

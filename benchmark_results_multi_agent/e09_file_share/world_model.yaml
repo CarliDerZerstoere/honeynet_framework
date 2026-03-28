@@ -1,0 +1,557 @@
+organization:
+  business_units: []
+  name: corporate_file_sharing
+  regions: []
+  type: ''
+secrets:
+  admin_interface_password:
+    name: admin_interface_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  backup_access_key:
+    name: backup_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  backup_secret_key:
+    name: backup_secret_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  ldap_admin_password:
+    name: ldap_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_interface:
+    deploy:
+      depends_on:
+      - nextcloud_backend
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: backend_zone
+    kind: infra
+    name: admin_interface
+    simulate:
+      behaviors: []
+      hostname: admin-interface.backend.corporatefilesharing.internal
+      issues: []
+      role: Admin interface for database management
+      secrets:
+      - admin_interface_password
+      services: []
+  backup_server:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on:
+      - nextcloud_backend
+      env:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mc
+        - alias
+        - set
+        - myminio
+        - http://localhost:9000
+        - admin
+        - admin123
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: backend_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup-server.backend.corporatefilesharing.internal
+      issues: []
+      role: Backup server for data redundancy
+      secrets:
+      - backup_access_key
+      - backup_secret_key
+      services: []
+  bait_admin_panel:
+    deploy:
+      depends_on: []
+      env:
+      - HTTPD_PATCHES=none
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: bait_admin_panel
+    simulate:
+      behaviors: []
+      hostname: bait-admin-panel.dmz.corporatefilesharing.internal
+      issues: []
+      role: Decoy admin panel for honeypot purposes
+      secrets: []
+      services: []
+  clamav_scanner:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 16686 || (echo > /dev/tcp/localhost/16686) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: jaegertracing/all-in-one:1.52
+      ports:
+      - 14250
+      - 14268
+      - 16686
+      - 4317
+      - 4318
+      - 5775
+      - 5778
+      - 6831
+      - 6832
+      - 9411
+      volumes: []
+      zone: backend_zone
+    kind: monitor
+    name: clamav_scanner
+    simulate:
+      behaviors: []
+      hostname: clamav-scanner.backend.corporatefilesharing.internal
+      issues: []
+      role: Antivirus scanner for file uploads
+      secrets: []
+      services: []
+  filebeat:
+    deploy:
+      command:
+      - /usr/bin/tini
+      - --
+      - /usr/local/bin/docker-entrypoint
+      - -environment
+      - container
+      depends_on:
+      - log_collector
+      env:
+      - ELASTIC_CONTAINER=true
+      - GODEBUG=madvdontneed=1
+      - LIBBEAT_MONITORING_CGROUPS_HIERARCHY_OVERRIDE=/
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: docker.elastic.co/beats/filebeat:7.15.2
+      ports: []
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: filebeat
+    simulate:
+      behaviors: []
+      hostname: filebeat.monitoring.corporatefilesharing.internal
+      issues: []
+      role: Log shipper for forwarding logs to log collector
+      secrets: []
+      services: []
+  grafana:
+    deploy:
+      depends_on:
+      - prometheus
+      env:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:latest
+      ports:
+      - 3000
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.monitoring.corporatefilesharing.internal
+      issues: []
+      role: Grafana dashboard for visualizing metrics
+      secrets: []
+      services: []
+  honeypot_file_server:
+    deploy:
+      depends_on:
+      - ldap_server
+      - clamav_scanner
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: backend_zone
+    kind: storage
+    name: honeypot_file_server
+    simulate:
+      behaviors: []
+      hostname: honeypot-file-server.backend.corporatefilesharing.internal
+      issues: []
+      role: Decoy file server for honeypot purposes
+      secrets: []
+      services: []
+  ldap_server:
+    deploy:
+      depends_on: []
+      env:
+      - LDAP_ADMIN_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: backend_zone
+    kind: identity
+    name: ldap_server
+    simulate:
+      behaviors: []
+      hostname: ldap.backend.corporatefilesharing.internal
+      issues: []
+      role: LDAP server for user authentication
+      secrets:
+      - ldap_admin_password
+      services: []
+  load_balancer:
+    deploy:
+      depends_on:
+      - reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      - 443
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: load-balancer.dmz.corporatefilesharing.internal
+      issues: []
+      role: Load balancer for distributing web traffic
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:latest
+      ports:
+      - 24224
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: log-collector.monitoring.corporatefilesharing.internal
+      issues: []
+      role: Log collector for aggregating system logs
+      secrets: []
+      services: []
+  monitoring_agent:
+    deploy:
+      depends_on:
+      - prometheus
+      env:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:latest
+      ports:
+      - 3000
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: monitoring_agent
+    simulate:
+      behaviors: []
+      hostname: monitoring-agent.monitoring.corporatefilesharing.internal
+      issues: []
+      role: Monitoring agent for system metrics
+      secrets: []
+      services: []
+  nextcloud_backend:
+    deploy:
+      depends_on:
+      - ldap_server
+      - clamav_scanner
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: backend_zone
+    kind: storage
+    name: nextcloud_backend
+    simulate:
+      behaviors: []
+      hostname: nextcloud-db.backend.corporatefilesharing.internal
+      issues: []
+      role: PostgreSQL database for Nextcloud
+      secrets:
+      - db_admin_password
+      services: []
+  nextcloud_frontend:
+    deploy:
+      depends_on:
+      - nextcloud_backend
+      - ldap_server
+      - clamav_scanner
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: nextcloud_frontend
+    simulate:
+      behaviors: []
+      hostname: nextcloud-web.dmz.corporatefilesharing.internal
+      issues: []
+      role: Nextcloud web frontend for file sharing
+      secrets: []
+      services: []
+  pgadmin:
+    deploy:
+      depends_on:
+      - nextcloud_backend
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@corporatefilesharing.internal
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:latest
+      ports:
+      - 80
+      volumes: []
+      zone: backend_zone
+    kind: infra
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.backend.corporatefilesharing.internal
+      issues: []
+      role: Database administration interface for PostgreSQL
+      secrets: []
+      services: []
+  prometheus:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true
+        timeout: 10s
+      image: prom/prometheus:latest
+      ports:
+      - 9090
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: prometheus
+    simulate:
+      behaviors: []
+      hostname: prometheus.monitoring.corporatefilesharing.internal
+      issues: []
+      role: Prometheus server for metrics collection
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - nextcloud_frontend
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      - 443
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: reverse-proxy.dmz.corporatefilesharing.internal
+      issues: []
+      role: Reverse proxy for routing external traffic
+      secrets: []
+      services: []
+zones:
+  backend_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: backend_zone
+    name: backend_zone
+  dmz_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: dmz_zone
+    name: dmz_zone
+  monitoring_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: monitoring_zone
+    name: monitoring_zone

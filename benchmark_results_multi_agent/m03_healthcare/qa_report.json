@@ -1,0 +1,288 @@
+{
+  "checks_run": 31,
+  "checks_passed": 31,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_patient_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 145.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_patient_portal:1026",
+      "passed": true,
+      "actual": "TCP connect to localhost:1026 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2172.0,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_patient_portal:1026",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 729.8,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_fhir_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 136.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_fhir_service:hn_patient_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 132.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_patient_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 128.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_audit_logging_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 125.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 121.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1028",
+      "passed": true,
+      "actual": "TCP connect to localhost:1028 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2147.4,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1028",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 364.5,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_reverse_proxy:hn_patient_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 111.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_load_balancer",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 105.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_load_balancer:1029",
+      "passed": true,
+      "actual": "TCP connect to localhost:1029 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2129.3,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_load_balancer:1029",
+      "passed": true,
+      "actual": "HTTP 404",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 345.6,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_load_balancer:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 91.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_monitoring_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 86.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 80.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_admin_panel:hn_patient_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 75.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_backup_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 70.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_backup_service:hn_patient_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 66.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 60.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_log_collector:hn_audit_logging_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 56.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_api_gateway",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 51.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_api_gateway:hn_fhir_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 46.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_service_discovery",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 41.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_honeypot_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 36.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_honeypot_admin_panel:1030",
+      "passed": true,
+      "actual": "TCP connect to localhost:1030 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2061.4,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_honeypot_admin_panel:1030",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 288.6,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_fake_backup_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 36.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_pgadmin",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 33.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_pgadmin:hn_patient_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 28.4,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "82ea6838db4b4d44ba56c2989692b1cf"
+}

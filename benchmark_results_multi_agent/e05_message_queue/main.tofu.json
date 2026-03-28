@@ -1,0 +1,346 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "event_driven_platform_internal_zone": {
+        "name": "event_driven_platform_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "event_driven_platform_app_zone": {
+        "name": "event_driven_platform_app_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "event_driven_platform_honeynet_backbone": {
+        "name": "event_driven_platform_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_rabbitmq_broker": {
+        "name": "rabbitmq@sha256:c601bbed8c3138c74d13439d1db867c106ec76029c3c9e458c11e18c3de25b2e",
+        "keep_locally": true
+      },
+      "hn_producer_api": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_consumer_worker": {
+        "name": "eclipse-mosquitto@sha256:6852da90a65dfff7aa3a1c8b249e92bb83c17ea8bbcce56bedff8707332a1a29",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_monitoring_dashboard": {
+        "name": "influxdb@sha256:5355c90249dac331bbcd1fdf3c31c7782400cd0ec5225145fc50b9aa026e9342",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d914d35dc1a5cf86f65c29d44451c05b73e283529e19ffcc25f45f939c579bd9",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_rabbitmq_broker": {
+        "name": "hn_rabbitmq_broker",
+        "image": "${docker_image.hn_rabbitmq_broker.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.event_driven_platform_internal_zone.name}",
+            "aliases": [
+              "rabbitmq_broker"
+            ]
+          }
+        ],
+        "hostname": "rabbitmq01.internal.eventdrivenplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "event_driven_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "rabbitmq-diagnostics",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_producer_api": {
+        "name": "hn_producer_api",
+        "image": "${docker_image.hn_producer_api.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.event_driven_platform_internal_zone.name}",
+            "aliases": [
+              "producer_api"
+            ]
+          }
+        ],
+        "hostname": "producer.api.eventdrivenplatform.app",
+        "depends_on": [
+          "docker_container.hn_rabbitmq_broker"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "event_driven_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_consumer_worker": {
+        "name": "hn_consumer_worker",
+        "image": "${docker_image.hn_consumer_worker.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.event_driven_platform_internal_zone.name}",
+            "aliases": [
+              "consumer_worker"
+            ]
+          }
+        ],
+        "hostname": "consumer.worker.internal.eventdrivenplatform.internal",
+        "depends_on": [
+          "docker_container.hn_rabbitmq_broker"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "event_driven_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 1883 || (echo > /dev/tcp/localhost/1883) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.event_driven_platform_app_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          },
+          {
+            "name": "${docker_network.event_driven_platform_internal_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy.eventdrivenplatform.app",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1024,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_producer_api"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "event_driven_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_dashboard": {
+        "name": "hn_monitoring_dashboard",
+        "image": "${docker_image.hn_monitoring_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.event_driven_platform_internal_zone.name}",
+            "aliases": [
+              "monitoring_dashboard"
+            ]
+          }
+        ],
+        "hostname": "monitoring.internal.eventdrivenplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "event_driven_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "influx",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.event_driven_platform_internal_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logs.internal.eventdrivenplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "event_driven_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.event_driven_platform_internal_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.internal.eventdrivenplatform.internal",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@eventdrivenplatform.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin"
+        ],
+        "depends_on": [
+          "docker_container.hn_rabbitmq_broker"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "event_driven_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

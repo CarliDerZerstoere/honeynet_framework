@@ -1,0 +1,152 @@
+{
+  "benchmark_id": "m04_devops_platform",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 12,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.5,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "git_hosting": [
+        "gitea"
+      ],
+      "ci_runner": [
+        "cache_service",
+        "ci_agent",
+        "ci_scheduler",
+        "config_management",
+        "coordination_service",
+        "jenkins_runner",
+        "load_balancer",
+        "security_scanner",
+        "service_discovery"
+      ],
+      "container_registry": [
+        "artifact_store",
+        "backup_service",
+        "build_cache",
+        "cache_service",
+        "config_management",
+        "container_registry",
+        "coordination_service",
+        "file_share",
+        "load_balancer",
+        "security_scanner",
+        "service_discovery"
+      ],
+      "monitoring": [
+        "alert_manager",
+        "dashboard_service",
+        "grafana",
+        "log_collector",
+        "metrics_collector",
+        "prometheus"
+      ],
+      "artifact_store": [
+        "artifact_store",
+        "build_cache"
+      ],
+      "ci_database": [
+        "ci_database"
+      ]
+    },
+    "matched_zones": {
+      "internal_zone": [
+        "build_zone",
+        "data_zone",
+        "internal_zone"
+      ],
+      "build_zone": [
+        "build_zone",
+        "data_zone",
+        "internal_zone"
+      ],
+      "data_zone": [
+        "build_zone",
+        "data_zone",
+        "internal_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 4,
+      "total": 4
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "ci_database",
+        "zone_id": "build_zone",
+        "system": "ci_database",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "backup_service",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "file_share",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "service_discovery",
+        "deployed_zone": "internal_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "build_cache",
+        "deployed_zone": "build_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "security_scanner",
+        "deployed_zone": "internal_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "config_management",
+        "deployed_zone": "internal_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "load_balancer",
+        "deployed_zone": "internal_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "container_registry",
+        "deployed_zone": "internal_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "cache_service",
+        "deployed_zone": "internal_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "artifact_store",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "container_registry",
+        "zone_id": "build_zone",
+        "system": "coordination_service",
+        "deployed_zone": "internal_zone"
+      }
+    ]
+  }
+}

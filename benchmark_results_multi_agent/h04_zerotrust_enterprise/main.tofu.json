@@ -1,0 +1,270 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "zero_trust_enterprise_dmz_zone": {
+        "name": "zero_trust_enterprise_dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "zero_trust_enterprise_secrets_zone": {
+        "name": "zero_trust_enterprise_secrets_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "zero_trust_enterprise_data_zone": {
+        "name": "zero_trust_enterprise_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "zero_trust_enterprise_security_zone": {
+        "name": "zero_trust_enterprise_security_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "zero_trust_enterprise_service_zone_a": {
+        "name": "zero_trust_enterprise_service_zone_a",
+        "driver": "bridge",
+        "internal": true
+      },
+      "zero_trust_enterprise_service_zone_b": {
+        "name": "zero_trust_enterprise_service_zone_b",
+        "driver": "bridge",
+        "internal": true
+      },
+      "zero_trust_enterprise_honeynet_backbone": {
+        "name": "zero_trust_enterprise_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_vault_audit_log_consumer": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_postgresql_primary": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_siem_audit_log_aggregator": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_grafana": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_honeytoken_vault_root": {
+        "name": "hashicorp/vault@sha256:0450896c43b13879b19442b204ce29dd19b5a10fce43d5cf38af17da20f56f4d",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_vault_audit_log_consumer": {
+        "name": "hn_vault_audit_log_consumer",
+        "image": "${docker_image.hn_vault_audit_log_consumer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.zero_trust_enterprise_security_zone.name}",
+            "aliases": [
+              "vault_audit_log_consumer"
+            ]
+          }
+        ],
+        "hostname": "vault-audit.security.zero_trust_enterprise.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "zero_trust_enterprise"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_postgresql_primary": {
+        "name": "hn_postgresql_primary",
+        "image": "${docker_image.hn_postgresql_primary.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.zero_trust_enterprise_data_zone.name}",
+            "aliases": [
+              "postgresql_primary"
+            ]
+          }
+        ],
+        "hostname": "db-primary.data.zero_trust_enterprise.internal",
+        "env": [
+          "POSTGRES_PASSWORD=weakpassword"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "zero_trust_enterprise"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_siem_audit_log_aggregator": {
+        "name": "hn_siem_audit_log_aggregator",
+        "image": "${docker_image.hn_siem_audit_log_aggregator.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.zero_trust_enterprise_security_zone.name}",
+            "aliases": [
+              "siem_audit_log_aggregator"
+            ]
+          }
+        ],
+        "hostname": "siem-aggregator.security.zero_trust_enterprise.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "zero_trust_enterprise"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana": {
+        "name": "hn_grafana",
+        "image": "${docker_image.hn_grafana.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.zero_trust_enterprise_security_zone.name}",
+            "aliases": [
+              "grafana"
+            ]
+          }
+        ],
+        "hostname": "grafana.security.zero_trust_enterprise.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "zero_trust_enterprise"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3000 || (echo > /dev/tcp/localhost/3000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeytoken_vault_root": {
+        "name": "hn_honeytoken_vault_root",
+        "image": "${docker_image.hn_honeytoken_vault_root.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.zero_trust_enterprise_secrets_zone.name}",
+            "aliases": [
+              "honeytoken_vault_root"
+            ]
+          }
+        ],
+        "hostname": "honeytoken-vault.secrets.zero_trust_enterprise.internal",
+        "env": [
+          "VERSION=1.15.6"
+        ],
+        "command": [
+          "server",
+          "-dev"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "zero_trust_enterprise"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "vault",
+              "status"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

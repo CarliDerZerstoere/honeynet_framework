@@ -1,0 +1,757 @@
+{
+  "zones": {
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "internal_zone": {
+      "name": "internal_zone",
+      "deploy": {
+        "network_name": "internal_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "dmz_zone": {
+      "name": "dmz_zone",
+      "deploy": {
+        "network_name": "dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    }
+  },
+  "systems": {
+    "webmail_portal": {
+      "name": "webmail_portal",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "mail_server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "webmail.corporate_email_infrastructure.com",
+        "role": "Public-facing webmail portal",
+        "issues": [],
+        "secrets": [
+          "webmail_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "mail_server": {
+      "name": "mail_server",
+      "kind": "runtime",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ldap_directory",
+          "file_storage"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "mail.internal.corporate_email_infrastructure.com",
+        "role": "Internal SMTP/IMAP mail server",
+        "issues": [],
+        "secrets": [
+          "mail_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "smtp",
+          "imap"
+        ]
+      }
+    },
+    "ldap_directory": {
+      "name": "ldap_directory",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ldap.internal.corporate_email_infrastructure.com",
+        "role": "LDAP directory for authentication",
+        "issues": [],
+        "secrets": [
+          "ldap_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "ldap"
+        ]
+      }
+    },
+    "file_storage": {
+      "name": "file_storage",
+      "kind": "storage",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "internal_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [
+          "CLICKHOUSE_PASSWORD=weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "filestore.internal.corporate_email_infrastructure.com",
+        "role": "File share for email attachments",
+        "issues": [],
+        "secrets": [
+          "file_storage_access_key"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "antispam_filter": {
+      "name": "antispam_filter",
+      "kind": "runtime",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "internal_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [
+          "CLICKHOUSE_PASSWORD=weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "mail_server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "antispam.internal.corporate_email_infrastructure.com",
+        "role": "Antispam filter for incoming emails",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "calendar_service": {
+      "name": "calendar_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ldap_directory"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "calendar.internal.corporate_email_infrastructure.com",
+        "role": "Shared calendar service",
+        "issues": [],
+        "secrets": [
+          "calendar_api_key"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "dmz_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "webmail_portal"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy.dmz.corporate_email_infrastructure.com",
+        "role": "Reverse proxy for external access",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "infra",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "dmz_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "reverse_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "lb.dmz.corporate_email_infrastructure.com",
+        "role": "Load balancer for distributing traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "monitoring_service": {
+      "name": "monitoring_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "vaultwarden/server:latest",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "I_REALLY_WANT_VOLATILE_STORAGE=true"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "mail_server",
+          "webmail_portal"
+        ],
+        "command": [
+          "/start.sh"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitor.internal.corporate_email_infrastructure.com",
+        "role": "Monitoring service for infrastructure",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "logging_service": {
+      "name": "logging_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "internal_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [
+          "CLICKHOUSE_PASSWORD=weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "mail_server",
+          "webmail_portal"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logs.internal.corporate_email_infrastructure.com",
+        "role": "Centralized logging service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "admin_panel": {
+      "name": "admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "mail_server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin.corporate_email_infrastructure.com",
+        "role": "Admin panel for managing email infrastructure",
+        "issues": [],
+        "secrets": [
+          "admin_panel_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "traefik:v2.10",
+        "zone": "dmz_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "calendar_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api.dmz.corporate_email_infrastructure.com",
+        "role": "API gateway for external services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "honeypot_ldap_directory": {
+      "name": "honeypot_ldap_directory",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot.ldap.internal.corporate_email_infrastructure.com",
+        "role": "Honeypot LDAP directory",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "ldap"
+        ]
+      }
+    },
+    "honeypot_file_storage": {
+      "name": "honeypot_file_storage",
+      "kind": "storage",
+      "deploy": {
+        "image": "portainer/portainer-ce:latest",
+        "zone": "internal_zone",
+        "ports": [
+          8000,
+          9000,
+          9443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot.filestore.internal.corporate_email_infrastructure.com",
+        "role": "Honeypot file storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "honeypot_admin_panel": {
+      "name": "honeypot_admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot.admin.corporate_email_infrastructure.com",
+        "role": "Honeypot admin panel",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "unknown",
+      "deploy": {
+        "image": "dpage/pgadmin4:latest",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@corporate.com",
+          "PGADMIN_DEFAULT_PASSWORD=pgadmin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "file_storage"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.internal.corporate_email_infrastructure.com",
+        "role": "Admin UI for file storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana": {
+      "name": "grafana",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:latest",
+        "zone": "internal_zone",
+        "ports": [
+          3000
+        ],
+        "env": [
+          "GF_SECURITY_ADMIN_PASSWORD=grafana123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "monitoring_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.internal.corporate_email_infrastructure.com",
+        "role": "Monitoring dashboard for infrastructure",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "corporate_email_infrastructure",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "webmail_admin_password": {
+      "name": "webmail_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "mail_admin_password": {
+      "name": "mail_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "ldap_admin_password": {
+      "name": "ldap_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "file_storage_access_key": {
+      "name": "file_storage_access_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "calendar_api_key": {
+      "name": "calendar_api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_panel_password": {
+      "name": "admin_panel_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_server_password": {
+      "name": "backup_server_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "schema_version": 3,
+  "recorded_at_utc": "2026-03-28T14:30:39.345577+00:00",
+  "envelope": {
+    "metrics_schema_version": 3
+  },
+  "observability": {
+    "run_id": "6a240ad197324392bb6f993a5172212e",
+    "work_dir": "C:\\Users\\nibbi\\workflow_analysis\\benchmark_results_multi_agent\\h05_iot_platform",
+    "tofu_version": "OpenTofu v1.11.5",
+    "started_at_utc": "2026-03-28T14:19:25.352197+00:00",
+    "failure_stage": "partial_completed",
+    "error_class": "",
+    "deploy_completed": true,
+    "repair_incident_count": 0,
+    "repair_actions": [],
+    "deterministic_dep_additions": [],
+    "deterministic_placement_fixes": [],
+    "stage_durations": {
+      "extraction": 42.25,
+      "validation": 0.006,
+      "image_resolution": 0.227,
+      "compilation": 0.279,
+      "render": 0.001,
+      "deploy": 113.704,
+      "runtime_verify": 233.878
+    },
+    "path_a": {
+      "diagnostics_collected": false,
+      "diagnostics_artifact": "",
+      "failing_resources_count": 0,
+      "docker_targets_count": 0,
+      "error_class": ""
+    }
+  },
+  "deployability": {
+    "world_model_valid": true,
+    "validation_first_pass_success": true,
+    "validation_repair_attempted": false,
+    "validation_repair_success": false,
+    "config_validation_pass": true,
+    "plan_success": true,
+    "deploy_success": false,
+    "deploy_first_attempt": false,
+    "deploy_retried": true,
+    "deploy_retry_count": 0,
+    "runtime_verification_success": true,
+    "health_check_rate": 1.0,
+    "container_start_rate": 1.0,
+    "expected_containers": 5,
+    "planned_containers": 17,
+    "dropped_containers": 7,
+    "running_containers": 5,
+    "health_checks_total": 8,
+    "health_checks_passed": 8,
+    "health_check_status": "measured",
+    "container_health_status": "measured",
+    "health_check_rate_by_type": {
+      "container_running": 1.0,
+      "depends_on_running": 1.0
+    }
+  },
+  "scenario_fit": {
+    "zone_count": 6,
+    "system_count": 17,
+    "model_dep_rate": 1.0,
+    "image_check_rate": 1.0,
+    "planned_service_coverage": 1.0,
+    "running_service_coverage": 0.3333,
+    "planned_zone_coverage": 1.0,
+    "running_zone_coverage": 1.0,
+    "planned_dep_coverage": 0.5,
+    "running_dep_coverage": 0.0,
+    "benchmark_dep_required": 6,
+    "placement_violations": 6,
+    "benchmark_pass": false,
+    "benchmark_status": "measured",
+    "benchmark_id": "h05_iot_platform",
+    "benchmark_ref": "benchmarks\\corpus_v1\\hard\\h05_iot_platform.yaml",
+    "scenario_fit_score": 0.3556
+  },
+  "pipeline_kpis": {
+    "blocked_before_deploy": false,
+    "deploy_eligible": true
+  },
+  "errors": []
+}

@@ -1,0 +1,52 @@
+{
+  "benchmark_id": "m06_streaming_platform",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 0.6666666666666666,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.8888888888888888,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "kafka_broker": [
+        "kafka_broker"
+      ],
+      "zookeeper": [
+        "zookeeper"
+      ],
+      "stream_processor": [
+        "stream_processor"
+      ],
+      "analytics_store": [
+        "clickhouse"
+      ],
+      "internal_api": [
+        "api_gateway",
+        "internal_api",
+        "reverse_proxy"
+      ],
+      "analytics_dashboard": [
+        "analytics_dashboard",
+        "grafana"
+      ]
+    },
+    "matched_zones": {
+      "internal_zone": [
+        "data_zone",
+        "internal_zone"
+      ],
+      "data_zone": [
+        "data_zone",
+        "internal_zone"
+      ],
+      "api_zone": []
+    },
+    "dependency_matches": {
+      "matched": 4,
+      "total": 4
+    },
+    "placement_violations_detail": []
+  }
+}

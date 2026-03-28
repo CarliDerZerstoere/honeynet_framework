@@ -1,0 +1,269 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "industrial_iot_platform_edge_zone": {
+        "name": "industrial_iot_platform_edge_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "industrial_iot_platform_ingestion_zone": {
+        "name": "industrial_iot_platform_ingestion_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "industrial_iot_platform_data_zone": {
+        "name": "industrial_iot_platform_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "industrial_iot_platform_application_zone": {
+        "name": "industrial_iot_platform_application_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "industrial_iot_platform_identity_zone": {
+        "name": "industrial_iot_platform_identity_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "industrial_iot_platform_ops_zone": {
+        "name": "industrial_iot_platform_ops_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "industrial_iot_platform_honeynet_backbone": {
+        "name": "industrial_iot_platform_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_kafka_cluster": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_influxdb": {
+        "name": "influxdb@sha256:5355c90249dac331bbcd1fdf3c31c7782400cd0ec5225145fc50b9aa026e9342",
+        "keep_locally": true
+      },
+      "hn_prometheus": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      },
+      "hn_grafana": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_filebeat": {
+        "name": "docker.elastic.co/beats/filebeat@sha256:b81bb050384b237cd18f9e6b656f9a7b5ba812610df7d56a7de5f597a4227536",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_kafka_cluster": {
+        "name": "hn_kafka_cluster",
+        "image": "${docker_image.hn_kafka_cluster.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_iot_platform_ingestion_zone.name}",
+            "aliases": [
+              "kafka_cluster"
+            ]
+          }
+        ],
+        "hostname": "kafka-cluster.ingestion.industrial-iot-platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_iot_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_influxdb": {
+        "name": "hn_influxdb",
+        "image": "${docker_image.hn_influxdb.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_iot_platform_data_zone.name}",
+            "aliases": [
+              "influxdb"
+            ]
+          }
+        ],
+        "hostname": "influxdb.data.industrial-iot-platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_iot_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "influx",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus": {
+        "name": "hn_prometheus",
+        "image": "${docker_image.hn_prometheus.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_iot_platform_ops_zone.name}",
+            "aliases": [
+              "prometheus"
+            ]
+          }
+        ],
+        "hostname": "prometheus.ops.industrial-iot-platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_iot_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:9090/-/healthy"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana": {
+        "name": "hn_grafana",
+        "image": "${docker_image.hn_grafana.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_iot_platform_ops_zone.name}",
+            "aliases": [
+              "grafana"
+            ]
+          }
+        ],
+        "hostname": "grafana.ops.industrial-iot-platform.internal",
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_iot_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:3000/api/health"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_filebeat": {
+        "name": "hn_filebeat",
+        "image": "${docker_image.hn_filebeat.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_iot_platform_ops_zone.name}",
+            "aliases": [
+              "filebeat"
+            ]
+          }
+        ],
+        "hostname": "filebeat.ops.industrial-iot-platform.internal",
+        "depends_on": [
+          "docker_container.hn_prometheus",
+          "docker_container.hn_grafana"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_iot_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

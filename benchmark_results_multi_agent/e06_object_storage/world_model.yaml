@@ -1,0 +1,559 @@
+organization:
+  business_units: []
+  name: corporate_data_lake
+  regions: []
+  type: ''
+secrets:
+  backup_service_access_key:
+    name: backup_service_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  ldap_admin_password:
+    name: ldap_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  metadata_db_root_password:
+    name: metadata_db_root_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  object_storage_admin_password:
+    name: object_storage_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  alerting_service:
+    deploy:
+      depends_on:
+      - monitoring_collector
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mongo
+        - --eval
+        - db.adminCommand('ping')
+        timeout: 10s
+      image: mongo:7.0
+      ports:
+      - 27017
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: alerting_service
+    simulate:
+      behaviors: []
+      hostname: alerting-service.monitoring.corporate_data_lake.internal
+      issues: []
+      role: Handles alerts based on monitoring data
+      secrets: []
+      services: []
+  api_gateway:
+    deploy:
+      depends_on:
+      - object_storage
+      - metadata_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      - 443
+      volumes: []
+      zone: app_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api-gateway.app.corporate_data_lake.internal
+      issues: []
+      role: Handles incoming API requests and routes them to appropriate services
+      secrets: []
+      services: []
+  backup_service:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on:
+      - object_storage
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_service
+    simulate:
+      behaviors: []
+      hostname: backup-service.data.corporate_data_lake.internal
+      issues: []
+      role: Handles backup operations for data storage
+      secrets:
+      - backup_service_access_key
+      services: []
+  bait_admin_panel:
+    deploy:
+      command:
+      - httpd-foreground
+      depends_on: []
+      env:
+      - HTTPD_PATCHES=
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: app_zone
+    kind: web
+    name: bait_admin_panel
+    simulate:
+      behaviors: []
+      hostname: bait-admin-panel.app.corporate_data_lake.internal
+      issues: []
+      role: Decoy admin panel to attract unauthorized access attempts
+      secrets: []
+      services: []
+  coordination_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: data_zone
+    kind: infra
+    name: coordination_service
+    simulate:
+      behaviors: []
+      hostname: coordination-service.data.corporate_data_lake.internal
+      issues: []
+      role: Coordinates distributed tasks and services
+      secrets: []
+      services: []
+  data_transform_service:
+    deploy:
+      command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/Caddyfile
+      - --adapter
+      - caddyfile
+      depends_on:
+      - object_storage
+      - metadata_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:2019/health
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 2019
+      - 443
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: runtime
+    name: data_transform_service
+    simulate:
+      behaviors: []
+      hostname: data-transform-service.data.corporate_data_lake.internal
+      issues: []
+      role: Processes and transforms data within the data lake
+      secrets: []
+      services: []
+  file_share:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - ldapsearch
+        - -x
+        - -H
+        - ldap://localhost:389
+        - -b
+        - dc=example,dc=org
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: file-share.data.corporate_data_lake.internal
+      issues: []
+      role: Provides shared file storage for internal services
+      secrets: []
+      services: []
+  identity_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: security_zone
+    kind: identity
+    name: identity_service
+    simulate:
+      behaviors: []
+      hostname: identity-service.security.corporate_data_lake.internal
+      issues: []
+      role: Manages user identities and authentication
+      secrets:
+      - ldap_admin_password
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: log-collector.monitoring.corporate_data_lake.internal
+      issues: []
+      role: Aggregates logs from various services for analysis
+      secrets: []
+      services: []
+  log_dashboard:
+    deploy:
+      depends_on:
+      - log_collector
+      env:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:latest
+      ports:
+      - 3000
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: log_dashboard
+    simulate:
+      behaviors: []
+      hostname: log-dashboard.monitoring.corporate_data_lake.internal
+      issues: []
+      role: Dashboard for visualizing log data
+      secrets: []
+      services: []
+  metadata_db:
+    deploy:
+      depends_on: []
+      env:
+      - MYSQL_ROOT_PASSWORD=admin123
+      - MYSQL_DATABASE=metadata
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mysql:8.0
+      ports:
+      - 3306
+      - 33060
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: metadata_db
+    simulate:
+      behaviors: []
+      hostname: metadata-db.data.corporate_data_lake.internal
+      issues: []
+      role: Stores metadata information for the data lake
+      secrets:
+      - metadata_db_root_password
+      services: []
+  monitoring_collector:
+    deploy:
+      depends_on:
+      - object_storage
+      - metadata_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: monitoring_collector
+    simulate:
+      behaviors: []
+      hostname: monitoring-collector.monitoring.corporate_data_lake.internal
+      issues: []
+      role: Collects monitoring data from various services
+      secrets: []
+      services: []
+  object_storage:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: object_storage
+    simulate:
+      behaviors: []
+      hostname: object-storage.data.corporate_data_lake.internal
+      issues: []
+      role: S3-compatible storage for internal data lake services
+      secrets:
+      - object_storage_admin_password
+      services: []
+  security_monitor:
+    deploy:
+      depends_on:
+      - identity_service
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 2019
+      - 443
+      - 80
+      volumes: []
+      zone: security_zone
+    kind: monitor
+    name: security_monitor
+    simulate:
+      behaviors: []
+      hostname: security-monitor.security.corporate_data_lake.internal
+      issues: []
+      role: Monitors security events and alerts
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: data_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: service-discovery.data.corporate_data_lake.internal
+      issues: []
+      role: Facilitates service discovery for internal services
+      secrets: []
+      services: []
+  web_frontend:
+    deploy:
+      depends_on:
+      - api_gateway
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: app_zone
+    kind: web
+    name: web_frontend
+    simulate:
+      behaviors: []
+      hostname: web-frontend.app.corporate_data_lake.internal
+      issues: []
+      role: Serves the main web application interface to users
+      secrets: []
+      services: []
+zones:
+  app_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: app_zone
+    name: app_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  monitoring_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: monitoring_zone
+    name: monitoring_zone
+  security_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: security_zone
+    name: security_zone

@@ -1,0 +1,1131 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "real_time_event_streaming_platform_internal_zone": {
+        "name": "real_time_event_streaming_platform_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "real_time_event_streaming_platform_data_zone": {
+        "name": "real_time_event_streaming_platform_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "real_time_event_streaming_platform_api_zone": {
+        "name": "real_time_event_streaming_platform_api_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "real_time_event_streaming_platform_honeynet_backbone": {
+        "name": "real_time_event_streaming_platform_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_zookeeper": {
+        "name": "zookeeper@sha256:1e748974c86de0d11d94309303a1e0b1fab529a35814137f71d22bb4b197b671",
+        "keep_locally": true
+      },
+      "hn_kafka_broker": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_stream_processor": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_clickhouse": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_internal_api": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_analytics_dashboard": {
+        "name": "matomo@sha256:788933d1e3eaa1da653ac69d7cdf7815b766f77e70eb7667f06cf955eae349c7",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "traefik@sha256:6341b98aec5ec8969b99e9730f4c5b22cca3103d42b6bbe4b7a3c910758fe565",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "drupal@sha256:42b3811155c952269b18766dfdb7f12457a7db21b197fc46fb595d7fc0b1f31d",
+        "keep_locally": true
+      },
+      "hn_prometheus": {
+        "name": "prom/prometheus@sha256:4a61322ac1103a0e3aea2a61ef1718422a48fa046441f299d71e660a3bc71ae9",
+        "keep_locally": true
+      },
+      "hn_grafana": {
+        "name": "grafana/grafana@sha256:e932bd6ed0e026595b08483cd0141e5103e1ab7ff8604839ff899b8dc54cabcb",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "fluent/fluentd@sha256:3b7d8d4b4064cbed7e7f90e63c1b769fe90a34a975508d79991c54a6b8ea22d4",
+        "keep_locally": true
+      },
+      "hn_admin_ui": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "httpd@sha256:331548c5249bdeced0f048bc2fb8c6b6427d2ec6508bed9c1fec6c57d0b27a60",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "consul@sha256:da6a5b7d071a84b3b150ce5a452e59e859e7d7c9d8ac141b80e65a2cb8f479c9",
+        "keep_locally": true
+      },
+      "hn_coordination_service": {
+        "name": "nats@sha256:5498ba57b9471840be3d15b033a4eec554d1c02fa6c2cc0ca2d888637f6c6e2f",
+        "keep_locally": true
+      },
+      "hn_alerting_service": {
+        "name": "kibana@sha256:18088be31fc33f8abcbee8b379299710d3e6d06df8a81368c5c35e906b6791a7",
+        "keep_locally": true
+      },
+      "hn_metrics_collector": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_bait_admin_panel": {
+        "name": "wordpress@sha256:8ae66efb09a2cc4f1ce44414c52b0ce4198c1f8ed338a6f51910bc09cd7d8bbb",
+        "keep_locally": true
+      },
+      "hn_weak_credential_db": {
+        "name": "mysql@sha256:64756cc92f707eb504496d774353990bcb0f6999ddf598b6ad188f2da66bd000",
+        "keep_locally": true
+      },
+      "hn_honeypot_service": {
+        "name": "httpd@sha256:331548c5249bdeced0f048bc2fb8c6b6427d2ec6508bed9c1fec6c57d0b27a60",
+        "keep_locally": true
+      },
+      "hn_fake_backup_server": {
+        "name": "mysql@sha256:64756cc92f707eb504496d774353990bcb0f6999ddf598b6ad188f2da66bd000",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d243a4bcc02d2ee6b447c601692813531d2d0fbca18b583d9f7f9658da835d81",
+        "keep_locally": true
+      },
+      "hn_filebeat": {
+        "name": "docker.elastic.co/beats/filebeat@sha256:d98f0d0a01b99e639a2c2bcb3021d87dd0c73f4c0852e9f81b4e7d3d85c1613e",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_zookeeper": {
+        "name": "hn_zookeeper",
+        "image": "${docker_image.hn_zookeeper.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "zookeeper"
+            ]
+          }
+        ],
+        "hostname": "zookeeper01.internal.realtimeplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 2181 || (echo > /dev/tcp/localhost/2181) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_kafka_broker": {
+        "name": "hn_kafka_broker",
+        "image": "${docker_image.hn_kafka_broker.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "kafka_broker"
+            ]
+          }
+        ],
+        "hostname": "kafka01.internal.realtimeplatform.internal",
+        "depends_on": [
+          "docker_container.hn_zookeeper"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "kafka-broker-api-versions",
+              "--bootstrap-server",
+              "localhost:9092"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_stream_processor": {
+        "name": "hn_stream_processor",
+        "image": "${docker_image.hn_stream_processor.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "stream_processor"
+            ]
+          },
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_data_zone.name}",
+            "aliases": [
+              "stream_processor"
+            ]
+          }
+        ],
+        "hostname": "streamproc01.internal.realtimeplatform.internal",
+        "depends_on": [
+          "docker_container.hn_kafka_broker",
+          "docker_container.hn_clickhouse"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "clickhouse-client",
+              "--query",
+              "SELECT 1"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_clickhouse": {
+        "name": "hn_clickhouse",
+        "image": "${docker_image.hn_clickhouse.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_data_zone.name}",
+            "aliases": [
+              "clickhouse"
+            ]
+          }
+        ],
+        "hostname": "clickhouse01.data.realtimeplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:8123/ || exit 1"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_internal_api": {
+        "name": "hn_internal_api",
+        "image": "${docker_image.hn_internal_api.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_api_zone.name}",
+            "aliases": [
+              "internal_api"
+            ]
+          },
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "internal_api"
+            ]
+          }
+        ],
+        "hostname": "api.internal.realtimeplatform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1030,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_stream_processor"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_analytics_dashboard": {
+        "name": "hn_analytics_dashboard",
+        "image": "${docker_image.hn_analytics_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_api_zone.name}",
+            "aliases": [
+              "analytics_dashboard"
+            ]
+          },
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_data_zone.name}",
+            "aliases": [
+              "analytics_dashboard"
+            ]
+          }
+        ],
+        "hostname": "dashboard.api.realtimeplatform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1031,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_clickhouse"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_api_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy.api.realtimeplatform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1032,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_internal_api"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_api_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "gateway.api.realtimeplatform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1033,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_reverse_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus": {
+        "name": "hn_prometheus",
+        "image": "${docker_image.hn_prometheus.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "prometheus"
+            ]
+          }
+        ],
+        "hostname": "prometheus.internal.realtimeplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:9090/-/healthy"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana": {
+        "name": "hn_grafana",
+        "image": "${docker_image.hn_grafana.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "grafana"
+            ]
+          }
+        ],
+        "hostname": "grafana.internal.realtimeplatform.internal",
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:3000/api/health"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logs.internal.realtimeplatform.internal",
+        "env": [
+          "LD_PRELOAD=default"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_ui": {
+        "name": "hn_admin_ui",
+        "image": "${docker_image.hn_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "admin_ui"
+            ]
+          }
+        ],
+        "hostname": "admin.internal.realtimeplatform.internal",
+        "depends_on": [
+          "docker_container.hn_kafka_broker"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_data_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup.data.realtimeplatform.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_data_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "fileshare.data.realtimeplatform.internal",
+        "env": [
+          "HTTPD_PATCHES=default_patch"
+        ],
+        "command": [
+          "httpd-foreground"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/ || exit 1"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "discovery.internal.realtimeplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "consul",
+              "members"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_coordination_service": {
+        "name": "hn_coordination_service",
+        "image": "${docker_image.hn_coordination_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "coordination_service"
+            ]
+          }
+        ],
+        "hostname": "coordination.internal.realtimeplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "nats",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alerting_service": {
+        "name": "hn_alerting_service",
+        "image": "${docker_image.hn_alerting_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "alerting_service"
+            ]
+          }
+        ],
+        "hostname": "alerts.internal.realtimeplatform.internal",
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:5601/ || exit 1"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_metrics_collector": {
+        "name": "hn_metrics_collector",
+        "image": "${docker_image.hn_metrics_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "metrics_collector"
+            ]
+          }
+        ],
+        "hostname": "metrics.internal.realtimeplatform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "nc",
+              "-z",
+              "localhost",
+              "9092"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_admin_panel": {
+        "name": "hn_bait_admin_panel",
+        "image": "${docker_image.hn_bait_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_api_zone.name}",
+            "aliases": [
+              "bait_admin_panel"
+            ]
+          }
+        ],
+        "hostname": "baitpanel.api.realtimeplatform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1034,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_weak_credential_db": {
+        "name": "hn_weak_credential_db",
+        "image": "${docker_image.hn_weak_credential_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_data_zone.name}",
+            "aliases": [
+              "weak_credential_db"
+            ]
+          }
+        ],
+        "hostname": "weakcreds.data.realtimeplatform.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_service": {
+        "name": "hn_honeypot_service",
+        "image": "${docker_image.hn_honeypot_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_api_zone.name}",
+            "aliases": [
+              "honeypot_service"
+            ]
+          }
+        ],
+        "hostname": "honeypot.api.realtimeplatform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1035,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "HTTPD_PATCHES=default"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fake_backup_server": {
+        "name": "hn_fake_backup_server",
+        "image": "${docker_image.hn_fake_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_data_zone.name}",
+            "aliases": [
+              "fake_backup_server"
+            ]
+          }
+        ],
+        "hostname": "fakebackup.data.realtimeplatform.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=password"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_data_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.data.realtimeplatform.internal",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@realtimeplatform.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin"
+        ],
+        "depends_on": [
+          "docker_container.hn_clickhouse"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_filebeat": {
+        "name": "hn_filebeat",
+        "image": "${docker_image.hn_filebeat.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.real_time_event_streaming_platform_internal_zone.name}",
+            "aliases": [
+              "filebeat"
+            ]
+          }
+        ],
+        "hostname": "filebeat.internal.realtimeplatform.internal",
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "real_time_event_streaming_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,439 @@
+{
+  "zones": {
+    "corporate_zone": {
+      "name": "corporate_zone",
+      "deploy": {
+        "network_name": "corporate_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "process_zone": {
+      "name": "process_zone",
+      "deploy": {
+        "network_name": "process_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "logging_zone": {
+      "name": "logging_zone",
+      "deploy": {
+        "network_name": "logging_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "hmi_panel": {
+      "name": "hmi_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "corporate_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "hmi01.corporate.industrial.internal",
+        "role": "HMI web panel for operators to monitor process values",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "historian_db": {
+      "name": "historian_db",
+      "kind": "database",
+      "deploy": {
+        "image": "influxdb:2.7",
+        "zone": "process_zone",
+        "ports": [
+          8086
+        ],
+        "env": [
+          "INFLUXDB_ADMIN_USER=admin",
+          "INFLUXDB_ADMIN_PASSWORD=password"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 8086 || (echo > /dev/tcp/localhost/8086) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "historian01.process.industrial.internal",
+        "role": "Historian database storing time-series measurements",
+        "issues": [],
+        "secrets": [
+          "historian_db_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "syslog_server": {
+      "name": "syslog_server",
+      "kind": "monitor",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "logging_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "syslog01.logging.industrial.internal",
+        "role": "Centralized syslog server for logging",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "logging_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "historian_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:3000/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana01.logging.industrial.internal",
+        "role": "Monitoring dashboard for visualizing process data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus_collector": {
+      "name": "prometheus_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:latest",
+        "zone": "logging_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9090/metrics"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus01.logging.industrial.internal",
+        "role": "Prometheus collector for monitoring metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "corporate_zone",
+        "ports": [
+          80,
+          443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "hmi_panel"
+        ],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy01.corporate.industrial.internal",
+        "role": "Reverse proxy for routing web traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_panel": {
+      "name": "admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "corporate_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin01.corporate.industrial.internal",
+        "role": "Admin panel for database management",
+        "issues": [],
+        "secrets": [
+          "admin_panel_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "mariadb:11",
+        "zone": "process_zone",
+        "ports": [
+          3306
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "historian_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup01.process.industrial.internal",
+        "role": "Backup server for data redundancy",
+        "issues": [],
+        "secrets": [
+          "backup_server_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "alpine:3.18",
+        "zone": "process_zone",
+        "ports": [
+          2049
+        ],
+        "env": [
+          "SHARE_NAME=data_share"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "historian_db",
+          "backup_server"
+        ],
+        "command": [
+          "/bin/sh",
+          "-c",
+          "while :; do sleep 2073600; done"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fileshare01.process.industrial.internal",
+        "role": "File share for process data exchange",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fluentd_collector": {
+      "name": "fluentd_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.14-1",
+        "zone": "logging_zone",
+        "ports": [
+          24224
+        ],
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=default"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "syslog_server"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fluentd01.logging.industrial.internal",
+        "role": "Log collector for centralized logging",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "industrial_control_system",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "historian_db_password": {
+      "name": "historian_db_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_panel_password": {
+      "name": "admin_panel_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_server_password": {
+      "name": "backup_server_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

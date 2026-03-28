@@ -1,0 +1,132 @@
+{
+  "benchmark_id": "h05_iot_platform",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.5,
+  "placement_violations": 6,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.4166666666666667,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "mqtt_broker": [
+        "mqtt_broker"
+      ],
+      "timeseries_store": [
+        "influxdb"
+      ],
+      "kafka_ingestion": [
+        "kafka_cluster"
+      ],
+      "fleet_api": [
+        "edge_worker_1",
+        "edge_worker_2",
+        "firmware_update_service",
+        "fleet_management_api"
+      ],
+      "device_identity": [
+        "device_certificate_authority",
+        "identity_service"
+      ],
+      "edge_worker": [
+        "edge_worker_1",
+        "edge_worker_2"
+      ],
+      "firmware_service": [
+        "firmware_update_service"
+      ],
+      "device_metadata_db": [
+        "postgresql"
+      ],
+      "monitoring": [
+        "grafana",
+        "prometheus"
+      ]
+    },
+    "matched_zones": {
+      "edge_zone": [
+        "application_zone",
+        "data_zone",
+        "edge_zone",
+        "identity_zone",
+        "ingestion_zone",
+        "ops_zone"
+      ],
+      "data_zone": [
+        "application_zone",
+        "data_zone",
+        "edge_zone",
+        "identity_zone",
+        "ingestion_zone",
+        "ops_zone"
+      ],
+      "ingestion_zone": [
+        "application_zone",
+        "data_zone",
+        "edge_zone",
+        "identity_zone",
+        "ingestion_zone",
+        "ops_zone"
+      ],
+      "application_zone": [
+        "application_zone",
+        "data_zone",
+        "edge_zone",
+        "identity_zone",
+        "ingestion_zone",
+        "ops_zone"
+      ],
+      "identity_zone": [
+        "application_zone",
+        "data_zone",
+        "edge_zone",
+        "identity_zone",
+        "ingestion_zone",
+        "ops_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 3,
+      "total": 6
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "timeseries_store",
+        "zone_id": "edge_zone",
+        "system": "influxdb",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "device_identity",
+        "zone_id": "edge_zone",
+        "system": "device_certificate_authority",
+        "deployed_zone": "identity_zone"
+      },
+      {
+        "service_id": "device_identity",
+        "zone_id": "edge_zone",
+        "system": "identity_service",
+        "deployed_zone": "identity_zone"
+      },
+      {
+        "service_id": "device_metadata_db",
+        "zone_id": "edge_zone",
+        "system": "postgresql",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "kafka_ingestion",
+        "zone_id": "edge_zone",
+        "system": "kafka_cluster",
+        "deployed_zone": "ingestion_zone"
+      },
+      {
+        "service_id": "mqtt_broker",
+        "zone_id": "edge_zone",
+        "system": "mqtt_broker",
+        "deployed_zone": "edge_zone"
+      }
+    ]
+  }
+}

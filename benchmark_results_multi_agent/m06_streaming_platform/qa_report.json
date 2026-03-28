@@ -1,0 +1,441 @@
+{
+  "checks_run": 48,
+  "checks_passed": 48,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_zookeeper",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 321.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_kafka_broker",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 312.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_kafka_broker:hn_zookeeper",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 304.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_stream_processor",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 298.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_stream_processor:hn_kafka_broker",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 291.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_stream_processor:hn_clickhouse",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 286.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_clickhouse",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 279.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_internal_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 274.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_internal_api:1030",
+      "passed": true,
+      "actual": "TCP connect to localhost:1030 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2290.4,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_internal_api:1030",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 516.5,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_internal_api:hn_stream_processor",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 259.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_analytics_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 251.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_analytics_dashboard:1031",
+      "passed": true,
+      "actual": "TCP connect to localhost:1031 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2265.4,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_analytics_dashboard:1031",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 671.1,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_analytics_dashboard:hn_clickhouse",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 232.0,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 223.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1032",
+      "passed": true,
+      "actual": "TCP connect to localhost:1032 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2238.7,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1032",
+      "passed": true,
+      "actual": "HTTP 404",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 464.0,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_reverse_proxy:hn_internal_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 205.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_api_gateway",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 196.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_api_gateway:1033",
+      "passed": true,
+      "actual": "TCP connect to localhost:1033 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2211.5,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_api_gateway:1033",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 782.6,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_api_gateway:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 179.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 172.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 165.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_grafana:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 158.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 152.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_admin_ui",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 146.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_admin_ui:hn_kafka_broker",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 141.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_backup_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 135.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_file_share",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 130.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_service_discovery",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 123.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_coordination_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 117.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_alerting_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 111.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_alerting_service:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 104.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_metrics_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 97.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_bait_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 90.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_bait_admin_panel:1034",
+      "passed": true,
+      "actual": "TCP connect to localhost:1034 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2106.3,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_bait_admin_panel:1034",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 944.3,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_weak_credential_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 69.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_honeypot_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 61.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_honeypot_service:1035",
+      "passed": true,
+      "actual": "TCP connect to localhost:1035 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2075.3,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_honeypot_service:1035",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 322.2,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_fake_backup_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 45.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_pgadmin",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 41.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_pgadmin:hn_clickhouse",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 37.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_filebeat",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 32.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_filebeat:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 30.5,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "f6f7ddbcd88546a6bcdae5672978fdea"
+}

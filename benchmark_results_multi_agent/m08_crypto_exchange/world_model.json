@@ -1,0 +1,906 @@
+{
+  "zones": {
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "trading_zone": {
+      "name": "trading_zone",
+      "deploy": {
+        "network_name": "trading_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "vault_zone": {
+      "name": "vault_zone",
+      "deploy": {
+        "network_name": "vault_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "monitoring_zone": {
+      "name": "monitoring_zone",
+      "deploy": {
+        "network_name": "monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api-gateway.exchange.cryptoplatform.internal",
+        "role": "API Gateway for routing requests to internal services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "order_book": {
+      "name": "order_book",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "trading_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "redis"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "order-book.trading.cryptoplatform.internal",
+        "role": "Redis-backed order book for real-time matching",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "redis": {
+      "name": "redis",
+      "kind": "database",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "trading_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "redis.trading.cryptoplatform.internal",
+        "role": "In-memory data structure store for caching and session management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "ledger_db": {
+      "name": "ledger_db",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "vault_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ledger-db.vault.cryptoplatform.internal",
+        "role": "PostgreSQL database for transaction history",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus": {
+      "name": "prometheus",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus.monitoring.cryptoplatform.internal",
+        "role": "Monitoring system collecting metrics from services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana": {
+      "name": "grafana",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.monitoring.cryptoplatform.internal",
+        "role": "Dashboard for visualizing monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "log-collector.monitoring.cryptoplatform.internal",
+        "role": "Centralized log collection service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alert_manager": {
+      "name": "alert_manager",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alert-manager.monitoring.cryptoplatform.internal",
+        "role": "Service for managing alerts based on monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "api_gateway"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "reverse-proxy.exchange.cryptoplatform.internal",
+        "role": "Reverse proxy for load balancing and SSL termination",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_panel": {
+      "name": "admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin-panel.exchange.cryptoplatform.internal",
+        "role": "Web interface for administrative tasks",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "vault_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup-server.vault.cryptoplatform.internal",
+        "role": "Server for backups of critical data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "vault_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "file-share.vault.cryptoplatform.internal",
+        "role": "File sharing service for internal documents",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_agent": {
+      "name": "monitoring_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoring-agent.monitoring.cryptoplatform.internal",
+        "role": "Agent for collecting and sending metrics to Prometheus",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "hashicorp/consul:1.17",
+        "zone": "trading_zone",
+        "ports": [
+          8300,
+          8301,
+          8302,
+          8500,
+          8600
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "agent",
+          "-dev",
+          "-client",
+          "0.0.0.0"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "consul",
+            "members"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "service-discovery.trading.cryptoplatform.internal",
+        "role": "Service discovery and configuration management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "infra",
+      "deploy": {
+        "image": "traefik:v2.10",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "reverse_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "load-balancer.exchange.cryptoplatform.internal",
+        "role": "Load balancer for distributing traffic across services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_documentation": {
+      "name": "api_documentation",
+      "kind": "web",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api-docs.exchange.cryptoplatform.internal",
+        "role": "Documentation for public and internal APIs",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "identity_ui": {
+      "name": "identity_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "trading_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "identity-ui.trading.cryptoplatform.internal",
+        "role": "User interface for identity verification and management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "postgres_admin_ui": {
+      "name": "postgres_admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "vault_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ledger_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "postgres-admin-ui.vault.cryptoplatform.internal",
+        "role": "Web interface for managing PostgreSQL databases",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "redis_admin_ui": {
+      "name": "redis_admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "trading_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "redis"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "redis-admin-ui.trading.cryptoplatform.internal",
+        "role": "Web interface for managing Redis instances",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeypot_admin_panel": {
+      "name": "honeypot_admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot-admin.exchange.cryptoplatform.internal",
+        "role": "Decoy admin panel to attract and monitor unauthorized access",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fake_backup_server": {
+      "name": "fake_backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "vault_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fake-backup.vault.cryptoplatform.internal",
+        "role": "Decoy backup server for security testing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fake_file_share": {
+      "name": "fake_file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "vault_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fake-file-share.vault.cryptoplatform.internal",
+        "role": "Decoy file share for security testing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "web",
+      "deploy": {
+        "image": "dpage/pgadmin4:latest",
+        "zone": "vault_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@cryptoplatform.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "ledger_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.vault.cryptoplatform.internal",
+        "role": "Web-based administration tool for PostgreSQL databases",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "cryptocurrency_exchange_platform",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "admin_password": {
+      "name": "admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "api_key": {
+      "name": "api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "db_password": {
+      "name": "db_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "redis_password": {
+      "name": "redis_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "ldap_admin_password": {
+      "name": "ldap_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

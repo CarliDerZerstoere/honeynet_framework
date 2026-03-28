@@ -1,0 +1,1135 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "three_tier_web_stack_public_zone": {
+        "name": "three_tier_web_stack_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "three_tier_web_stack_data_zone": {
+        "name": "three_tier_web_stack_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "three_tier_web_stack_monitoring_zone": {
+        "name": "three_tier_web_stack_monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "three_tier_web_stack_honeynet_backbone": {
+        "name": "three_tier_web_stack_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_web_server": {
+        "name": "ghost@sha256:3ffcb8f2f1f808806e7a0f694a2b130cd78652a26b4337b33fe7e249ce58665a",
+        "keep_locally": true
+      },
+      "hn_redis_cache": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_postgres_db": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_fluentd_agent": {
+        "name": "fluent/fluentd@sha256:3e0bd37d74c95cff04a5a70ca4bb7470c6f807075cb914c1267c89f5801e1333",
+        "keep_locally": true
+      },
+      "hn_nginx_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_admin_ui": {
+        "name": "adminer@sha256:aedd36aebf9352b435a2657f0a1e51fc6ac054dd838f42aee2a79ce059a1d796",
+        "keep_locally": true
+      },
+      "hn_redis_admin_ui": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_grafana_dashboard": {
+        "name": "grafana/grafana@sha256:e932bd6ed0e026595b08483cd0141e5103e1ab7ff8604839ff899b8dc54cabcb",
+        "keep_locally": true
+      },
+      "hn_prometheus_collector": {
+        "name": "prom/prometheus@sha256:4a61322ac1103a0e3aea2a61ef1718422a48fa046441f299d71e660a3bc71ae9",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "fluent/fluentd@sha256:3e0bd37d74c95cff04a5a70ca4bb7470c6f807075cb914c1267c89f5801e1333",
+        "keep_locally": true
+      },
+      "hn_alerting_service": {
+        "name": "prom/prometheus@sha256:1a3e9a878e50cd339ae7cf5718fda08381dda2d4ccd28e94bbaa3190d1a566c2",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_load_balancer": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_honeypot_admin_panel": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_bait_file_server": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_log_aggregator": {
+        "name": "fluent/fluentd@sha256:3e0bd37d74c95cff04a5a70ca4bb7470c6f807075cb914c1267c89f5801e1333",
+        "keep_locally": true
+      },
+      "hn_monitoring_agent": {
+        "name": "grafana/grafana@sha256:76dcf36e7d2a4110c2387c1ad6e4641068dc78d7780da516d5d666d1e4623ac5",
+        "keep_locally": true
+      },
+      "hn_staging_server": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_debug_endpoint": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_web_server": {
+        "name": "hn_web_server",
+        "image": "${docker_image.hn_web_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "web_server"
+            ]
+          }
+        ],
+        "hostname": "web01.public.three_tier_web_stack.internal",
+        "env": [
+          "database__client=mysql",
+          "database__connection__host=your-database-host",
+          "database__connection__user=your-database-user",
+          "database__connection__password=your-database-password",
+          "database__connection__database=your-database-name",
+          "NODE_ENV=production",
+          "GHOST_INSTALL=/var/lib/ghost",
+          "GHOST_CONTENT=/var/lib/ghost/content",
+          "GHOST_VERSION=5.130.6",
+          "GHOST_CLI_VERSION=1.28.4",
+          "GOSU_VERSION=1.19",
+          "YARN_VERSION=1.22.22",
+          "NODE_VERSION=20.20.0",
+          "DATABASE_HOST=your-database-host"
+        ],
+        "depends_on": [
+          "docker_container.hn_redis_cache",
+          "docker_container.hn_postgres_db"
+        ],
+        "command": [
+          "node",
+          "current/index.js"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:2368 || wget -qO- http://localhost:2368 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_redis_cache": {
+        "name": "hn_redis_cache",
+        "image": "${docker_image.hn_redis_cache.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "redis_cache"
+            ]
+          }
+        ],
+        "hostname": "redis01.data.three_tier_web_stack.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_postgres_db": {
+        "name": "hn_postgres_db",
+        "image": "${docker_image.hn_postgres_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "postgres_db"
+            ]
+          }
+        ],
+        "hostname": "db01.data.three_tier_web_stack.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fluentd_agent": {
+        "name": "hn_fluentd_agent",
+        "image": "${docker_image.hn_fluentd_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_monitoring_zone.name}",
+            "aliases": [
+              "fluentd_agent"
+            ]
+          }
+        ],
+        "hostname": "fluentd01.monitoring.three_tier_web_stack.internal",
+        "env": [
+          "LD_PRELOAD=default"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_nginx_reverse_proxy": {
+        "name": "hn_nginx_reverse_proxy",
+        "image": "${docker_image.hn_nginx_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_public_zone.name}",
+            "aliases": [
+              "nginx_reverse_proxy"
+            ]
+          },
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "nginx_reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy01.public.three_tier_web_stack.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_web_server"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_public_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          },
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api01.public.three_tier_web_stack.internal",
+        "ports": [
+          {
+            "internal": 2019,
+            "external": 2020,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 443,
+            "external": 1029,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 80,
+            "external": 1032,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_web_server"
+        ],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_ui": {
+        "name": "hn_admin_ui",
+        "image": "${docker_image.hn_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_public_zone.name}",
+            "aliases": [
+              "admin_ui"
+            ]
+          },
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "admin_ui"
+            ]
+          }
+        ],
+        "hostname": "adminui01.public.three_tier_web_stack.internal",
+        "ports": [
+          {
+            "internal": 8080,
+            "external": 8080,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_postgres_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_redis_admin_ui": {
+        "name": "hn_redis_admin_ui",
+        "image": "${docker_image.hn_redis_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_public_zone.name}",
+            "aliases": [
+              "redis_admin_ui"
+            ]
+          },
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "redis_admin_ui"
+            ]
+          }
+        ],
+        "hostname": "redisadmin01.public.three_tier_web_stack.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1033,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_redis_cache"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana_dashboard": {
+        "name": "hn_grafana_dashboard",
+        "image": "${docker_image.hn_grafana_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_monitoring_zone.name}",
+            "aliases": [
+              "grafana_dashboard"
+            ]
+          }
+        ],
+        "hostname": "grafana01.monitoring.three_tier_web_stack.internal",
+        "depends_on": [
+          "docker_container.hn_fluentd_agent"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3000/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus_collector": {
+        "name": "hn_prometheus_collector",
+        "image": "${docker_image.hn_prometheus_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_monitoring_zone.name}",
+            "aliases": [
+              "prometheus_collector"
+            ]
+          }
+        ],
+        "hostname": "prometheus01.monitoring.three_tier_web_stack.internal",
+        "depends_on": [
+          "docker_container.hn_fluentd_agent"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9090/-/healthy"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup01.data.three_tier_web_stack.internal",
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_postgres_db"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "fileshare01.data.three_tier_web_stack.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_monitoring_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logcollector01.monitoring.three_tier_web_stack.internal",
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "depends_on": [
+          "docker_container.hn_fluentd_agent"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alerting_service": {
+        "name": "hn_alerting_service",
+        "image": "${docker_image.hn_alerting_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_monitoring_zone.name}",
+            "aliases": [
+              "alerting_service"
+            ]
+          }
+        ],
+        "hostname": "alerting01.monitoring.three_tier_web_stack.internal",
+        "depends_on": [
+          "docker_container.hn_prometheus_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:9090/-/healthy"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "discovery01.data.three_tier_web_stack.internal",
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:2019/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_load_balancer": {
+        "name": "hn_load_balancer",
+        "image": "${docker_image.hn_load_balancer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_public_zone.name}",
+            "aliases": [
+              "load_balancer"
+            ]
+          }
+        ],
+        "hostname": "loadbalancer01.public.three_tier_web_stack.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1034,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_nginx_reverse_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_admin_panel": {
+        "name": "hn_honeypot_admin_panel",
+        "image": "${docker_image.hn_honeypot_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_public_zone.name}",
+            "aliases": [
+              "honeypot_admin_panel"
+            ]
+          }
+        ],
+        "hostname": "honeypotadmin01.public.three_tier_web_stack.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1035,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_file_server": {
+        "name": "hn_bait_file_server",
+        "image": "${docker_image.hn_bait_file_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "bait_file_server"
+            ]
+          }
+        ],
+        "hostname": "baitfileserver01.data.three_tier_web_stack.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_aggregator": {
+        "name": "hn_log_aggregator",
+        "image": "${docker_image.hn_log_aggregator.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_monitoring_zone.name}",
+            "aliases": [
+              "log_aggregator"
+            ]
+          }
+        ],
+        "hostname": "logaggregator01.monitoring.three_tier_web_stack.internal",
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "depends_on": [
+          "docker_container.hn_fluentd_agent"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_agent": {
+        "name": "hn_monitoring_agent",
+        "image": "${docker_image.hn_monitoring_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_monitoring_zone.name}",
+            "aliases": [
+              "monitoring_agent"
+            ]
+          }
+        ],
+        "hostname": "monitoringagent01.monitoring.three_tier_web_stack.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:3000/api/health"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_staging_server": {
+        "name": "hn_staging_server",
+        "image": "${docker_image.hn_staging_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_public_zone.name}",
+            "aliases": [
+              "staging_server"
+            ]
+          },
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "staging_server"
+            ]
+          }
+        ],
+        "hostname": "staging01.public.three_tier_web_stack.internal",
+        "ports": [
+          {
+            "internal": 8080,
+            "external": 8083,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "STAGING=true"
+        ],
+        "depends_on": [
+          "docker_container.hn_web_server",
+          "docker_container.hn_api_gateway"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_debug_endpoint": {
+        "name": "hn_debug_endpoint",
+        "image": "${docker_image.hn_debug_endpoint.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.three_tier_web_stack_public_zone.name}",
+            "aliases": [
+              "debug_endpoint"
+            ]
+          },
+          {
+            "name": "${docker_network.three_tier_web_stack_data_zone.name}",
+            "aliases": [
+              "debug_endpoint"
+            ]
+          }
+        ],
+        "hostname": "debug01.public.three_tier_web_stack.internal",
+        "ports": [
+          {
+            "internal": 9090,
+            "external": 9091,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "DEBUG=true"
+        ],
+        "depends_on": [
+          "docker_container.hn_web_server"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "three_tier_web_stack"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,751 @@
+organization:
+  business_units: []
+  name: programmatic_advertising_platform
+  regions: []
+  type: ''
+secrets:
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  ad_server:
+    deploy:
+      depends_on:
+      - bid_cache
+      - campaign_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: ad_server
+    simulate:
+      behaviors: []
+      hostname: adserver.public.programmaticad.internal
+      issues: []
+      role: Public ad serving API returning creatives
+      secrets: []
+      services: []
+  admin_panel:
+    deploy:
+      depends_on:
+      - campaign_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: adminpanel.public.programmaticad.internal
+      issues: []
+      role: Web interface for database administration
+      secrets: []
+      services: []
+  alert_manager:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: prom/alertmanager:v0.26.0
+      ports:
+      - 9093
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: alert_manager
+    simulate:
+      behaviors: []
+      hostname: alertmanager.analytics.programmaticad.internal
+      issues: []
+      role: Manages alert notifications and responses
+      secrets: []
+      services: []
+  api_monitor:
+    deploy:
+      depends_on: []
+      env:
+      - LD_PRELOAD=/usr/lib/preload.so
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:v1.16
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: api_monitor
+    simulate:
+      behaviors: []
+      hostname: apimonitor.analytics.programmaticad.internal
+      issues: []
+      role: Monitors API performance and availability
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      depends_on: []
+      env:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=password
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:5984/_up
+        timeout: 10s
+      image: couchdb:3.3
+      ports:
+      - 4369
+      - 5984
+      - 9100
+      volumes: []
+      zone: backend_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backupserver.backend.programmaticad.internal
+      issues: []
+      role: Server dedicated to data backup and recovery
+      secrets: []
+      services: []
+  bid_cache:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: backend_zone
+    kind: unknown
+    name: bid_cache
+    simulate:
+      behaviors: []
+      hostname: bidcache.backend.programmaticad.internal
+      issues: []
+      role: Real-time bid cache for ad auctions
+      secrets: []
+      services: []
+  cache_admin:
+    deploy:
+      depends_on:
+      - bid_cache
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: backend_zone
+    kind: infra
+    name: cache_admin
+    simulate:
+      behaviors: []
+      hostname: cacheadmin.backend.programmaticad.internal
+      issues: []
+      role: Admin interface for managing cache
+      secrets: []
+      services: []
+  campaign_db:
+    deploy:
+      depends_on: []
+      env:
+      - MYSQL_ROOT_PASSWORD=weakpassword
+      - MYSQL_DATABASE=campaign_db
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mariadb:11
+      ports:
+      - 3306
+      volumes: []
+      zone: backend_zone
+    kind: database
+    name: campaign_db
+    simulate:
+      behaviors: []
+      hostname: campaigndb.backend.programmaticad.internal
+      issues: []
+      role: Stores campaign data for ad targeting
+      secrets:
+      - db_admin_password
+      services: []
+  click_tracker:
+    deploy:
+      depends_on:
+      - campaign_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3000 || (echo > /dev/tcp/localhost/3000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: click_tracker
+    simulate:
+      behaviors: []
+      hostname: clicktracker.public.programmaticad.internal
+      issues: []
+      role: Logs impressions and conversions
+      secrets: []
+      services: []
+  data_backup:
+    deploy:
+      depends_on:
+      - campaign_db
+      env:
+      - MYSQL_ROOT_PASSWORD=weakpassword
+      - MYSQL_DATABASE=backup_db
+      - MYSQL_USER=backup_admin
+      - MYSQL_PASSWORD=weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mariadb:11
+      ports:
+      - 3306
+      volumes: []
+      zone: backend_zone
+    kind: storage
+    name: data_backup
+    simulate:
+      behaviors: []
+      hostname: backup.backend.programmaticad.internal
+      issues: []
+      role: Backs up critical data from databases
+      secrets: []
+      services: []
+  db_admin_ui:
+    deploy:
+      depends_on:
+      - campaign_db
+      env:
+      - PMA_HOST=campaign_db
+      - PMA_USER=admin
+      - PMA_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: backend_zone
+    kind: infra
+    name: db_admin_ui
+    simulate:
+      behaviors: []
+      hostname: dbadminui.backend.programmaticad.internal
+      issues: []
+      role: Database administration user interface
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana.analytics.programmaticad.internal
+      issues: []
+      role: Analytics dashboard for reporting
+      secrets: []
+      services: []
+  honeypot_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: matomo:4
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: honeypot_service
+    simulate:
+      behaviors: []
+      hostname: honeypot.public.programmaticad.internal
+      issues: []
+      role: Deceptive service to detect unauthorized access
+      secrets: []
+      services: []
+  identity_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: backend_zone
+    kind: identity
+    name: identity_service
+    simulate:
+      behaviors: []
+      hostname: ldap.backend.programmaticad.internal
+      issues: []
+      role: Manages user identities and authentication
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env:
+      - LD_PRELOAD=/usr/lib/preload.so
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:v1.16
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logcollector.analytics.programmaticad.internal
+      issues: []
+      role: Collects logs from various services
+      secrets: []
+      services: []
+  metrics_server:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: metrics_server
+    simulate:
+      behaviors: []
+      hostname: metricsserver.analytics.programmaticad.internal
+      issues: []
+      role: Serves metrics for analysis and monitoring
+      secrets: []
+      services: []
+  monitoring_agent:
+    deploy:
+      depends_on:
+      - grafana_dashboard
+      env:
+      - LD_PRELOAD=/usr/lib/preload.so
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:24224 || wget -qO- http://localhost:24224 || true
+        timeout: 10s
+      image: fluent/fluentd:v1.16
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: monitoring_agent
+    simulate:
+      behaviors: []
+      hostname: fluentd.analytics.programmaticad.internal
+      issues: []
+      role: Monitors system logs and metrics
+      secrets: []
+      services: []
+  network_monitor:
+    deploy:
+      depends_on: []
+      env:
+      - LD_PRELOAD=/usr/lib/preload.so
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:v1.16
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: network_monitor
+    simulate:
+      behaviors: []
+      hostname: networkmonitor.analytics.programmaticad.internal
+      issues: []
+      role: Monitors network traffic and performance
+      secrets: []
+      services: []
+  pgadmin_ui:
+    deploy:
+      depends_on:
+      - campaign_db
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@programmaticad.internal
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:6.21
+      ports:
+      - 80
+      volumes: []
+      zone: backend_zone
+    kind: infra
+    name: pgadmin_ui
+    simulate:
+      behaviors: []
+      hostname: pgadmin.backend.programmaticad.internal
+      issues: []
+      role: Web-based database management tool for PostgreSQL
+      secrets: []
+      services: []
+  prometheus_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: prometheus_collector
+    simulate:
+      behaviors: []
+      hostname: prometheus.analytics.programmaticad.internal
+      issues: []
+      role: Collects metrics for monitoring
+      secrets: []
+      services: []
+  reporting_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: analytics_zone
+    kind: runtime
+    name: reporting_service
+    simulate:
+      behaviors: []
+      hostname: reporting.analytics.programmaticad.internal
+      issues: []
+      role: Generates reports from analytics data
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - ad_server
+      - click_tracker
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 10000 || (echo > /dev/tcp/localhost/10000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: envoyproxy/envoy:v1.28-latest
+      ports:
+      - 10000
+      volumes: []
+      zone: backend_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: reverseproxy.public.programmaticad.internal
+      issues: []
+      role: Handles incoming requests and forwards them to appropriate services
+      secrets: []
+      services: []
+  security_scanner:
+    deploy:
+      depends_on: []
+      env:
+      - LD_PRELOAD=/usr/lib/preloadable_libiconv.so
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: fluent/fluentd:v1.16
+      ports:
+      - 24224
+      - 5140
+      volumes: []
+      zone: backend_zone
+    kind: unknown
+    name: security_scanner
+    simulate:
+      behaviors: []
+      hostname: securityscanner.backend.programmaticad.internal
+      issues: []
+      role: Scans systems for security vulnerabilities
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - consul
+        - members
+        timeout: 10s
+      image: hashicorp/consul:1.17
+      ports:
+      - 8300
+      - 8301
+      - 8301
+      - 8302
+      - 8302
+      - 8500
+      - 8600
+      - 8600
+      volumes: []
+      zone: backend_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: consul.backend.programmaticad.internal
+      issues: []
+      role: Service discovery and configuration management
+      secrets: []
+      services: []
+  visualization_tool:
+    deploy:
+      depends_on:
+      - grafana_dashboard
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: analytics_zone
+    kind: monitor
+    name: visualization_tool
+    simulate:
+      behaviors: []
+      hostname: visualization.analytics.programmaticad.internal
+      issues: []
+      role: Visualizes data for analysis and decision-making
+      secrets: []
+      services: []
+zones:
+  analytics_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: analytics_zone
+    name: analytics_zone
+  backend_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: backend_zone
+    name: backend_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

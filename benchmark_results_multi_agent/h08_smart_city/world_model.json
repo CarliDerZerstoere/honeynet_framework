@@ -1,0 +1,555 @@
+{
+  "zones": {
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "iot_zone": {
+      "name": "iot_zone",
+      "deploy": {
+        "network_name": "iot_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "dispatch_zone": {
+      "name": "dispatch_zone",
+      "deploy": {
+        "network_name": "dispatch_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "ops_zone": {
+      "name": "ops_zone",
+      "deploy": {
+        "network_name": "ops_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "traffic_api": {
+      "name": "traffic_api",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "metrics_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "traffic-api.public.smartcity.internal",
+        "role": "REST API for traffic signal coordination",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "metrics_db": {
+      "name": "metrics_db",
+      "kind": "database",
+      "deploy": {
+        "image": "influxdb:2.7",
+        "zone": "data_zone",
+        "ports": [
+          8086
+        ],
+        "env": [
+          "INFLUXDB_ADMIN_USER=admin",
+          "INFLUXDB_ADMIN_PASSWORD=password"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "influx",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "metrics-db.data.smartcity.internal",
+        "role": "InfluxDB for storing time-series metrics",
+        "issues": [],
+        "secrets": [
+          "influxdb_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "city_db": {
+      "name": "city_db",
+      "kind": "database",
+      "deploy": {
+        "image": "mariadb:11",
+        "zone": "data_zone",
+        "ports": [
+          3306
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123",
+          "MYSQL_DATABASE=city"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "city-db.data.smartcity.internal",
+        "role": "MariaDB for storing city records",
+        "issues": [],
+        "secrets": [
+          "mariadb_root_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "citizen_portal": {
+      "name": "citizen_portal",
+      "kind": "web",
+      "deploy": {
+        "image": "drupal:10-apache",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "city_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "citizen-portal.public.smartcity.internal",
+        "role": "Public portal for citizen access",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "event_bus": {
+      "name": "event_bus",
+      "kind": "queue",
+      "deploy": {
+        "image": "rabbitmq:3.12-management",
+        "zone": "dispatch_zone",
+        "ports": [
+          15671,
+          15672,
+          15691,
+          15692,
+          25672,
+          4369,
+          5671,
+          5672
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "rabbitmqctl",
+            "status"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "event-bus.dispatch.smartcity.internal",
+        "role": "RabbitMQ event bus for cross-system notifications",
+        "issues": [],
+        "secrets": [
+          "rabbitmq_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana": {
+      "name": "grafana",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "ops_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.ops.smartcity.internal",
+        "role": "Grafana dashboard for visualizing monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "traffic_api",
+          "citizen_portal"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api-gateway.public.smartcity.internal",
+        "role": "Gateway for routing API requests",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ROOT_USER=admin",
+          "MINIO_ROOT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup-server.data.smartcity.internal",
+        "role": "Server for data backup and recovery",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_agent": {
+      "name": "monitoring_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "ops_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoring-agent.ops.smartcity.internal",
+        "role": "Agent for collecting monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "kafka_admin": {
+      "name": "kafka_admin",
+      "kind": "infra",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "dispatch_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "event_bus"
+        ],
+        "command": [
+          "/etc/kafka/docker/run"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "kafka-admin.dispatch.smartcity.internal",
+        "role": "Admin interface for Kafka management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "traffic_management_ui": {
+      "name": "traffic_management_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "traffic_api"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "traffic-ui.public.smartcity.internal",
+        "role": "User interface for traffic management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "config_management": {
+      "name": "config_management",
+      "kind": "infra",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "ops_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/api/health || wget -qO- http://localhost:3000/api/health || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "config-management.ops.smartcity.internal",
+        "role": "System for managing configuration across services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "network_monitor": {
+      "name": "network_monitor",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "ops_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "network-monitor.ops.smartcity.internal",
+        "role": "Monitoring system for network performance",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "smart_city_infrastructure",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "influxdb_admin_password": {
+      "name": "influxdb_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "mariadb_root_password": {
+      "name": "mariadb_root_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "rabbitmq_admin_password": {
+      "name": "rabbitmq_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

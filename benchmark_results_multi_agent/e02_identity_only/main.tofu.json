@@ -1,0 +1,326 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "corporate_internal_directory_internal_zone": {
+        "name": "corporate_internal_directory_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_internal_directory_dmz_zone": {
+        "name": "corporate_internal_directory_dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "corporate_internal_directory_honeynet_backbone": {
+        "name": "corporate_internal_directory_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_ldap_service": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_auth_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_admin_console": {
+        "name": "neo4j@sha256:d9e2fb1ba398536e50d22ebc3d5d585baa086c1c0cf8e5b96bdc9e11e87e002a",
+        "keep_locally": true
+      },
+      "hn_monitoring_service": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "httpd@sha256:331548c5249bdeced0f048bc2fb8c6b6427d2ec6508bed9c1fec6c57d0b27a60",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d914d35dc1a5cf86f65c29d44451c05b73e283529e19ffcc25f45f939c579bd9",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_ldap_service": {
+        "name": "hn_ldap_service",
+        "image": "${docker_image.hn_ldap_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_internal_directory_internal_zone.name}",
+            "aliases": [
+              "ldap_service"
+            ]
+          }
+        ],
+        "hostname": "ldap01.internal.corporate_internal_directory",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_internal_directory"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_auth_proxy": {
+        "name": "hn_auth_proxy",
+        "image": "${docker_image.hn_auth_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_internal_directory_dmz_zone.name}",
+            "aliases": [
+              "auth_proxy"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_internal_directory_internal_zone.name}",
+            "aliases": [
+              "auth_proxy"
+            ]
+          }
+        ],
+        "hostname": "authproxy.dmz.corporate_internal_directory",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1026,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_ldap_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_internal_directory"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_console": {
+        "name": "hn_admin_console",
+        "image": "${docker_image.hn_admin_console.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_internal_directory_internal_zone.name}",
+            "aliases": [
+              "admin_console"
+            ]
+          }
+        ],
+        "hostname": "adminconsole.internal.corporate_internal_directory",
+        "env": [
+          "NEO4J_AUTH=neo4j/weakpassword"
+        ],
+        "depends_on": [
+          "docker_container.hn_ldap_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_internal_directory"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "cypher-shell",
+              "-u",
+              "neo4j",
+              "-p",
+              "admin123",
+              "RETURN 1"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_service": {
+        "name": "hn_monitoring_service",
+        "image": "${docker_image.hn_monitoring_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_internal_directory_internal_zone.name}",
+            "aliases": [
+              "monitoring_service"
+            ]
+          }
+        ],
+        "hostname": "monitor.internal.corporate_internal_directory",
+        "depends_on": [
+          "docker_container.hn_ldap_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_internal_directory"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_internal_directory_dmz_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "reverseproxy.dmz.corporate_internal_directory",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "depends_on": [
+          "docker_container.hn_auth_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_internal_directory"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_internal_directory_internal_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.internal.corporate_internal_directory",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@example.com",
+          "PGADMIN_DEFAULT_PASSWORD=weakpassword"
+        ],
+        "depends_on": [
+          "docker_container.hn_ldap_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_internal_directory"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,542 @@
+organization:
+  business_units: []
+  name: dns_sinkhole_environment
+  regions: []
+  type: ''
+secrets:
+  admin_password:
+    name: admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  api_key:
+    name: api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  db_credentials:
+    name: db_credentials
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  alerting_service:
+    deploy:
+      command:
+      - /start.sh
+      depends_on:
+      - log_collector
+      env:
+      - I_REALLY_WANT_VOLATILE_STORAGE=true
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: vaultwarden/server:latest
+      ports:
+      - 80
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: alerting_service
+    simulate:
+      behaviors: []
+      hostname: alerts.dns_sinkhole_environment.internal
+      issues: []
+      role: Sends alerts based on monitoring data
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      depends_on:
+      - log_storage
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: logging_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup.dns_sinkhole_environment.internal
+      issues: []
+      role: Backs up critical data and configurations
+      secrets: []
+      services: []
+  data_aggregator:
+    deploy:
+      depends_on:
+      - log_collector
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: logging_zone
+    kind: runtime
+    name: data_aggregator
+    simulate:
+      behaviors: []
+      hostname: aggregator.dns_sinkhole_environment.internal
+      issues: []
+      role: Aggregates data for reporting and analysis
+      secrets: []
+      services: []
+  dns_admin_ui:
+    deploy:
+      depends_on:
+      - dns_resolver
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: dns_zone
+    kind: web
+    name: dns_admin_ui
+    simulate:
+      behaviors: []
+      hostname: dnsadmin.dns_sinkhole_environment.internal
+      issues: []
+      role: Web interface for DNS administration
+      secrets: []
+      services: []
+  dns_cache:
+    deploy:
+      depends_on:
+      - dns_resolver
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: logging_zone
+    kind: infra
+    name: dns_cache
+    simulate:
+      behaviors: []
+      hostname: cache.dns_sinkhole_environment.internal
+      issues: []
+      role: Caches DNS queries for faster resolution
+      secrets: []
+      services: []
+  dns_debug_endpoint:
+    deploy:
+      depends_on:
+      - dns_resolver
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 8080
+      volumes: []
+      zone: dns_zone
+    kind: web
+    name: dns_debug_endpoint
+    simulate:
+      behaviors: []
+      hostname: debug.dns_sinkhole_environment.internal
+      issues: []
+      role: Debug endpoint for DNS resolution testing
+      secrets: []
+      services: []
+  dns_resolver:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 2019
+      - 443
+      - 80
+      volumes: []
+      zone: dns_zone
+    kind: infra
+    name: dns_resolver
+    simulate:
+      behaviors: []
+      hostname: dns01.dns_sinkhole_environment.internal
+      issues: []
+      role: Recursive DNS resolver redirecting suspicious domains
+      secrets: []
+      services: []
+  identity_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: drupal:10-apache
+      ports:
+      - 80
+      volumes: []
+      zone: logging_zone
+    kind: identity
+    name: identity_service
+    simulate:
+      behaviors: []
+      hostname: identity.dns_sinkhole_environment.internal
+      issues: []
+      role: Manages user identities and authentication
+      secrets: []
+      services: []
+  load_balancer:
+    deploy:
+      depends_on:
+      - sinkhole_web
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 2019
+      - 443
+      - 80
+      volumes: []
+      zone: dns_zone
+    kind: infra
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: loadbalancer.dns_sinkhole_environment.internal
+      issues: []
+      role: Balances load across multiple services
+      secrets: []
+      services: []
+  log_analyzer:
+    deploy:
+      depends_on:
+      - log_collector
+      - threat_analysis_tool
+      env:
+      - FLUENTD_CONF=fluent.conf
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: fluent/fluentd:latest
+      ports:
+      - 24224
+      volumes: []
+      zone: logging_zone
+    kind: runtime
+    name: log_analyzer
+    simulate:
+      behaviors: []
+      hostname: analyzer.dns_sinkhole_environment.internal
+      issues: []
+      role: Analyzes logs for threat patterns
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on:
+      - sinkhole_web
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 16686 || (echo > /dev/tcp/localhost/16686) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: jaegertracing/all-in-one:1.52
+      ports:
+      - 14250
+      - 14268
+      - 16686
+      - 4317
+      - 4318
+      - 5775
+      - 5778
+      - 6831
+      - 6832
+      - 9411
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logs.dns_sinkhole_environment.internal
+      issues: []
+      role: Collects and aggregates logs for analysis
+      secrets: []
+      services: []
+  log_storage:
+    deploy:
+      depends_on:
+      - log_collector
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: logging_zone
+    kind: storage
+    name: log_storage
+    simulate:
+      behaviors: []
+      hostname: storage.dns_sinkhole_environment.internal
+      issues: []
+      role: Stores logs for long-term analysis
+      secrets: []
+      services: []
+  monitoring_dashboard:
+    deploy:
+      depends_on:
+      - log_collector
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: monitoring_dashboard
+    simulate:
+      behaviors: []
+      hostname: dashboard.dns_sinkhole_environment.internal
+      issues: []
+      role: Displays monitoring metrics and alerts
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:16686 || wget -qO- http://localhost:16686 || true
+        timeout: 10s
+      image: jaegertracing/all-in-one:1.52
+      ports:
+      - 14250
+      - 14268
+      - 16686
+      - 4317
+      - 4318
+      - 5775
+      - 5778
+      - 6831
+      - 6832
+      - 9411
+      volumes: []
+      zone: logging_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery.dns_sinkhole_environment.internal
+      issues: []
+      role: Discovers and registers services dynamically
+      secrets: []
+      services: []
+  sinkhole_web:
+    deploy:
+      depends_on:
+      - dns_resolver
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: dns_zone
+    kind: web
+    name: sinkhole_web
+    simulate:
+      behaviors: []
+      hostname: sinkhole.dns_sinkhole_environment.internal
+      issues: []
+      role: Web server capturing and logging incoming requests
+      secrets: []
+      services: []
+  threat_analysis_tool:
+    deploy:
+      depends_on:
+      - log_collector
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: logging_zone
+    kind: runtime
+    name: threat_analysis_tool
+    simulate:
+      behaviors: []
+      hostname: analysis.dns_sinkhole_environment.internal
+      issues: []
+      role: Analyzes threats based on captured data
+      secrets: []
+      services: []
+  web_proxy:
+    deploy:
+      depends_on:
+      - sinkhole_web
+      env:
+      - HTTPD_PATCHES=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: dns_zone
+    kind: web
+    name: web_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy.dns_sinkhole_environment.internal
+      issues: []
+      role: Proxy server for web traffic
+      secrets: []
+      services: []
+zones:
+  dns_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: dns_zone
+    name: dns_zone
+  logging_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: logging_zone
+    name: logging_zone

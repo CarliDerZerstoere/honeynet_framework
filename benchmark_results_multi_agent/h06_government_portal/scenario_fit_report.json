@@ -1,0 +1,121 @@
+{
+  "benchmark_id": "h06_government_portal",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.9090909090909091,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.8333333333333334,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.914141414141414,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "citizen_portal": [
+        "citizen_portal",
+        "nginx_load_balancer"
+      ],
+      "case_management_api": [
+        "case_management_api",
+        "citizen_portal",
+        "document_retrieval_service",
+        "document_upload_service",
+        "esigning_microservice",
+        "nginx_load_balancer"
+      ],
+      "document_management": [
+        "audit_trail_service",
+        "case_management_api",
+        "classified_document_store",
+        "data_retention_compliance_store",
+        "document_management_system",
+        "document_retrieval_service",
+        "document_upload_service",
+        "esigning_microservice"
+      ],
+      "esigning_service": [
+        "case_management_api",
+        "citizen_portal",
+        "document_retrieval_service",
+        "document_upload_service",
+        "esigning_microservice",
+        "nginx_load_balancer"
+      ],
+      "case_db": [
+        "case_db"
+      ],
+      "federated_identity": [
+        "federated_identity_provider"
+      ],
+      "audit_trail": [
+        "audit_trail_service",
+        "case_db",
+        "classified_document_store",
+        "data_retention_compliance_store",
+        "document_management_system",
+        "grafana_dashboard",
+        "prometheus_monitoring"
+      ],
+      "load_balancer": [],
+      "classified_store": [
+        "classified_document_store"
+      ],
+      "retention_store": [
+        "data_retention_compliance_store"
+      ],
+      "monitoring": [
+        "grafana_dashboard",
+        "prometheus_monitoring"
+      ]
+    },
+    "matched_zones": {
+      "public_dmz": [
+        "public_dmz"
+      ],
+      "application_zone": [
+        "application_zone",
+        "compliance_zone",
+        "data_zone",
+        "document_zone",
+        "identity_zone",
+        "ops_zone"
+      ],
+      "data_zone": [
+        "application_zone",
+        "compliance_zone",
+        "data_zone",
+        "document_zone",
+        "identity_zone",
+        "ops_zone"
+      ],
+      "identity_zone": [
+        "application_zone",
+        "compliance_zone",
+        "data_zone",
+        "document_zone",
+        "identity_zone",
+        "ops_zone"
+      ],
+      "compliance_zone": [
+        "application_zone",
+        "compliance_zone",
+        "data_zone",
+        "document_zone",
+        "identity_zone",
+        "ops_zone"
+      ],
+      "document_zone": [
+        "application_zone",
+        "compliance_zone",
+        "data_zone",
+        "document_zone",
+        "identity_zone",
+        "ops_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 5,
+      "total": 6
+    },
+    "placement_violations_detail": []
+  }
+}

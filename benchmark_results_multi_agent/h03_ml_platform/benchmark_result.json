@@ -1,0 +1,41 @@
+{
+  "scenario_id": "h03_ml_platform",
+  "difficulty": "hard",
+  "prompt_variant": "detailed",
+  "prompt_text": "Model a production machine learning platform:\n- Public zone: Model inference REST API\n- Internal zone: Feature store, model registry, MLflow experiment tracker,\n  training job scheduler\n- Data zone: MinIO object storage for datasets and model artifacts,\n  PostgreSQL metadata database, Kafka for data pipeline events\n- Ops zone: Prometheus and Grafana monitoring\nInclude honeytokens for model API keys, data scientist credentials,\nand training job service accounts.",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.8333,
+  "benchmark_dep_required": 6,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "deploy_success": true,
+  "deploy_status": "runtime_degraded",
+  "containers_planned": 36,
+  "containers_running": 15,
+  "containers_dropped": 21,
+  "running_service_coverage": 0.8,
+  "running_zone_coverage": 1.0,
+  "running_dep_coverage": 0.0,
+  "scenario_fit_score": 0.6,
+  "duration_s": 1020.98,
+  "stage_durations": {
+    "extraction": 92.809,
+    "validation": 0.004,
+    "image_resolution": 0.251,
+    "compilation": 0.295,
+    "render": 0.001,
+    "deploy": 65.535,
+    "runtime_verify": 181.433
+  },
+  "failure_stage": "runtime_verify",
+  "error_class": "unknown",
+  "errors": [],
+  "scenario_complexity": {
+    "required_services_count": 10,
+    "required_zones_count": 4,
+    "required_deps_count": 6
+  },
+  "dry_run": false,
+  "dry_run_valid": false
+}

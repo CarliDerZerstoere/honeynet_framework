@@ -1,0 +1,537 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "telecommunications_carrier_signaling_zone": {
+        "name": "telecommunications_carrier_signaling_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "telecommunications_carrier_data_zone": {
+        "name": "telecommunications_carrier_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "telecommunications_carrier_identity_zone": {
+        "name": "telecommunications_carrier_identity_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "telecommunications_carrier_compliance_zone": {
+        "name": "telecommunications_carrier_compliance_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "telecommunications_carrier_core_zone": {
+        "name": "telecommunications_carrier_core_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "telecommunications_carrier_ops_zone": {
+        "name": "telecommunications_carrier_ops_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "telecommunications_carrier_honeynet_backbone": {
+        "name": "telecommunications_carrier_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_kafka_broker_1": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_kafka_broker_2": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_kafka_broker_3": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_billing_api": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_cdr_archive": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_compliance_audit_log": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_grafana_dashboard": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_lawful_intercept_export": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_clickhouse_admin_ui": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_honeytoken_compliance_keys": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_fluentd_log_collector": {
+        "name": "fluent/fluentd@sha256:3e0bd37d74c95cff04a5a70ca4bb7470c6f807075cb914c1267c89f5801e1333",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_kafka_broker_1": {
+        "name": "hn_kafka_broker_1",
+        "image": "${docker_image.hn_kafka_broker_1.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_signaling_zone.name}",
+            "aliases": [
+              "kafka_broker_1"
+            ]
+          }
+        ],
+        "hostname": "kafka01.signaling.telecomcarrier.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "nc",
+              "-z",
+              "localhost",
+              "9092"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_kafka_broker_2": {
+        "name": "hn_kafka_broker_2",
+        "image": "${docker_image.hn_kafka_broker_2.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_signaling_zone.name}",
+            "aliases": [
+              "kafka_broker_2"
+            ]
+          }
+        ],
+        "hostname": "kafka02.signaling.telecomcarrier.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "nc",
+              "-z",
+              "localhost",
+              "9092"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_kafka_broker_3": {
+        "name": "hn_kafka_broker_3",
+        "image": "${docker_image.hn_kafka_broker_3.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_signaling_zone.name}",
+            "aliases": [
+              "kafka_broker_3"
+            ]
+          }
+        ],
+        "hostname": "kafka03.signaling.telecomcarrier.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "nc",
+              "-z",
+              "localhost",
+              "9092"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_billing_api": {
+        "name": "hn_billing_api",
+        "image": "${docker_image.hn_billing_api.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_core_zone.name}",
+            "aliases": [
+              "billing_api"
+            ]
+          },
+          {
+            "name": "${docker_network.telecommunications_carrier_data_zone.name}",
+            "aliases": [
+              "billing_api"
+            ]
+          }
+        ],
+        "hostname": "billing.core.telecomcarrier.internal",
+        "depends_on": [
+          "docker_container.hn_cdr_archive"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_cdr_archive": {
+        "name": "hn_cdr_archive",
+        "image": "${docker_image.hn_cdr_archive.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_data_zone.name}",
+            "aliases": [
+              "cdr_archive"
+            ]
+          }
+        ],
+        "hostname": "cdr.data.telecomcarrier.internal",
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_compliance_audit_log": {
+        "name": "hn_compliance_audit_log",
+        "image": "${docker_image.hn_compliance_audit_log.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_compliance_zone.name}",
+            "aliases": [
+              "compliance_audit_log"
+            ]
+          }
+        ],
+        "hostname": "auditlog.compliance.telecomcarrier.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana_dashboard": {
+        "name": "hn_grafana_dashboard",
+        "image": "${docker_image.hn_grafana_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_ops_zone.name}",
+            "aliases": [
+              "grafana_dashboard"
+            ]
+          }
+        ],
+        "hostname": "grafana.ops.telecomcarrier.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_lawful_intercept_export": {
+        "name": "hn_lawful_intercept_export",
+        "image": "${docker_image.hn_lawful_intercept_export.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_compliance_zone.name}",
+            "aliases": [
+              "lawful_intercept_export"
+            ]
+          }
+        ],
+        "hostname": "interceptexport.compliance.telecomcarrier.internal",
+        "env": [
+          "MINIO_ACCESS_KEY=export",
+          "MINIO_SECRET_KEY=export123"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_clickhouse_admin_ui": {
+        "name": "hn_clickhouse_admin_ui",
+        "image": "${docker_image.hn_clickhouse_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_data_zone.name}",
+            "aliases": [
+              "clickhouse_admin_ui"
+            ]
+          }
+        ],
+        "hostname": "chadmin.data.telecomcarrier.internal",
+        "depends_on": [
+          "docker_container.hn_cdr_archive"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "clickhouse-client --query 'SELECT 1'"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeytoken_compliance_keys": {
+        "name": "hn_honeytoken_compliance_keys",
+        "image": "${docker_image.hn_honeytoken_compliance_keys.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_compliance_zone.name}",
+            "aliases": [
+              "honeytoken_compliance_keys"
+            ]
+          }
+        ],
+        "hostname": "honeycompliance.compliance.telecomcarrier.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fluentd_log_collector": {
+        "name": "hn_fluentd_log_collector",
+        "image": "${docker_image.hn_fluentd_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.telecommunications_carrier_ops_zone.name}",
+            "aliases": [
+              "fluentd_log_collector"
+            ]
+          }
+        ],
+        "hostname": "fluentd.ops.telecomcarrier.internal",
+        "env": [
+          "FLUENT_ELASTICSEARCH_HOST=elasticsearch",
+          "LD_PRELOAD=default"
+        ],
+        "depends_on": [
+          "docker_container.hn_grafana_dashboard"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "telecommunications_carrier"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

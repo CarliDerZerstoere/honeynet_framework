@@ -1,0 +1,41 @@
+{
+  "scenario_id": "e05_message_queue",
+  "difficulty": "easy",
+  "prompt_variant": "detailed",
+  "prompt_text": "Model an event-driven platform: a RabbitMQ broker handling internal\nasynchronous messages between internal services.",
+  "planned_service_coverage": 0.6667,
+  "planned_zone_coverage": 0.5,
+  "planned_dep_coverage": 0.5,
+  "benchmark_dep_required": 2,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "deploy_success": true,
+  "deploy_status": "deployed",
+  "containers_planned": 7,
+  "containers_running": 7,
+  "containers_dropped": 0,
+  "running_service_coverage": 0.6667,
+  "running_zone_coverage": 0.5,
+  "running_dep_coverage": 0.5,
+  "scenario_fit_score": 0.5556,
+  "duration_s": 167.97,
+  "stage_durations": {
+    "extraction": 20.936,
+    "validation": 0.005,
+    "image_resolution": 0.147,
+    "compilation": 0.188,
+    "render": 0.001,
+    "deploy": 13.78,
+    "runtime_verify": 7.997
+  },
+  "failure_stage": "completed",
+  "error_class": "",
+  "errors": [],
+  "scenario_complexity": {
+    "required_services_count": 3,
+    "required_zones_count": 2,
+    "required_deps_count": 2
+  },
+  "dry_run": false,
+  "dry_run_valid": false
+}

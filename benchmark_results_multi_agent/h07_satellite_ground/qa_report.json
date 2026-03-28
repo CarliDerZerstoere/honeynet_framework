@@ -1,0 +1,162 @@
+{
+  "checks_run": 17,
+  "checks_passed": 15,
+  "checks_failed": 2,
+  "pass_rate": 0.8824,
+  "results": [
+    {
+      "check_id": "running:hn_mission_control_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 120.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_mission_control_dashboard:3002",
+      "passed": true,
+      "actual": "TCP connect to localhost:3002 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2128.1,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_mission_control_dashboard:3002",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 361.0,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_grafana_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 93.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_grafana_dashboard:hn_prometheus_monitoring",
+      "passed": false,
+      "actual": "",
+      "expected": "running",
+      "error": "Container hn_prometheus_monitoring is ''",
+      "duration_ms": 88.9,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 82.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_admin_panel:1025",
+      "passed": true,
+      "actual": "TCP connect to localhost:1025 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2099.3,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_admin_panel:1025",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 341.1,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_monitoring_agent",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 72.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_monitoring_agent:hn_prometheus_monitoring",
+      "passed": false,
+      "actual": "",
+      "expected": "running",
+      "error": "Container hn_prometheus_monitoring is ''",
+      "duration_ms": 64.9,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_service_discovery",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 55.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 46.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_telemetry_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 38.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_telemetry_dashboard:3003",
+      "passed": true,
+      "actual": "TCP connect to localhost:3003 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2066.7,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_telemetry_dashboard:3003",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 289.2,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_fluentd",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 39.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_fluentd:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 34.7,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "42a6e28bc58c4f17b6a72d4b62021117"
+}

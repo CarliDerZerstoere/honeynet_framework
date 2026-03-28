@@ -1,0 +1,316 @@
+organization:
+  business_units: []
+  name: satellite_ground_station
+  regions: []
+  type: ''
+secrets:
+  admin_panel_password:
+    name: admin_panel_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  storage_access_key:
+    name: storage_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  uplink_api_key:
+    name: uplink_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  vault_root_token:
+    name: vault_root_token
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: token
+systems:
+  admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: ops_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: admin.ops.satellite_ground_station.internal
+      issues: []
+      role: Web-based administration panel for managing databases
+      secrets:
+      - admin_panel_password
+      services: []
+  fluentd:
+    deploy:
+      depends_on:
+      - log_collector
+      env:
+      - FLUENTD_CONF=fluent.conf
+      - LD_PRELOAD=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: fluent/fluentd:v1.14-1
+      ports:
+      - 24224
+      volumes: []
+      zone: security_zone
+    kind: monitor
+    name: fluentd
+    simulate:
+      behaviors: []
+      hostname: fluentd.security.satellite_ground_station.internal
+      issues: []
+      role: Log collector and forwarder for centralized logging
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on:
+      - prometheus_monitoring
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: security_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana.security.satellite_ground_station.internal
+      issues: []
+      role: Visualizes monitoring data and system metrics
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: telemetry_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: loki.telemetry.satellite_ground_station.internal
+      issues: []
+      role: Collects and aggregates logs from various services
+      secrets: []
+      services: []
+  mission_control_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3000/api/health
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: web
+    name: mission_control_dashboard
+    simulate:
+      behaviors: []
+      hostname: dashboard.ops.satellite_ground_station.internal
+      issues: []
+      role: Provides a web interface for mission control operations
+      secrets: []
+      services: []
+  monitoring_agent:
+    deploy:
+      depends_on:
+      - prometheus_monitoring
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9090/-/healthy
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: telemetry_zone
+    kind: monitor
+    name: monitoring_agent
+    simulate:
+      behaviors: []
+      hostname: agent.telemetry.satellite_ground_station.internal
+      issues: []
+      role: Collects telemetry data for monitoring and alerting
+      secrets: []
+      services: []
+  prometheus_monitoring:
+    kind: monitor
+    name: prometheus_monitoring
+    simulate:
+      behaviors: []
+      hostname: prometheus.security.satellite_ground_station.internal
+      issues: []
+      role: Monitors system metrics and performance
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - consul members | grep -q alive
+        timeout: 10s
+      image: hashicorp/consul:1.17
+      ports:
+      - 8300
+      - 8301
+      - 8302
+      - 8500
+      - 8600
+      volumes: []
+      zone: telemetry_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery.telemetry.satellite_ground_station.internal
+      issues: []
+      role: Facilitates service discovery and health checks
+      secrets: []
+      services: []
+  telemetry_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: web
+    name: telemetry_dashboard
+    simulate:
+      behaviors: []
+      hostname: telemetry-dashboard.ops.satellite_ground_station.internal
+      issues: []
+      role: Displays telemetry data and system status to operators
+      secrets: []
+      services: []
+zones:
+  command_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: command_zone
+    name: command_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  ops_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: ops_zone
+    name: ops_zone
+  security_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: security_zone
+    name: security_zone
+  telemetry_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: telemetry_zone
+    name: telemetry_zone

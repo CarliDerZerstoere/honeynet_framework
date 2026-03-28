@@ -1,0 +1,551 @@
+{
+  "zones": {
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "game_zone": {
+      "name": "game_zone",
+      "deploy": {
+        "network_name": "game_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "monitoring_zone": {
+      "name": "monitoring_zone",
+      "deploy": {
+        "network_name": "monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "redis_session_store": {
+      "name": "redis_session_store",
+      "kind": "database",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "game_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "redis-session-store.game.multiplayergame.internal",
+        "role": "Stores active player sessions",
+        "issues": [],
+        "secrets": [
+          "redis_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "postgres_player_db": {
+      "name": "postgres_player_db",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "data_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "postgres-player-db.data.multiplayergame.internal",
+        "role": "Stores player profiles and inventories",
+        "issues": [],
+        "secrets": [
+          "db_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_dashboard": {
+      "name": "admin_dashboard",
+      "kind": "web",
+      "deploy": {
+        "image": "adminer:4",
+        "zone": "data_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "postgres_player_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin-dashboard.data.multiplayergame.internal",
+        "role": "Admin panel for game masters",
+        "issues": [],
+        "secrets": [
+          "admin_dashboard_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "reverse-proxy.public.multiplayergame.internal",
+        "role": "Handles incoming HTTP requests and forwards them to appropriate services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "reverse_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api-gateway.public.multiplayergame.internal",
+        "role": "Manages API requests and routes them to appropriate backend services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:3000/healthz"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana-dashboard.monitoring.multiplayergame.internal",
+        "role": "Visualizes monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alert_manager": {
+      "name": "alert_manager",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9093/-/ready"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alert-manager.monitoring.multiplayergame.internal",
+        "role": "Manages alerts based on monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "postgres_player_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup-server.data.multiplayergame.internal",
+        "role": "Stores backups of critical data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "file-share.data.multiplayergame.internal",
+        "role": "Provides shared file storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "coordination_service": {
+      "name": "coordination_service",
+      "kind": "infra",
+      "deploy": {
+        "image": "hashicorp/consul:1.17",
+        "zone": "game_zone",
+        "ports": [
+          8300,
+          8301,
+          8302,
+          8500,
+          8600
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "consul",
+            "members"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "coordination-service.game.multiplayergame.internal",
+        "role": "Coordinates distributed services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_api": {
+      "name": "admin_api",
+      "kind": "web",
+      "deploy": {
+        "image": "adminer:4",
+        "zone": "data_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "postgres_player_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin-api.data.multiplayergame.internal",
+        "role": "API for admin operations",
+        "issues": [],
+        "secrets": [
+          "admin_api_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "game_master_tools": {
+      "name": "game_master_tools",
+      "kind": "web",
+      "deploy": {
+        "image": "adminer:4",
+        "zone": "data_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "admin_dashboard"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "game-master-tools.data.multiplayergame.internal",
+        "role": "Tools for game masters to manage the game environment",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "session_management_ui": {
+      "name": "session_management_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "redis_session_store"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "session-management-ui.data.multiplayergame.internal",
+        "role": "User interface for managing player sessions",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "multiplayer_online_game",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "api_key": {
+      "name": "api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "redis_password": {
+      "name": "redis_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "db_admin_password": {
+      "name": "db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_dashboard_password": {
+      "name": "admin_dashboard_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_api_key": {
+      "name": "admin_api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

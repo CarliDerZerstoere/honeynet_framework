@@ -1,0 +1,70 @@
+{
+  "benchmark_id": "m09_ad_network",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.8333333333333334,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.75,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.8611111111111112,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "ad_server": [
+        "ad_server",
+        "admin_panel",
+        "analytics_processor",
+        "api_gateway",
+        "click_tracker",
+        "fraud_detector",
+        "honeypot_service",
+        "reporting_service",
+        "reverse_proxy"
+      ],
+      "click_tracker": [
+        "ad_server",
+        "admin_panel",
+        "analytics_processor",
+        "api_gateway",
+        "click_tracker",
+        "fraud_detector",
+        "honeypot_service",
+        "reporting_service",
+        "reverse_proxy"
+      ],
+      "campaign_db": [
+        "campaign_db"
+      ],
+      "bid_cache": [],
+      "analytics_dashboard": [
+        "click_tracker",
+        "grafana_dashboard",
+        "log_aggregator",
+        "visualization_tool"
+      ],
+      "fraud_detector": [
+        "analytics_processor",
+        "fraud_detector",
+        "reporting_service"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "public_zone"
+      ],
+      "backend_zone": [
+        "analytics_zone",
+        "backend_zone"
+      ],
+      "analytics_zone": [
+        "analytics_zone",
+        "backend_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 3,
+      "total": 4
+    },
+    "placement_violations_detail": []
+  }
+}

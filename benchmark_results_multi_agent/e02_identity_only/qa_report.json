@@ -1,0 +1,144 @@
+{
+  "checks_run": 15,
+  "checks_passed": 15,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_ldap_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 81.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_auth_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 73.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_auth_proxy:1026",
+      "passed": true,
+      "actual": "TCP connect to localhost:1026 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2099.0,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_auth_proxy:1026",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 326.0,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_auth_proxy:hn_ldap_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 58.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_admin_console",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 52.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_admin_console:hn_ldap_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 46.9,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_monitoring_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 42.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_monitoring_service:hn_ldap_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 38.0,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 33.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1027",
+      "passed": true,
+      "actual": "TCP connect to localhost:1027 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2060.7,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1027",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 290.1,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_reverse_proxy:hn_auth_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 40.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_pgadmin",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 34.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_pgadmin:hn_ldap_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 29.6,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "2749ed8a95d3421ba98a8979d5444b7a"
+}

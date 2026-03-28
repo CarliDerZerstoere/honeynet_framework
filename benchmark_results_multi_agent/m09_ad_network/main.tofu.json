@@ -1,0 +1,1157 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "programmatic_advertising_platform_public_zone": {
+        "name": "programmatic_advertising_platform_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "programmatic_advertising_platform_backend_zone": {
+        "name": "programmatic_advertising_platform_backend_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "programmatic_advertising_platform_analytics_zone": {
+        "name": "programmatic_advertising_platform_analytics_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "programmatic_advertising_platform_honeynet_backbone": {
+        "name": "programmatic_advertising_platform_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_ad_server": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_click_tracker": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_campaign_db": {
+        "name": "mariadb@sha256:31c1aa20ba2d78c4cbc45b2675e40ffd6a3cd59897a9767ce88fc284309f55ab",
+        "keep_locally": true
+      },
+      "hn_bid_cache": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_grafana_dashboard": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_prometheus_collector": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "envoyproxy/envoy@sha256:2ff39d93964ddadfc74e7db0ec62bf433d91dcafa6c3542a6754715a60ba6b3c",
+        "keep_locally": true
+      },
+      "hn_admin_panel": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_monitoring_agent": {
+        "name": "fluent/fluentd@sha256:48106d90f326407602c146981bcec7462adbd5f8d7a16a0af1250d378b7688a4",
+        "keep_locally": true
+      },
+      "hn_data_backup": {
+        "name": "mariadb@sha256:31c1aa20ba2d78c4cbc45b2675e40ffd6a3cd59897a9767ce88fc284309f55ab",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "hashicorp/consul@sha256:fa5020e2307bc941e4317207de1ab55f2c7a8cd6b02c0592cce1cd20ec8a7f87",
+        "keep_locally": true
+      },
+      "hn_identity_service": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_reporting_service": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_network_monitor": {
+        "name": "fluent/fluentd@sha256:48106d90f326407602c146981bcec7462adbd5f8d7a16a0af1250d378b7688a4",
+        "keep_locally": true
+      },
+      "hn_security_scanner": {
+        "name": "fluent/fluentd@sha256:48106d90f326407602c146981bcec7462adbd5f8d7a16a0af1250d378b7688a4",
+        "keep_locally": true
+      },
+      "hn_api_monitor": {
+        "name": "fluent/fluentd@sha256:48106d90f326407602c146981bcec7462adbd5f8d7a16a0af1250d378b7688a4",
+        "keep_locally": true
+      },
+      "hn_cache_admin": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_db_admin_ui": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_honeypot_service": {
+        "name": "matomo@sha256:788933d1e3eaa1da653ac69d7cdf7815b766f77e70eb7667f06cf955eae349c7",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "couchdb@sha256:307a3f5276f64c0db28f226b7b5c180b8f2c851afa681cfb4fbb1b1fe7fd5587",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "fluent/fluentd@sha256:48106d90f326407602c146981bcec7462adbd5f8d7a16a0af1250d378b7688a4",
+        "keep_locally": true
+      },
+      "hn_metrics_server": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      },
+      "hn_alert_manager": {
+        "name": "prom/alertmanager@sha256:361db356b33041437517f1cd298462055580585f26555c317df1a3caf2868552",
+        "keep_locally": true
+      },
+      "hn_visualization_tool": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_pgadmin_ui": {
+        "name": "dpage/pgadmin4@sha256:d914d35dc1a5cf86f65c29d44451c05b73e283529e19ffcc25f45f939c579bd9",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_ad_server": {
+        "name": "hn_ad_server",
+        "image": "${docker_image.hn_ad_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_public_zone.name}",
+            "aliases": [
+              "ad_server"
+            ]
+          },
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "ad_server"
+            ]
+          }
+        ],
+        "hostname": "adserver.public.programmaticad.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_bid_cache",
+          "docker_container.hn_campaign_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_click_tracker": {
+        "name": "hn_click_tracker",
+        "image": "${docker_image.hn_click_tracker.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_public_zone.name}",
+            "aliases": [
+              "click_tracker"
+            ]
+          },
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "click_tracker"
+            ]
+          }
+        ],
+        "hostname": "clicktracker.public.programmaticad.internal",
+        "ports": [
+          {
+            "internal": 3000,
+            "external": 3001,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_campaign_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3000 || (echo > /dev/tcp/localhost/3000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_campaign_db": {
+        "name": "hn_campaign_db",
+        "image": "${docker_image.hn_campaign_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "campaign_db"
+            ]
+          }
+        ],
+        "hostname": "campaigndb.backend.programmaticad.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=weakpassword",
+          "MYSQL_DATABASE=campaign_db",
+          "MYSQL_USER=admin",
+          "MYSQL_PASSWORD=weakpassword"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bid_cache": {
+        "name": "hn_bid_cache",
+        "image": "${docker_image.hn_bid_cache.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "bid_cache"
+            ]
+          }
+        ],
+        "hostname": "bidcache.backend.programmaticad.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana_dashboard": {
+        "name": "hn_grafana_dashboard",
+        "image": "${docker_image.hn_grafana_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "grafana_dashboard"
+            ]
+          }
+        ],
+        "hostname": "grafana.analytics.programmaticad.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus_collector": {
+        "name": "hn_prometheus_collector",
+        "image": "${docker_image.hn_prometheus_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "prometheus_collector"
+            ]
+          }
+        ],
+        "hostname": "prometheus.analytics.programmaticad.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          },
+          {
+            "name": "${docker_network.programmatic_advertising_platform_public_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "reverseproxy.public.programmaticad.internal",
+        "depends_on": [
+          "docker_container.hn_ad_server",
+          "docker_container.hn_click_tracker"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 10000 || (echo > /dev/tcp/localhost/10000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_panel": {
+        "name": "hn_admin_panel",
+        "image": "${docker_image.hn_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_public_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          },
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          }
+        ],
+        "hostname": "adminpanel.public.programmaticad.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_campaign_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_agent": {
+        "name": "hn_monitoring_agent",
+        "image": "${docker_image.hn_monitoring_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "monitoring_agent"
+            ]
+          }
+        ],
+        "hostname": "fluentd.analytics.programmaticad.internal",
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "depends_on": [
+          "docker_container.hn_grafana_dashboard"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:24224 || wget -qO- http://localhost:24224 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_data_backup": {
+        "name": "hn_data_backup",
+        "image": "${docker_image.hn_data_backup.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "data_backup"
+            ]
+          }
+        ],
+        "hostname": "backup.backend.programmaticad.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=weakpassword",
+          "MYSQL_DATABASE=backup_db",
+          "MYSQL_USER=backup_admin",
+          "MYSQL_PASSWORD=weakpassword"
+        ],
+        "depends_on": [
+          "docker_container.hn_campaign_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "consul.backend.programmaticad.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "consul",
+              "members"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_identity_service": {
+        "name": "hn_identity_service",
+        "image": "${docker_image.hn_identity_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "identity_service"
+            ]
+          }
+        ],
+        "hostname": "ldap.backend.programmaticad.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reporting_service": {
+        "name": "hn_reporting_service",
+        "image": "${docker_image.hn_reporting_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "reporting_service"
+            ]
+          }
+        ],
+        "hostname": "reporting.analytics.programmaticad.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_network_monitor": {
+        "name": "hn_network_monitor",
+        "image": "${docker_image.hn_network_monitor.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "network_monitor"
+            ]
+          }
+        ],
+        "hostname": "networkmonitor.analytics.programmaticad.internal",
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_security_scanner": {
+        "name": "hn_security_scanner",
+        "image": "${docker_image.hn_security_scanner.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "security_scanner"
+            ]
+          }
+        ],
+        "hostname": "securityscanner.backend.programmaticad.internal",
+        "env": [
+          "LD_PRELOAD=/usr/lib/preloadable_libiconv.so"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_monitor": {
+        "name": "hn_api_monitor",
+        "image": "${docker_image.hn_api_monitor.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "api_monitor"
+            ]
+          }
+        ],
+        "hostname": "apimonitor.analytics.programmaticad.internal",
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_cache_admin": {
+        "name": "hn_cache_admin",
+        "image": "${docker_image.hn_cache_admin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "cache_admin"
+            ]
+          }
+        ],
+        "hostname": "cacheadmin.backend.programmaticad.internal",
+        "depends_on": [
+          "docker_container.hn_bid_cache"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_db_admin_ui": {
+        "name": "hn_db_admin_ui",
+        "image": "${docker_image.hn_db_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "db_admin_ui"
+            ]
+          }
+        ],
+        "hostname": "dbadminui.backend.programmaticad.internal",
+        "env": [
+          "PMA_HOST=campaign_db",
+          "PMA_USER=admin",
+          "PMA_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_campaign_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_service": {
+        "name": "hn_honeypot_service",
+        "image": "${docker_image.hn_honeypot_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_public_zone.name}",
+            "aliases": [
+              "honeypot_service"
+            ]
+          }
+        ],
+        "hostname": "honeypot.public.programmaticad.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backupserver.backend.programmaticad.internal",
+        "env": [
+          "COUCHDB_USER=admin",
+          "COUCHDB_PASSWORD=password"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:5984/_up"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logcollector.analytics.programmaticad.internal",
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_metrics_server": {
+        "name": "hn_metrics_server",
+        "image": "${docker_image.hn_metrics_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "metrics_server"
+            ]
+          }
+        ],
+        "hostname": "metricsserver.analytics.programmaticad.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alert_manager": {
+        "name": "hn_alert_manager",
+        "image": "${docker_image.hn_alert_manager.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "alert_manager"
+            ]
+          }
+        ],
+        "hostname": "alertmanager.analytics.programmaticad.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_visualization_tool": {
+        "name": "hn_visualization_tool",
+        "image": "${docker_image.hn_visualization_tool.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_analytics_zone.name}",
+            "aliases": [
+              "visualization_tool"
+            ]
+          }
+        ],
+        "hostname": "visualization.analytics.programmaticad.internal",
+        "depends_on": [
+          "docker_container.hn_grafana_dashboard"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin_ui": {
+        "name": "hn_pgadmin_ui",
+        "image": "${docker_image.hn_pgadmin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.programmatic_advertising_platform_backend_zone.name}",
+            "aliases": [
+              "pgadmin_ui"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.backend.programmaticad.internal",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@programmaticad.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_campaign_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "programmatic_advertising_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

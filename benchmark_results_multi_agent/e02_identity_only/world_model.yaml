@@ -1,0 +1,224 @@
+organization:
+  business_units: []
+  name: corporate_internal_directory
+  regions: []
+  type: ''
+secrets:
+  ldap_admin_password:
+    name: ldap_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  neo4j_admin_password:
+    name: neo4j_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_console:
+    deploy:
+      depends_on:
+      - ldap_service
+      env:
+      - NEO4J_AUTH=neo4j/weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - cypher-shell
+        - -u
+        - neo4j
+        - -p
+        - admin123
+        - RETURN 1
+        timeout: 10s
+      image: neo4j:5.15
+      ports:
+      - 7473
+      - 7474
+      - 7687
+      volumes: []
+      zone: internal_zone
+    kind: unknown
+    name: admin_console
+    simulate:
+      behaviors: []
+      hostname: adminconsole.internal.corporate_internal_directory
+      issues: []
+      role: Admin console for managing internal directory services
+      secrets:
+      - neo4j_admin_password
+      services:
+      - http
+      - https
+  auth_proxy:
+    deploy:
+      depends_on:
+      - ldap_service
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: auth_proxy
+    simulate:
+      behaviors: []
+      hostname: authproxy.dmz.corporate_internal_directory
+      issues: []
+      role: Authentication proxy for external access
+      secrets: []
+      services:
+      - http
+      - https
+  ldap_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: identity
+    name: ldap_service
+    simulate:
+      behaviors: []
+      hostname: ldap01.internal.corporate_internal_directory
+      issues: []
+      role: LDAP server for internal directory services
+      secrets:
+      - ldap_admin_password
+      services:
+      - ldap
+  monitoring_service:
+    deploy:
+      depends_on:
+      - ldap_service
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 2019
+      - 443
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: monitoring_service
+    simulate:
+      behaviors: []
+      hostname: monitor.internal.corporate_internal_directory
+      issues: []
+      role: Monitoring service for internal systems
+      secrets: []
+      services:
+      - http
+      - https
+  pgadmin:
+    deploy:
+      depends_on:
+      - ldap_service
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:6.21
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: unknown
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.internal.corporate_internal_directory
+      issues: []
+      role: Database administration interface for internal use
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - auth_proxy
+      env:
+      - HTTPD_PATCHES=none
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: reverseproxy.dmz.corporate_internal_directory
+      issues: []
+      role: Reverse proxy for routing external requests
+      secrets: []
+      services:
+      - http
+      - https
+zones:
+  dmz_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: dmz_zone
+    name: dmz_zone
+  internal_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: internal_zone
+    name: internal_zone

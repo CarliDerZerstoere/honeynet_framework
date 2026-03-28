@@ -1,0 +1,459 @@
+{
+  "checks_run": 50,
+  "checks_passed": 47,
+  "checks_failed": 3,
+  "pass_rate": 0.94,
+  "results": [
+    {
+      "check_id": "running:hn_dns_resolver",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 285.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_dns_resolver:2019",
+      "passed": true,
+      "actual": "TCP connect to localhost:2019 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2293.5,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "tcp:hn_dns_resolver:1024",
+      "passed": true,
+      "actual": "TCP connect to localhost:1024 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2284.4,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_dns_resolver:1024",
+      "passed": false,
+      "actual": "",
+      "expected": "HTTP response",
+      "error": "HTTP request to http://localhost:1024/ failed: ",
+      "duration_ms": 520.4,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "tcp:hn_dns_resolver:1025",
+      "passed": true,
+      "actual": "TCP connect to localhost:1025 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2275.6,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_dns_resolver:1025",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 516.5,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_sinkhole_web",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 250.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_sinkhole_web:1026",
+      "passed": true,
+      "actual": "TCP connect to localhost:1026 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2261.2,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_sinkhole_web:1026",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 499.4,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_sinkhole_web:hn_dns_resolver",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 235.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 227.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_log_collector:hn_sinkhole_web",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 220.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_web_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 214.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_web_proxy:1027",
+      "passed": true,
+      "actual": "TCP connect to localhost:1027 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2225.8,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_web_proxy:1027",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 466.1,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_web_proxy:hn_sinkhole_web",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 201.0,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_monitoring_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 195.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_monitoring_dashboard:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 189.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_alerting_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 182.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_alerting_service:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 177.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_log_storage",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 172.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_log_storage:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 166.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_backup_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 160.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_backup_server:hn_log_storage",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 155.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_identity_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 149.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_dns_admin_ui",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 144.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_dns_admin_ui:1028",
+      "passed": true,
+      "actual": "TCP connect to localhost:1028 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2153.0,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_dns_admin_ui:1028",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 404.1,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_dns_admin_ui:hn_dns_resolver",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 129.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_threat_analysis_tool",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 123.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_threat_analysis_tool:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 116.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_data_aggregator",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 111.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_data_aggregator:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 105.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_service_discovery",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 100.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_load_balancer",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 95.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_load_balancer:2020",
+      "passed": true,
+      "actual": "TCP connect to localhost:2020 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2105.5,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "tcp:hn_load_balancer:1029",
+      "passed": true,
+      "actual": "TCP connect to localhost:1029 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2100.0,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_load_balancer:1029",
+      "passed": false,
+      "actual": "",
+      "expected": "HTTP response",
+      "error": "HTTP request to http://localhost:1029/ failed: ",
+      "duration_ms": 338.9,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "tcp:hn_load_balancer:1030",
+      "passed": true,
+      "actual": "TCP connect to localhost:1030 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2093.5,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_load_balancer:1030",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 336.1,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_load_balancer:hn_sinkhole_web",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 72.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_dns_cache",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 66.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_dns_cache:hn_dns_resolver",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 60.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_log_analyzer",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 55.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_log_analyzer:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 49.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_log_analyzer:hn_threat_analysis_tool",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 46.9,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_dns_debug_endpoint",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 41.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_dns_debug_endpoint:8080",
+      "passed": true,
+      "actual": "TCP connect to localhost:8080 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2046.7,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_dns_debug_endpoint:8080",
+      "passed": false,
+      "actual": "Server disconnected without sending a response.",
+      "expected": "HTTP response",
+      "error": "HTTP request to http://localhost:8080/ failed: Server disconnected without sending a response.",
+      "duration_ms": 283.0,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_dns_debug_endpoint:hn_dns_resolver",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 33.6,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "ed7f4add7801488e91e9578aba65b09b"
+}

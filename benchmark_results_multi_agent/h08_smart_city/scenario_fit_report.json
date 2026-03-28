@@ -1,0 +1,134 @@
+{
+  "benchmark_id": "h08_smart_city",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.75,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.4,
+  "placement_violations": 6,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.35833333333333334,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "sensor_gateway": [
+        "mqtt_broker"
+      ],
+      "traffic_api": [
+        "api_gateway",
+        "citizen_portal",
+        "data_aggregator",
+        "dispatch_ui",
+        "emergency_dispatch_service",
+        "load_balancer",
+        "reverse_proxy",
+        "sensor_gateway",
+        "traffic_api",
+        "traffic_management_ui"
+      ],
+      "metrics_db": [
+        "metrics_db"
+      ],
+      "city_db": [],
+      "citizen_portal": [
+        "api_gateway",
+        "citizen_portal",
+        "dispatch_ui",
+        "load_balancer",
+        "reverse_proxy",
+        "traffic_api",
+        "traffic_management_ui"
+      ],
+      "emergency_dispatch": [
+        "api_gateway",
+        "citizen_portal",
+        "data_aggregator",
+        "dispatch_ui",
+        "emergency_dispatch_service",
+        "load_balancer",
+        "reverse_proxy",
+        "sensor_gateway",
+        "traffic_api",
+        "traffic_management_ui"
+      ],
+      "event_bus": [],
+      "monitoring": [
+        "grafana",
+        "log_collector",
+        "monitoring_agent",
+        "network_monitor",
+        "prometheus"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "public_zone"
+      ],
+      "iot_zone": [
+        "data_zone",
+        "dispatch_zone",
+        "iot_zone",
+        "ops_zone"
+      ],
+      "data_zone": [
+        "data_zone",
+        "dispatch_zone",
+        "iot_zone",
+        "ops_zone"
+      ],
+      "dispatch_zone": [
+        "data_zone",
+        "dispatch_zone",
+        "iot_zone",
+        "ops_zone"
+      ],
+      "ops_zone": [
+        "data_zone",
+        "dispatch_zone",
+        "iot_zone",
+        "ops_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 2,
+      "total": 5
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "emergency_dispatch",
+        "zone_id": "public_zone",
+        "system": "api_gateway",
+        "deployed_zone": "public_zone"
+      },
+      {
+        "service_id": "emergency_dispatch",
+        "zone_id": "public_zone",
+        "system": "traffic_management_ui",
+        "deployed_zone": "public_zone"
+      },
+      {
+        "service_id": "emergency_dispatch",
+        "zone_id": "public_zone",
+        "system": "citizen_portal",
+        "deployed_zone": "public_zone"
+      },
+      {
+        "service_id": "emergency_dispatch",
+        "zone_id": "public_zone",
+        "system": "reverse_proxy",
+        "deployed_zone": "public_zone"
+      },
+      {
+        "service_id": "emergency_dispatch",
+        "zone_id": "public_zone",
+        "system": "load_balancer",
+        "deployed_zone": "public_zone"
+      },
+      {
+        "service_id": "emergency_dispatch",
+        "zone_id": "public_zone",
+        "system": "traffic_api",
+        "deployed_zone": "public_zone"
+      }
+    ]
+  }
+}

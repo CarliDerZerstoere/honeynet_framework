@@ -1,0 +1,39 @@
+{
+  "benchmark_id": "e08_vpn_gateway",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.3333333333333333,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.0,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.4444444444444444,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "vpn_gateway": [],
+      "auth_proxy": [
+        "admin_panel",
+        "auth_proxy",
+        "bait_admin_ui",
+        "internal_wiki",
+        "pgadmin_ui",
+        "reverse_proxy"
+      ],
+      "internal_wiki": []
+    },
+    "matched_zones": {
+      "edge_zone": [
+        "edge_zone"
+      ],
+      "internal_zone": [
+        "internal_zone",
+        "monitoring_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 0,
+      "total": 2
+    },
+    "placement_violations_detail": []
+  }
+}

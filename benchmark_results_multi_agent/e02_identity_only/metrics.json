@@ -1,0 +1,95 @@
+{
+  "schema_version": 3,
+  "recorded_at_utc": "2026-03-28T10:23:29.964986+00:00",
+  "envelope": {
+    "metrics_schema_version": 3
+  },
+  "observability": {
+    "run_id": "2749ed8a95d3421ba98a8979d5444b7a",
+    "work_dir": "C:\\Users\\nibbi\\workflow_analysis\\benchmark_results_multi_agent\\e02_identity_only",
+    "tofu_version": "OpenTofu v1.11.5",
+    "started_at_utc": "2026-03-28T10:18:16.451685+00:00",
+    "failure_stage": "runtime_verify",
+    "error_class": "unknown",
+    "deploy_completed": true,
+    "repair_incident_count": 1,
+    "repair_actions": [
+      {
+        "stage": "runtime_repair",
+        "action": "container_restart",
+        "target": "admin_console"
+      }
+    ],
+    "deterministic_dep_additions": [],
+    "deterministic_placement_fixes": [],
+    "stage_durations": {
+      "extraction": 23.567,
+      "validation": 0.006,
+      "image_resolution": 0.128,
+      "compilation": 0.163,
+      "render": 0.001,
+      "deploy": 14.341,
+      "runtime_verify": 183.954
+    },
+    "path_a": {
+      "diagnostics_collected": false,
+      "diagnostics_artifact": "",
+      "failing_resources_count": 0,
+      "docker_targets_count": 0,
+      "error_class": ""
+    }
+  },
+  "deployability": {
+    "world_model_valid": true,
+    "validation_first_pass_success": true,
+    "validation_repair_attempted": false,
+    "validation_repair_success": false,
+    "config_validation_pass": true,
+    "plan_success": true,
+    "deploy_success": true,
+    "deploy_first_attempt": true,
+    "deploy_retried": true,
+    "deploy_retry_count": 2,
+    "runtime_verification_success": false,
+    "health_check_rate": 1.0,
+    "container_start_rate": 1.0,
+    "expected_containers": 6,
+    "planned_containers": 6,
+    "dropped_containers": 0,
+    "running_containers": 6,
+    "health_checks_total": 15,
+    "health_checks_passed": 15,
+    "health_check_status": "measured",
+    "container_health_status": "measured",
+    "health_check_rate_by_type": {
+      "container_running": 1.0,
+      "depends_on_running": 1.0,
+      "http_status": 1.0,
+      "tcp_connect": 1.0
+    }
+  },
+  "scenario_fit": {
+    "zone_count": 2,
+    "system_count": 6,
+    "model_dep_rate": 1.0,
+    "image_check_rate": 1.0,
+    "planned_service_coverage": 0.6667,
+    "running_service_coverage": 0.6667,
+    "planned_zone_coverage": 0.5,
+    "running_zone_coverage": 0.5,
+    "planned_dep_coverage": 0.5,
+    "running_dep_coverage": 0.5,
+    "benchmark_dep_required": 2,
+    "placement_violations": 0,
+    "benchmark_pass": false,
+    "benchmark_status": "measured",
+    "benchmark_id": "e02_identity_only",
+    "benchmark_ref": "benchmarks\\corpus_v1\\easy\\e02_identity_only.yaml",
+    "scenario_fit_score": 0.5556
+  },
+  "pipeline_kpis": {
+    "blocked_before_deploy": false,
+    "deploy_eligible": true
+  },
+  "errors": []
+}

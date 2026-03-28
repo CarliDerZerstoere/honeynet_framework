@@ -1,0 +1,41 @@
+{
+  "scenario_id": "e02_identity_only",
+  "difficulty": "easy",
+  "prompt_variant": "detailed",
+  "prompt_text": "Model a corporate internal directory using an LDAP server accessible only\nfrom the internal network.",
+  "planned_service_coverage": 0.6667,
+  "planned_zone_coverage": 0.5,
+  "planned_dep_coverage": 0.5,
+  "benchmark_dep_required": 2,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "deploy_success": true,
+  "deploy_status": "runtime_degraded",
+  "containers_planned": 6,
+  "containers_running": 6,
+  "containers_dropped": 0,
+  "running_service_coverage": 0.6667,
+  "running_zone_coverage": 0.5,
+  "running_dep_coverage": 0.5,
+  "scenario_fit_score": 0.5556,
+  "duration_s": 313.91,
+  "stage_durations": {
+    "extraction": 23.567,
+    "validation": 0.006,
+    "image_resolution": 0.128,
+    "compilation": 0.163,
+    "render": 0.001,
+    "deploy": 14.341,
+    "runtime_verify": 183.954
+  },
+  "failure_stage": "runtime_verify",
+  "error_class": "unknown",
+  "errors": [],
+  "scenario_complexity": {
+    "required_services_count": 3,
+    "required_zones_count": 2,
+    "required_deps_count": 2
+  },
+  "dry_run": false,
+  "dry_run_valid": false
+}

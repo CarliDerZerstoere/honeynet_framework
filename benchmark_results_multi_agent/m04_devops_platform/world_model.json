@@ -1,0 +1,1288 @@
+{
+  "zones": {
+    "internal_zone": {
+      "name": "internal_zone",
+      "deploy": {
+        "network_name": "internal_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "build_zone": {
+      "name": "build_zone",
+      "deploy": {
+        "network_name": "build_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "gitea": {
+      "name": "gitea",
+      "kind": "web",
+      "deploy": {
+        "image": "gitea/gitea:latest",
+        "zone": "internal_zone",
+        "ports": [
+          3000,
+          22
+        ],
+        "env": [
+          "GITEA__database__DB_TYPE=sqlite3",
+          "GITEA__database__PATH=data/gitea.db",
+          "GITEA__security__INSTALL_LOCK=true",
+          "GITEA__security__SECRET_KEY=weaksecretkey"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "ci_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "gitea.internal_developer_platform.internal",
+        "role": "Source code hosting and version control",
+        "issues": [],
+        "secrets": [
+          "gitea_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http",
+          "ssh"
+        ]
+      }
+    },
+    "jenkins_runner": {
+      "name": "jenkins_runner",
+      "kind": "runtime",
+      "deploy": {
+        "image": "jenkins/jenkins:lts",
+        "zone": "build_zone",
+        "ports": [
+          50000,
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "gitea",
+          "container_registry",
+          "ci_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8080/login || wget -qO- http://localhost:8080/login || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "jenkins.build.internal_developer_platform.internal",
+        "role": "Continuous Integration/Continuous Deployment runner",
+        "issues": [],
+        "secrets": [
+          "jenkins_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http",
+          "agent"
+        ]
+      }
+    },
+    "container_registry": {
+      "name": "container_registry",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "internal_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "registry.internal_developer_platform.internal",
+        "role": "Private Docker container registry",
+        "issues": [],
+        "secrets": [
+          "registry_access_key",
+          "registry_secret_key"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "artifact_store": {
+      "name": "artifact_store",
+      "kind": "storage",
+      "deploy": {
+        "image": "influxdb:2.7",
+        "zone": "data_zone",
+        "ports": [
+          8086
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8086/health || wget -qO- http://localhost:8086/health || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "artifacts.data.internal_developer_platform.internal",
+        "role": "Artifact repository for build artifacts",
+        "issues": [],
+        "secrets": [
+          "artifact_store_access_key",
+          "artifact_store_secret_key"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "ci_database": {
+      "name": "ci_database",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "data_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123",
+          "POSTGRES_USER=admin"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "admin"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "db.data.internal_developer_platform.internal",
+        "role": "Database for CI/CD data storage",
+        "issues": [],
+        "secrets": [
+          "ci_db_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "postgres"
+        ]
+      }
+    },
+    "prometheus": {
+      "name": "prometheus",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "internal_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9090/metrics"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus.internal_developer_platform.internal",
+        "role": "Monitoring and alerting toolkit",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "grafana": {
+      "name": "grafana",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "internal_zone",
+        "ports": [
+          3000
+        ],
+        "env": [
+          "GF_SECURITY_ADMIN_USER=admin",
+          "GF_SECURITY_ADMIN_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.internal_developer_platform.internal",
+        "role": "Monitoring dashboard and visualization",
+        "issues": [],
+        "secrets": [
+          "grafana_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "nginx_proxy": {
+      "name": "nginx_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "gitea",
+          "jenkins_runner",
+          "grafana"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy.internal_developer_platform.internal",
+        "role": "Reverse proxy for internal services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "internal_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logs.internal_developer_platform.internal",
+        "role": "Log collection and aggregation",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "alert_manager": {
+      "name": "alert_manager",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "internal_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alerts.internal_developer_platform.internal",
+        "role": "Alert management for monitoring stack",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "backup_service": {
+      "name": "backup_service",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "ci_database",
+          "artifact_store"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup.data.internal_developer_platform.internal",
+        "role": "Backup service for data storage",
+        "issues": [],
+        "secrets": [
+          "backup_service_access_key",
+          "backup_service_secret_key"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "admin_ui": {
+      "name": "admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "portainer/portainer-ce:latest",
+        "zone": "internal_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ci_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9000/ || wget -qO- http://localhost:9000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin.internal_developer_platform.internal",
+        "role": "Administrative user interface for managing services",
+        "issues": [],
+        "secrets": [
+          "admin_ui_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "jaegertracing/all-in-one:1.52",
+        "zone": "internal_zone",
+        "ports": [
+          14250,
+          14268,
+          16686,
+          4317,
+          4318,
+          5775,
+          5778,
+          6831,
+          6832,
+          9411
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:16686 || wget -qO- http://localhost:16686 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "discovery.internal_developer_platform.internal",
+        "role": "Service discovery and tracing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "infra",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "nginx_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "lb.internal_developer_platform.internal",
+        "role": "Load balancing for internal services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "ci_agent": {
+      "name": "ci_agent",
+      "kind": "runtime",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "build_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "jenkins_runner"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "agent.build.internal_developer_platform.internal",
+        "role": "Agent for CI/CD tasks",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "metrics_collector": {
+      "name": "metrics_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "internal_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "metrics.internal_developer_platform.internal",
+        "role": "Metrics collection for monitoring",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "dashboard_service": {
+      "name": "dashboard_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "internal_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "grafana"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "dashboard.internal_developer_platform.internal",
+        "role": "Service for monitoring dashboards",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "nginx_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api.internal_developer_platform.internal",
+        "role": "API gateway for internal services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "postgres_admin": {
+      "name": "postgres_admin",
+      "kind": "web",
+      "deploy": {
+        "image": "portainer/portainer-ce:latest",
+        "zone": "internal_zone",
+        "ports": [
+          8000,
+          9000,
+          9443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ci_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.internal_developer_platform.internal",
+        "role": "PostgreSQL administration interface",
+        "issues": [],
+        "secrets": [
+          "pgadmin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "files.data.internal_developer_platform.internal",
+        "role": "File sharing service for data storage",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "cache_service": {
+      "name": "cache_service",
+      "kind": "infra",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "internal_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "cache.internal_developer_platform.internal",
+        "role": "Cache service for internal data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "ci_scheduler": {
+      "name": "ci_scheduler",
+      "kind": "runtime",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "build_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "jenkins_runner"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "scheduler.build.internal_developer_platform.internal",
+        "role": "Scheduler for CI/CD tasks",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "build_cache": {
+      "name": "build_cache",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "build_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "buildcache.build.internal_developer_platform.internal",
+        "role": "Cache for build artifacts",
+        "issues": [],
+        "secrets": [
+          "build_cache_access_key",
+          "build_cache_secret_key"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "security_scanner": {
+      "name": "security_scanner",
+      "kind": "infra",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "internal_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "scanner.internal_developer_platform.internal",
+        "role": "Security scanning for vulnerabilities",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "identity_service": {
+      "name": "identity_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "neo4j:5.15",
+        "zone": "internal_zone",
+        "ports": [
+          7473,
+          7474,
+          7687
+        ],
+        "env": [
+          "NEO4J_AUTH=neo4j/weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "cypher-shell",
+            "-u",
+            "neo4j",
+            "-p",
+            "admin123",
+            "RETURN 1"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "identity.internal_developer_platform.internal",
+        "role": "Identity and access management service",
+        "issues": [],
+        "secrets": [
+          "neo4j_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "coordination_service": {
+      "name": "coordination_service",
+      "kind": "infra",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "internal_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "coordination.internal_developer_platform.internal",
+        "role": "Service coordination and management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "config_management": {
+      "name": "config_management",
+      "kind": "infra",
+      "deploy": {
+        "image": "portainer/portainer-ce:latest",
+        "zone": "internal_zone",
+        "ports": [
+          8000,
+          9000,
+          9443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "config.internal_developer_platform.internal",
+        "role": "Configuration management for services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "web",
+      "deploy": {
+        "image": "dpage/pgadmin4:latest",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@example.com",
+          "PGADMIN_DEFAULT_PASSWORD=pgadmin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "ci_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.data.internal_developer_platform.internal",
+        "role": "Web-based administration tool for PostgreSQL",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "internal_developer_platform",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "gitea_admin_password": {
+      "name": "gitea_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "jenkins_admin_password": {
+      "name": "jenkins_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "registry_access_key": {
+      "name": "registry_access_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "registry_secret_key": {
+      "name": "registry_secret_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "artifact_store_access_key": {
+      "name": "artifact_store_access_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "artifact_store_secret_key": {
+      "name": "artifact_store_secret_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "ci_db_password": {
+      "name": "ci_db_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "grafana_admin_password": {
+      "name": "grafana_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_service_access_key": {
+      "name": "backup_service_access_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "backup_service_secret_key": {
+      "name": "backup_service_secret_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_ui_password": {
+      "name": "admin_ui_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "pgadmin_password": {
+      "name": "pgadmin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "build_cache_access_key": {
+      "name": "build_cache_access_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "build_cache_secret_key": {
+      "name": "build_cache_secret_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "neo4j_password": {
+      "name": "neo4j_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

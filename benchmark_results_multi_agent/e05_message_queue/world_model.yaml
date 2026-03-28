@@ -1,0 +1,269 @@
+organization:
+  business_units: []
+  name: event_driven_platform
+  regions: []
+  type: ''
+secrets:
+  consumer_worker_secret:
+    name: consumer_worker_secret
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  monitoring_dashboard_token:
+    name: monitoring_dashboard_token
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: token
+  producer_api_key:
+    name: producer_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  rabbitmq_admin_password:
+    name: rabbitmq_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  consumer_worker:
+    deploy:
+      depends_on:
+      - rabbitmq_broker
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 1883 || (echo > /dev/tcp/localhost/1883) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: eclipse-mosquitto:2.0
+      ports:
+      - 1883
+      volumes: []
+      zone: internal_zone
+    kind: runtime
+    name: consumer_worker
+    simulate:
+      behaviors: []
+      hostname: consumer.worker.internal.eventdrivenplatform.internal
+      issues: []
+      role: Worker for consuming messages from the broker
+      secrets:
+      - consumer_worker_secret
+      services:
+      - mqtt
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 2019
+      - 443
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logs.internal.eventdrivenplatform.internal
+      issues: []
+      role: Log collector for system logs
+      secrets: []
+      services:
+      - http
+  monitoring_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - influx
+        - ping
+        timeout: 10s
+      image: influxdb:2.7
+      ports:
+      - 8086
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: monitoring_dashboard
+    simulate:
+      behaviors: []
+      hostname: monitoring.internal.eventdrivenplatform.internal
+      issues: []
+      role: Dashboard for monitoring system metrics
+      secrets:
+      - monitoring_dashboard_token
+      services:
+      - http
+  pgadmin:
+    deploy:
+      depends_on:
+      - rabbitmq_broker
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@eventdrivenplatform.internal
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:6.21
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: unknown
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.internal.eventdrivenplatform.internal
+      issues: []
+      role: Admin UI for database management
+      secrets: []
+      services: []
+  producer_api:
+    deploy:
+      depends_on:
+      - rabbitmq_broker
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: producer_api
+    simulate:
+      behaviors: []
+      hostname: producer.api.eventdrivenplatform.app
+      issues: []
+      role: API for producing messages to the broker
+      secrets:
+      - producer_api_key
+      services:
+      - http
+  rabbitmq_broker:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - rabbitmq-diagnostics
+        - ping
+        timeout: 10s
+      image: rabbitmq:3.12-management
+      ports:
+      - 15671
+      - 15672
+      - 15691
+      - 15692
+      - 25672
+      - 4369
+      - 5671
+      - 5672
+      volumes: []
+      zone: internal_zone
+    kind: queue
+    name: rabbitmq_broker
+    simulate:
+      behaviors: []
+      hostname: rabbitmq01.internal.eventdrivenplatform.internal
+      issues: []
+      role: Message broker for internal asynchronous communication
+      secrets:
+      - rabbitmq_admin_password
+      services:
+      - amqp
+      - http
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - producer_api
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: app_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy.eventdrivenplatform.app
+      issues: []
+      role: Reverse proxy for routing external requests
+      secrets: []
+      services:
+      - http
+      - https
+zones:
+  app_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: app_zone
+    name: app_zone
+  internal_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: internal_zone
+    name: internal_zone

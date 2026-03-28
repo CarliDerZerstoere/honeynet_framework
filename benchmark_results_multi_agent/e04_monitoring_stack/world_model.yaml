@@ -1,0 +1,696 @@
+organization:
+  business_units: []
+  name: operations_monitoring_stack
+  regions: []
+  type: ''
+secrets:
+  api_gateway_key:
+    name: api_gateway_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  grafana_admin_password:
+    name: grafana_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  prometheus_scrape_token:
+    name: prometheus_scrape_token
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: token
+systems:
+  admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: ops_zone
+    kind: infra
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: admin01.ops.operations_monitoring_stack.internal
+      issues: []
+      role: Administrative interface for system management
+      secrets: []
+      services: []
+  alerting_service:
+    deploy:
+      depends_on:
+      - monitoring_collector
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9093/api/v1/status
+        timeout: 10s
+      image: prom/alertmanager:v0.26.0
+      ports:
+      - 9093
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: alerting_service
+    simulate:
+      behaviors: []
+      hostname: alerting01.ops.operations_monitoring_stack.internal
+      issues: []
+      role: Alerting and notification service
+      secrets: []
+      services: []
+  alertmanager_service:
+    deploy:
+      depends_on:
+      - prometheus_server
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9093/-/healthy
+        timeout: 10s
+      image: prom/alertmanager:v0.26.0
+      ports:
+      - 9093
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: alertmanager_service
+    simulate:
+      behaviors: []
+      hostname: alertmanager01.logging.operations_monitoring_stack.internal
+      issues: []
+      role: Alert management and routing
+      secrets: []
+      services: []
+  api_gateway:
+    deploy:
+      command:
+      - kong
+      - docker-start
+      depends_on:
+      - reverse_proxy
+      env:
+      - KONG_DATABASE=off
+      - KONG_PG_HOST=postgres_host
+      - KONG_PG_PORT=5432
+      - KONG_PG_USER=kong
+      - KONG_PG_PASSWORD=kong_password
+      - KONG_PG_DATABASE=kong
+      - KONG_DECLARATIVE_CONFIG=/path/to/kong.yml
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:8001
+        timeout: 10s
+      image: kong:3.4
+      ports:
+      - 8000
+      - 8443
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api01.public.operations_monitoring_stack.internal
+      issues: []
+      role: API gateway and traffic management
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: database_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup01.database.operations_monitoring_stack.internal
+      issues: []
+      role: Database backup and recovery
+      secrets: []
+      services: []
+  cache_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: database_zone
+    kind: runtime
+    name: cache_service
+    simulate:
+      behaviors: []
+      hostname: cache01.database.operations_monitoring_stack.internal
+      issues: []
+      role: In-memory data caching
+      secrets: []
+      services: []
+  database_primary:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: database_zone
+    kind: database
+    name: database_primary
+    simulate:
+      behaviors: []
+      hostname: db-primary01.database.operations_monitoring_stack.internal
+      issues: []
+      role: Primary database server
+      secrets: []
+      services: []
+  database_replica:
+    deploy:
+      depends_on:
+      - database_primary
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: database_zone
+    kind: database
+    name: database_replica
+    simulate:
+      behaviors: []
+      hostname: db-replica01.database.operations_monitoring_stack.internal
+      issues: []
+      role: Replica database server
+      secrets: []
+      services: []
+  elasticsearch_logging_agent:
+    deploy:
+      command:
+      - /usr/local/bin/kibana-docker
+      depends_on: []
+      env:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:5601/status
+        timeout: 10s
+      image: kibana:8.11.0
+      ports:
+      - 5601
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: elasticsearch_logging_agent
+    simulate:
+      behaviors: []
+      hostname: elasticsearch01.logging.operations_monitoring_stack.internal
+      issues: []
+      role: Log indexing and search
+      secrets: []
+      services: []
+  file_share:
+    deploy:
+      depends_on: []
+      env:
+      - HTTPD_PATCHES=none
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: database_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: fileshare01.database.operations_monitoring_stack.internal
+      issues: []
+      role: Shared file storage
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on:
+      - prometheus_server
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3000/api/health
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana01.ops.operations_monitoring_stack.internal
+      issues: []
+      role: Visualization and dashboarding
+      secrets: []
+      services: []
+  honeypot_admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3000/login
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: public_zone
+    kind: infra
+    name: honeypot_admin_panel
+    simulate:
+      behaviors: []
+      hostname: honeypot01.public.operations_monitoring_stack.internal
+      issues: []
+      role: Decoy administrative interface
+      secrets: []
+      services: []
+  identity_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: security_zone
+    kind: identity
+    name: identity_service
+    simulate:
+      behaviors: []
+      hostname: identity01.security.operations_monitoring_stack.internal
+      issues: []
+      role: User identity and authentication service
+      secrets: []
+      services: []
+  kibana_dashboard:
+    deploy:
+      depends_on:
+      - elasticsearch_logging_agent
+      env:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch01.logging.operations_monitoring_stack.internal:9200
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:5601/ || wget -qO- http://localhost:5601/ || true
+        timeout: 10s
+      image: kibana:8.11.0
+      ports:
+      - 5601
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: kibana_dashboard
+    simulate:
+      behaviors: []
+      hostname: kibana01.logging.operations_monitoring_stack.internal
+      issues: []
+      role: Log visualization and analysis
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 16686 || (echo > /dev/tcp/localhost/16686) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: jaegertracing/all-in-one:1.52
+      ports:
+      - 14250
+      - 14268
+      - 16686
+      - 4317
+      - 4318
+      - 5775
+      - 5778
+      - 6831
+      - 6832
+      - 9411
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logcollector01.logging.operations_monitoring_stack.internal
+      issues: []
+      role: Centralized log collection
+      secrets: []
+      services: []
+  loki_logging_agent:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3100/ready
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: loki_logging_agent
+    simulate:
+      behaviors: []
+      hostname: loki01.logging.operations_monitoring_stack.internal
+      issues: []
+      role: Log aggregation and storage
+      secrets: []
+      services: []
+  monitoring_collector:
+    deploy:
+      command:
+      - influxd
+      depends_on: []
+      env:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=admin123
+      - DOCKER_INFLUXDB_INIT_ORG=myorg
+      - DOCKER_INFLUXDB_INIT_BUCKET=mybucket
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:8086/health
+        timeout: 10s
+      image: influxdb:2.7
+      ports:
+      - 8086
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: monitoring_collector
+    simulate:
+      behaviors: []
+      hostname: collector01.ops.operations_monitoring_stack.internal
+      issues: []
+      role: Data collection for monitoring
+      secrets: []
+      services: []
+  prometheus_server:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9090/-/healthy
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: prometheus_server
+    simulate:
+      behaviors: []
+      hostname: prometheus01.logging.operations_monitoring_stack.internal
+      issues: []
+      role: Metrics collection and monitoring
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - web_frontend
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      - 443
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy01.public.operations_monitoring_stack.internal
+      issues: []
+      role: Reverse proxy for web services
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:8500/v1/status/leader
+        timeout: 10s
+      image: consul:1.14
+      ports:
+      - 8500
+      volumes: []
+      zone: ops_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery01.ops.operations_monitoring_stack.internal
+      issues: []
+      role: Service discovery and configuration management
+      secrets: []
+      services: []
+  web_frontend:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: web_frontend
+    simulate:
+      behaviors: []
+      hostname: web01.public.operations_monitoring_stack.internal
+      issues: []
+      role: Public-facing web interface
+      secrets: []
+      services: []
+zones:
+  database_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: database_zone
+    name: database_zone
+  logging_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: logging_zone
+    name: logging_zone
+  ops_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: ops_zone
+    name: ops_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone
+  security_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: security_zone
+    name: security_zone

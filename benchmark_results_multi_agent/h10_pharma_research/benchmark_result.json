@@ -1,0 +1,37 @@
+{
+  "scenario_id": "h10_pharma_research",
+  "difficulty": "hard",
+  "prompt_variant": "detailed",
+  "prompt_text": "Model a pharmaceutical research laboratory IT environment: a lab management\nweb portal for scientists, a LIMS REST API tracking samples and experiments,\na PostgreSQL compound database for molecular data, a Celery-based analysis\npipeline running computational chemistry jobs, a MinIO document vault for\nresearch papers and patents, a regulatory submission API for FDA filings,\nan audit service for GxP compliance, Keycloak for identity management,\nand Prometheus monitoring. Research data and regulatory systems must be\nisolated from the public portal.",
+  "planned_service_coverage": 0.0,
+  "planned_zone_coverage": 0.0,
+  "planned_dep_coverage": 0.0,
+  "benchmark_dep_required": 0,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "deploy_success": false,
+  "deploy_status": "failed",
+  "containers_planned": 35,
+  "containers_running": 0,
+  "containers_dropped": 0,
+  "running_service_coverage": 0.0,
+  "running_zone_coverage": 0.0,
+  "running_dep_coverage": 0.0,
+  "scenario_fit_score": 0.0,
+  "duration_s": 87.4,
+  "stage_durations": {
+    "extraction": 86.992
+  },
+  "failure_stage": "world_model_validation",
+  "error_class": "llm_schema_error",
+  "errors": [
+    "REF_DEPENDS_ON: System 'lims_api' depends on undefined system 'identity_service'"
+  ],
+  "scenario_complexity": {
+    "required_services_count": 9,
+    "required_zones_count": 5,
+    "required_deps_count": 6
+  },
+  "dry_run": false,
+  "dry_run_valid": false
+}

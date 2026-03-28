@@ -1,0 +1,216 @@
+{
+  "checks_run": 23,
+  "checks_passed": 23,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_redis_session_store",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 130.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_postgres_player_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 122.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_admin_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 115.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_admin_dashboard:hn_postgres_player_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 108.9,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 103.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1026",
+      "passed": true,
+      "actual": "TCP connect to localhost:1026 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2106.4,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1026",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 353.4,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_api_gateway",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 93.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_api_gateway:1027",
+      "passed": true,
+      "actual": "TCP connect to localhost:1027 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2113.8,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_api_gateway:1027",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 342.8,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_api_gateway:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 82.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_grafana_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 75.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_alert_manager",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 69.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_backup_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 63.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_backup_server:hn_postgres_player_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 58.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_file_share",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 53.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_coordination_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 48.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_admin_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 42.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_admin_api:hn_postgres_player_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 40.0,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_game_master_tools",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 40.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_game_master_tools:hn_admin_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 37.0,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_session_management_ui",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 37.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_session_management_ui:hn_redis_session_store",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 28.5,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "dac74c6867fd47fb92148decf8691b26"
+}

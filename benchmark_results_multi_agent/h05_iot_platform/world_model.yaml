@@ -1,0 +1,228 @@
+organization:
+  business_units: []
+  name: industrial_iot_platform
+  regions: []
+  type: ''
+secrets:
+  device_master_api_key:
+    name: device_master_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  fleet_admin_password:
+    name: fleet_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  influxdb_admin_password:
+    name: influxdb_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  mqtt_broker_admin_password:
+    name: mqtt_broker_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  postgresql_admin_password:
+    name: postgresql_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  filebeat:
+    deploy:
+      depends_on:
+      - prometheus
+      - grafana
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: docker.elastic.co/beats/filebeat:8.10.0
+      ports: []
+      volumes: []
+      zone: ops_zone
+    kind: unknown
+    name: filebeat
+    simulate:
+      behaviors: []
+      hostname: filebeat.ops.industrial-iot-platform.internal
+      issues: []
+      role: Log collector for system logs
+      secrets: []
+      services: []
+  grafana:
+    deploy:
+      depends_on:
+      - prometheus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3000/api/health
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.ops.industrial-iot-platform.internal
+      issues: []
+      role: Dashboard for visualizing monitoring data
+      secrets: []
+      services: []
+  influxdb:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - influx
+        - ping
+        timeout: 10s
+      image: influxdb:2.7
+      ports:
+      - 8086
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: influxdb
+    simulate:
+      behaviors: []
+      hostname: influxdb.data.industrial-iot-platform.internal
+      issues: []
+      role: InfluxDB time-series store for telemetry data
+      secrets:
+      - influxdb_admin_password
+      services: []
+  kafka_cluster:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: ingestion_zone
+    kind: queue
+    name: kafka_cluster
+    simulate:
+      behaviors: []
+      hostname: kafka-cluster.ingestion.industrial-iot-platform.internal
+      issues: []
+      role: Kafka cluster for high-throughput event ingestion
+      secrets: []
+      services: []
+  prometheus:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9090/-/healthy
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: prometheus
+    simulate:
+      behaviors: []
+      hostname: prometheus.ops.industrial-iot-platform.internal
+      issues: []
+      role: Monitoring system for collecting metrics
+      secrets: []
+      services: []
+zones:
+  application_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: application_zone
+    name: application_zone
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  edge_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: edge_zone
+    name: edge_zone
+  identity_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: identity_zone
+    name: identity_zone
+  ingestion_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: ingestion_zone
+    name: ingestion_zone
+  ops_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: ops_zone
+    name: ops_zone

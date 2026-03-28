@@ -1,0 +1,80 @@
+{
+  "schema_version": 3,
+  "recorded_at_utc": "2026-03-28T15:22:54.364102+00:00",
+  "envelope": {
+    "metrics_schema_version": 3
+  },
+  "observability": {
+    "run_id": "27eaccada21d46e582943ce4974ca3e1",
+    "work_dir": "C:\\Users\\nibbi\\workflow_analysis\\benchmark_results_multi_agent\\h10_pharma_research",
+    "tofu_version": "OpenTofu v1.11.5",
+    "started_at_utc": "2026-03-28T15:21:27.367481+00:00",
+    "failure_stage": "world_model_validation",
+    "error_class": "llm_schema_error",
+    "deploy_completed": false,
+    "repair_incident_count": 0,
+    "repair_actions": [],
+    "deterministic_dep_additions": [],
+    "deterministic_placement_fixes": [],
+    "stage_durations": {
+      "extraction": 86.992
+    },
+    "path_a": {
+      "diagnostics_collected": false,
+      "diagnostics_artifact": "",
+      "failing_resources_count": 0,
+      "docker_targets_count": 0,
+      "error_class": ""
+    }
+  },
+  "deployability": {
+    "world_model_valid": false,
+    "validation_first_pass_success": false,
+    "validation_repair_attempted": true,
+    "validation_repair_success": false,
+    "config_validation_pass": false,
+    "plan_success": false,
+    "deploy_success": false,
+    "deploy_first_attempt": false,
+    "deploy_retried": false,
+    "deploy_retry_count": 0,
+    "runtime_verification_success": false,
+    "health_check_rate": null,
+    "container_start_rate": null,
+    "expected_containers": 0,
+    "planned_containers": 35,
+    "dropped_containers": 0,
+    "running_containers": 0,
+    "health_checks_total": 0,
+    "health_checks_passed": 0,
+    "health_check_status": "not_run",
+    "container_health_status": "not_run",
+    "health_check_rate_by_type": {}
+  },
+  "scenario_fit": {
+    "zone_count": 5,
+    "system_count": 35,
+    "model_dep_rate": 0.0,
+    "image_check_rate": 0.0,
+    "planned_service_coverage": 0.0,
+    "running_service_coverage": 0.0,
+    "planned_zone_coverage": 0.0,
+    "running_zone_coverage": 0.0,
+    "planned_dep_coverage": 0.0,
+    "running_dep_coverage": 0.0,
+    "benchmark_dep_required": 0,
+    "placement_violations": 0,
+    "benchmark_pass": null,
+    "benchmark_status": "not_configured",
+    "benchmark_id": "",
+    "benchmark_ref": "",
+    "scenario_fit_score": 0.0
+  },
+  "pipeline_kpis": {
+    "blocked_before_deploy": true,
+    "deploy_eligible": false
+  },
+  "errors": [
+    "REF_DEPENDS_ON: System 'lims_api' depends on undefined system 'identity_service'"
+  ]
+}

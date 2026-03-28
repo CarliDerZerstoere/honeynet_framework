@@ -1,0 +1,1151 @@
+organization:
+  business_units: []
+  name: pharmaceutical_research_lab
+  regions: []
+  type: ''
+secrets:
+  admin_panel_login:
+    name: admin_panel_login
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  keycloak_admin_password:
+    name: keycloak_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  ldap_admin_password:
+    name: ldap_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  minio_access_key:
+    name: minio_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  minio_secret_key:
+    name: minio_secret_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  pgadmin_login:
+    name: pgadmin_login
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  portainer_admin_password:
+    name: portainer_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  vault_root_token:
+    name: vault_root_token
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: token
+systems:
+  admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: portal_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: adminpanel.portal.pharmaceutical_research_lab.internal
+      issues: []
+      role: Web-based admin panel for database management
+      secrets:
+      - admin_panel_login
+      services: []
+  alert_manager:
+    deploy:
+      depends_on:
+      - prometheus_monitoring
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9093
+        timeout: 10s
+      image: prom/alertmanager:v0.26.0
+      ports:
+      - 9093
+      volumes: []
+      zone: research_zone
+    kind: monitor
+    name: alert_manager
+    simulate:
+      behaviors: []
+      hostname: alertmanager.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Alert management for monitoring systems
+      secrets: []
+      services: []
+  api_gateway:
+    deploy:
+      depends_on:
+      - lims_api
+      - regulatory_api
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: portal_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: apigateway.portal.pharmaceutical_research_lab.internal
+      issues: []
+      role: API gateway for managing API requests
+      secrets: []
+      services: []
+  audit_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9090/-/healthy
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: regulatory_zone
+    kind: monitor
+    name: audit_service
+    simulate:
+      behaviors: []
+      hostname: auditservice.regulatory.pharmaceutical_research_lab.internal
+      issues: []
+      role: Service for GxP compliance auditing
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 8000 || (echo > /dev/tcp/localhost/8000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: restic/rest-server:latest
+      ports:
+      - 8000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backupserver.data.pharmaceutical_research_lab.internal
+      issues: []
+      role: Server for backing up research data
+      secrets: []
+      services: []
+  celery_analysis_pipeline:
+    deploy:
+      command:
+      - celery
+      - -A
+      - tasks
+      - worker
+      - --loglevel=info
+      depends_on:
+      - compound_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: python:3.12-slim
+      ports: []
+      volumes: []
+      zone: research_zone
+    kind: runtime
+    name: celery_analysis_pipeline
+    simulate:
+      behaviors: []
+      hostname: celerypipeline.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Celery-based pipeline for computational chemistry jobs
+      secrets: []
+      services: []
+  compound_db:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: compound_db
+    simulate:
+      behaviors: []
+      hostname: compounddb.data.pharmaceutical_research_lab.internal
+      issues: []
+      role: PostgreSQL database for storing molecular data
+      secrets:
+      - db_admin_password
+      services: []
+  fake_admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: drupal:10-apache
+      ports:
+      - 80
+      volumes: []
+      zone: portal_zone
+    kind: web
+    name: fake_admin_panel
+    simulate:
+      behaviors: []
+      hostname: fakeadminpanel.portal.pharmaceutical_research_lab.internal
+      issues: []
+      role: Decoy admin panel to mislead attackers
+      secrets: []
+      services: []
+  fake_backup_server:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 8000 || (echo > /dev/tcp/localhost/8000) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: restic/rest-server:latest
+      ports:
+      - 8000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: fake_backup_server
+    simulate:
+      behaviors: []
+      hostname: fakebackupserver.data.pharmaceutical_research_lab.internal
+      issues: []
+      role: Decoy backup server to mislead attackers
+      secrets: []
+      services: []
+  fake_database:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: fake_database
+    simulate:
+      behaviors: []
+      hostname: fakedatabase.data.pharmaceutical_research_lab.internal
+      issues: []
+      role: Decoy database to mislead attackers
+      secrets: []
+      services: []
+  fake_document_vault:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: fake_document_vault
+    simulate:
+      behaviors: []
+      hostname: fakedocumentvault.data.pharmaceutical_research_lab.internal
+      issues: []
+      role: Decoy document vault to mislead attackers
+      secrets: []
+      services: []
+  fake_identity_service:
+    deploy:
+      command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/Caddyfile
+      - --adapter
+      - caddyfile
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      - 443
+      - 2019
+      volumes: []
+      zone: identity_zone
+    kind: identity
+    name: fake_identity_service
+    simulate:
+      behaviors: []
+      hostname: fakeidentityservice.identity.pharmaceutical_research_lab.internal
+      issues: []
+      role: Decoy identity service to mislead attackers
+      secrets: []
+      services: []
+  file_share:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: fileshare.data.pharmaceutical_research_lab.internal
+      issues: []
+      role: File sharing service for research data
+      secrets: []
+      services: []
+  fluentd_log_forwarder:
+    deploy:
+      depends_on:
+      - log_collector
+      env:
+      - FLUENTD_CONF=fluent.conf
+      - LD_PRELOAD=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: fluent/fluentd:v1.15
+      ports:
+      - 24224
+      volumes: []
+      zone: research_zone
+    kind: monitor
+    name: fluentd_log_forwarder
+    simulate:
+      behaviors: []
+      hostname: fluentd.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Log forwarder for aggregating logs across systems
+      secrets: []
+      services: []
+  grafana_alerting:
+    deploy:
+      depends_on:
+      - grafana_dashboard
+      - alert_manager
+      env:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: research_zone
+    kind: monitor
+    name: grafana_alerting
+    simulate:
+      behaviors: []
+      hostname: grafanaalerting.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Grafana alerting for monitoring and notifications
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on:
+      - prometheus_monitoring
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3000
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: research_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Grafana dashboard for monitoring metrics
+      secrets: []
+      services: []
+  honeypot_service:
+    deploy:
+      command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/Caddyfile
+      - --adapter
+      - caddyfile
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      volumes: []
+      zone: portal_zone
+    kind: unknown
+    name: honeypot_service
+    simulate:
+      behaviors: []
+      hostname: honeypot.portal.pharmaceutical_research_lab.internal
+      issues: []
+      role: Decoy service to detect unauthorized access
+      secrets: []
+      services: []
+  kafka_broker:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9092
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: research_zone
+    kind: queue
+    name: kafka_broker
+    simulate:
+      behaviors: []
+      hostname: kafkabroker.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Kafka broker for message queuing
+      secrets: []
+      services: []
+  keycloak_identity_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: drupal:10-apache
+      ports:
+      - 80
+      volumes: []
+      zone: identity_zone
+    kind: identity
+    name: keycloak_identity_service
+    simulate:
+      behaviors: []
+      hostname: keycloak.identity.pharmaceutical_research_lab.internal
+      issues: []
+      role: Identity management using Keycloak
+      secrets:
+      - keycloak_admin_password
+      services: []
+  lab_portal:
+    deploy:
+      depends_on:
+      - lims_api
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: drupal:10-apache
+      ports:
+      - 80
+      volumes: []
+      zone: portal_zone
+    kind: web
+    name: lab_portal
+    simulate:
+      behaviors: []
+      hostname: labportal.pharmaceutical_research_lab.internal
+      issues: []
+      role: Scientist web portal for accessing lab management tools
+      secrets: []
+      services: []
+  ldap_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: identity_zone
+    kind: identity
+    name: ldap_service
+    simulate:
+      behaviors: []
+      hostname: ldap.identity.pharmaceutical_research_lab.internal
+      issues: []
+      role: LDAP service for directory management
+      secrets:
+      - ldap_admin_password
+      services: []
+  lims_api:
+    deploy:
+      depends_on:
+      - compound_db
+      - identity_service
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: node:20-alpine
+      ports: []
+      volumes: []
+      zone: research_zone
+    kind: web
+    name: lims_api
+    simulate:
+      behaviors: []
+      hostname: limsapi.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: LIMS REST API for tracking samples and experiments
+      secrets: []
+      services: []
+  load_balancer:
+    deploy:
+      depends_on:
+      - reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: traefik:v2.10
+      ports:
+      - 80
+      volumes: []
+      zone: portal_zone
+    kind: web
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: loadbalancer.portal.pharmaceutical_research_lab.internal
+      issues: []
+      role: Load balancer for distributing web traffic
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3100/ready
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: research_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logcollector.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Centralized log collection service
+      secrets: []
+      services: []
+  minio_document_vault:
+    deploy:
+      depends_on: []
+      env:
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: minio_document_vault
+    simulate:
+      behaviors: []
+      hostname: documentvault.data.pharmaceutical_research_lab.internal
+      issues: []
+      role: MinIO storage for research papers and patents
+      secrets:
+      - minio_access_key
+      - minio_secret_key
+      services: []
+  nats_broker:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - nats
+        - ping
+        timeout: 10s
+      image: nats:latest
+      ports:
+      - 4222
+      - 6222
+      - 8222
+      volumes: []
+      zone: research_zone
+    kind: queue
+    name: nats_broker
+    simulate:
+      behaviors: []
+      hostname: natsbroker.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: NATS broker for lightweight messaging
+      secrets: []
+      services: []
+  pgadmin:
+    deploy:
+      depends_on:
+      - compound_db
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: dpage/pgadmin4:latest
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: infra
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.data.pharmaceutical_research_lab.internal
+      issues: []
+      role: Database administration tool for PostgreSQL
+      secrets:
+      - pgadmin_login
+      services: []
+  portainer:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9000
+        timeout: 10s
+      image: portainer/portainer-ce:latest
+      ports:
+      - 8000
+      - 9000
+      - 9443
+      volumes: []
+      zone: research_zone
+    kind: infra
+    name: portainer
+    simulate:
+      behaviors: []
+      hostname: portainer.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Container management interface
+      secrets:
+      - portainer_admin_password
+      services: []
+  prometheus_monitoring:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9090/metrics
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: research_zone
+    kind: monitor
+    name: prometheus_monitoring
+    simulate:
+      behaviors: []
+      hostname: prometheus.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Prometheus monitoring for research systems
+      secrets: []
+      services: []
+  rabbitmq_broker:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - rabbitmq-diagnostics
+        - status
+        timeout: 10s
+      image: rabbitmq:3.12-management
+      ports:
+      - 15671
+      - 15672
+      - 15691
+      - 15692
+      - 25672
+      - 4369
+      - 5671
+      - 5672
+      volumes: []
+      zone: research_zone
+    kind: queue
+    name: rabbitmq_broker
+    simulate:
+      behaviors: []
+      hostname: rabbitmqbroker.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: RabbitMQ broker for message queuing
+      secrets: []
+      services: []
+  regulatory_api:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: regulatory_zone
+    kind: web
+    name: regulatory_api
+    simulate:
+      behaviors: []
+      hostname: regulatoryapi.regulatory.pharmaceutical_research_lab.internal
+      issues: []
+      role: API for regulatory submissions to FDA
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - lab_portal
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: portal_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: reverseproxy.portal.pharmaceutical_research_lab.internal
+      issues: []
+      role: Reverse proxy for routing web traffic
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - consul
+        - members
+        timeout: 10s
+      image: hashicorp/consul:1.17
+      ports:
+      - 8300
+      - 8301
+      - 8302
+      - 8500
+      - 8600
+      volumes: []
+      zone: research_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: servicediscovery.research.pharmaceutical_research_lab.internal
+      issues: []
+      role: Service discovery using Consul
+      secrets: []
+      services: []
+  staging_endpoint:
+    deploy:
+      depends_on:
+      - lab_portal
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 8080
+      volumes: []
+      zone: portal_zone
+    kind: web
+    name: staging_endpoint
+    simulate:
+      behaviors: []
+      hostname: staging.portal.pharmaceutical_research_lab.internal
+      issues: []
+      role: Staging environment for testing web portal changes
+      secrets: []
+      services: []
+  vault_service:
+    deploy:
+      depends_on: []
+      env:
+      - VERSION=1.15
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8200/v1/sys/health
+        timeout: 10s
+      image: hashicorp/vault:1.15
+      ports:
+      - 8200
+      volumes: []
+      zone: identity_zone
+    kind: identity
+    name: vault_service
+    simulate:
+      behaviors: []
+      hostname: vault.identity.pharmaceutical_research_lab.internal
+      issues: []
+      role: Secret management using Vault
+      secrets:
+      - vault_root_token
+      services: []
+zones:
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  identity_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: identity_zone
+    name: identity_zone
+  portal_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: portal_zone
+    name: portal_zone
+  regulatory_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: regulatory_zone
+    name: regulatory_zone
+  research_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: research_zone
+    name: research_zone

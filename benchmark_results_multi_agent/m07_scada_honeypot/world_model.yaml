@@ -1,0 +1,349 @@
+organization:
+  business_units: []
+  name: industrial_control_system
+  regions: []
+  type: ''
+secrets:
+  admin_panel_password:
+    name: admin_panel_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  backup_server_password:
+    name: backup_server_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  historian_db_password:
+    name: historian_db_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: corporate_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: admin01.corporate.industrial.internal
+      issues: []
+      role: Admin panel for database management
+      secrets:
+      - admin_panel_password
+      services: []
+  backup_server:
+    deploy:
+      depends_on:
+      - historian_db
+      env:
+      - MYSQL_ROOT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mariadb:11
+      ports:
+      - 3306
+      volumes: []
+      zone: process_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup01.process.industrial.internal
+      issues: []
+      role: Backup server for data redundancy
+      secrets:
+      - backup_server_password
+      services: []
+  file_share:
+    deploy:
+      command:
+      - /bin/sh
+      - -c
+      - while :; do sleep 2073600; done
+      depends_on:
+      - historian_db
+      - backup_server
+      env:
+      - SHARE_NAME=data_share
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: alpine:3.18
+      ports:
+      - 2049
+      volumes: []
+      zone: process_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: fileshare01.process.industrial.internal
+      issues: []
+      role: File share for process data exchange
+      secrets: []
+      services: []
+  fluentd_collector:
+    deploy:
+      depends_on:
+      - syslog_server
+      env:
+      - FLUENTD_CONF=fluent.conf
+      - LD_PRELOAD=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: fluent/fluentd:v1.14-1
+      ports:
+      - 24224
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: fluentd_collector
+    simulate:
+      behaviors: []
+      hostname: fluentd01.logging.industrial.internal
+      issues: []
+      role: Log collector for centralized logging
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on:
+      - historian_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:3000/
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana01.logging.industrial.internal
+      issues: []
+      role: Monitoring dashboard for visualizing process data
+      secrets: []
+      services: []
+  historian_db:
+    deploy:
+      depends_on: []
+      env:
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=password
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 8086 || (echo > /dev/tcp/localhost/8086) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: influxdb:2.7
+      ports:
+      - 8086
+      volumes: []
+      zone: process_zone
+    kind: database
+    name: historian_db
+    simulate:
+      behaviors: []
+      hostname: historian01.process.industrial.internal
+      issues: []
+      role: Historian database storing time-series measurements
+      secrets:
+      - historian_db_password
+      services: []
+  hmi_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: corporate_zone
+    kind: web
+    name: hmi_panel
+    simulate:
+      behaviors: []
+      hostname: hmi01.corporate.industrial.internal
+      issues: []
+      role: HMI web panel for operators to monitor process values
+      secrets: []
+      services: []
+  prometheus_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9090/metrics
+        timeout: 10s
+      image: prom/prometheus:latest
+      ports:
+      - 9090
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: prometheus_collector
+    simulate:
+      behaviors: []
+      hostname: prometheus01.logging.industrial.internal
+      issues: []
+      role: Prometheus collector for monitoring metrics
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/Caddyfile
+      - --adapter
+      - caddyfile
+      depends_on:
+      - hmi_panel
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      - 443
+      volumes: []
+      zone: corporate_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy01.corporate.industrial.internal
+      issues: []
+      role: Reverse proxy for routing web traffic
+      secrets: []
+      services: []
+  syslog_server:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: logging_zone
+    kind: monitor
+    name: syslog_server
+    simulate:
+      behaviors: []
+      hostname: syslog01.logging.industrial.internal
+      issues: []
+      role: Centralized syslog server for logging
+      secrets: []
+      services: []
+zones:
+  corporate_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: corporate_zone
+    name: corporate_zone
+  logging_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: logging_zone
+    name: logging_zone
+  process_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: process_zone
+    name: process_zone

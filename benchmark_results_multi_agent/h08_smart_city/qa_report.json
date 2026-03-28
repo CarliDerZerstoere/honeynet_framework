@@ -1,0 +1,252 @@
+{
+  "checks_run": 27,
+  "checks_passed": 27,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_traffic_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 156.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_traffic_api:1025",
+      "passed": true,
+      "actual": "TCP connect to localhost:1025 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2203.1,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_traffic_api:1025",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 413.2,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_traffic_api:hn_metrics_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 142.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_metrics_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 136.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_city_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 131.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_citizen_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 126.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_citizen_portal:1028",
+      "passed": true,
+      "actual": "TCP connect to localhost:1028 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2159.4,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_citizen_portal:1028",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 793.9,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_citizen_portal:hn_city_db",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 115.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_event_bus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 110.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 104.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_api_gateway",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 98.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_api_gateway:1029",
+      "passed": true,
+      "actual": "TCP connect to localhost:1029 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2129.9,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_api_gateway:1029",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 354.1,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_api_gateway:hn_traffic_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 82.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_api_gateway:hn_citizen_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 73.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_backup_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 65.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_monitoring_agent",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 56.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_kafka_admin",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 49.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_kafka_admin:hn_event_bus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 42.7,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_traffic_management_ui",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 44.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_traffic_management_ui:1030",
+      "passed": true,
+      "actual": "TCP connect to localhost:1030 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2069.4,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_traffic_management_ui:1030",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 296.6,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_traffic_management_ui:hn_traffic_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 37.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_config_management",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 32.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_network_monitor",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 38.6,
+      "check_type": "container_running"
+    }
+  ],
+  "run_id": "d0171bca709d4bd988711de2560bd488"
+}

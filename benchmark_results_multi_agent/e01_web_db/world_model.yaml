@@ -1,0 +1,480 @@
+organization:
+  business_units: []
+  name: corporate_application
+  regions: []
+  type: ''
+secrets:
+  admin_panel_password:
+    name: admin_panel_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_panel:
+    deploy:
+      depends_on:
+      - postgres_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true
+        timeout: 10s
+      image: adminer:4
+      ports:
+      - 8080
+      volumes: []
+      zone: mgmt_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: admin.mgmt.corporate_application.internal
+      issues: []
+      role: Admin panel for managing database
+      secrets:
+      - admin_panel_password
+      services: []
+  backup_server:
+    deploy:
+      command:
+      - /opt/couchdb/bin/couchdb
+      depends_on: []
+      env:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=password
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:5984/
+        timeout: 10s
+      image: couchdb:3.3
+      ports:
+      - 4369
+      - 5984
+      - 9100
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup.data.corporate_application.internal
+      issues: []
+      role: Backup server for data storage
+      secrets: []
+      services: []
+  bait_database:
+    deploy:
+      depends_on: []
+      env:
+      - MYSQL_ROOT_PASSWORD=admin123
+      - MARIADB_ROOT_PASSWORD=weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mariadb:11
+      ports:
+      - 3306
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: bait_database
+    simulate:
+      behaviors: []
+      hostname: baitdb.data.corporate_application.internal
+      issues: []
+      role: Decoy database to attract attackers
+      secrets: []
+      services: []
+  file_share:
+    deploy:
+      command:
+      - /opt/couchdb/bin/couchdb
+      depends_on: []
+      env:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=password
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:5984/
+        timeout: 10s
+      image: couchdb:3.3
+      ports:
+      - 4369
+      - 5984
+      - 9100
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: fileshare.data.corporate_application.internal
+      issues: []
+      role: File sharing service for data storage
+      secrets: []
+      services: []
+  fluentd_agent:
+    deploy:
+      depends_on: []
+      env:
+      - LD_PRELOAD=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: fluent/fluentd:v1.14-1
+      ports: []
+      volumes: []
+      zone: mgmt_zone
+    kind: monitor
+    name: fluentd_agent
+    simulate:
+      behaviors: []
+      hostname: fluentd.mgmt.corporate_application.internal
+      issues: []
+      role: Log collection agent
+      secrets: []
+      services: []
+  grafana:
+    deploy:
+      depends_on:
+      - prometheus
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.1.0
+      ports:
+      - 3000
+      volumes: []
+      zone: mgmt_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.mgmt.corporate_application.internal
+      issues: []
+      role: Dashboard for visualizing metrics
+      secrets: []
+      services: []
+  honeypot_admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: honeypot_admin_panel
+    simulate:
+      behaviors: []
+      hostname: honeypot.public.corporate_application.internal
+      issues: []
+      role: Decoy admin panel to attract attackers
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on:
+      - fluentd_agent
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: mgmt_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logcollector.mgmt.corporate_application.internal
+      issues: []
+      role: Centralized log collection service
+      secrets: []
+      services: []
+  pgadmin:
+    deploy:
+      depends_on:
+      - postgres_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: mgmt_zone
+    kind: web
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.mgmt.corporate_application.internal
+      issues: []
+      role: Database administration tool for PostgreSQL
+      secrets: []
+      services: []
+  postgres_db:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: postgres_db
+    simulate:
+      behaviors: []
+      hostname: db01.data.corporate_application.internal
+      issues: []
+      role: Primary database holding application records
+      secrets:
+      - db_admin_password
+      services: []
+  prometheus:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy
+          || true
+        timeout: 10s
+      image: prom/prometheus:v2.46.0
+      ports:
+      - 9090
+      volumes: []
+      zone: mgmt_zone
+    kind: monitor
+    name: prometheus
+    simulate:
+      behaviors: []
+      hostname: prometheus.mgmt.corporate_application.internal
+      issues: []
+      role: Monitoring and alerting toolkit
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - web_frontend
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy01.public.corporate_application.internal
+      issues: []
+      role: Reverse proxy to route traffic to web frontend
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      command:
+      - traefik
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: traefik:v2.10
+      ports:
+      - 80
+      volumes: []
+      zone: mgmt_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery.mgmt.corporate_application.internal
+      issues: []
+      role: Service discovery and routing
+      secrets: []
+      services: []
+  staging_web_frontend:
+    deploy:
+      depends_on:
+      - web_frontend
+      env:
+      - WORDPRESS_DB_HOST=db01.data.corporate_application.internal
+      - WORDPRESS_DB_USER=staging
+      - WORDPRESS_DB_PASSWORD=stagingpass
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true
+        timeout: 10s
+      image: wordpress:6.4-php8.2-apache
+      ports:
+      - 8080
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: staging_web_frontend
+    simulate:
+      behaviors: []
+      hostname: staging-web01.public.corporate_application.internal
+      issues: []
+      role: Staging environment for web frontend
+      secrets: []
+      services: []
+  web_frontend:
+    deploy:
+      depends_on:
+      - postgres_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost/
+        timeout: 10s
+      image: wordpress:6.4-php8.2-apache
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: web_frontend
+    simulate:
+      behaviors: []
+      hostname: web01.public.corporate_application.internal
+      issues: []
+      role: Public-facing web frontend serving HTTP traffic
+      secrets: []
+      services: []
+zones:
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  mgmt_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: mgmt_zone
+    name: mgmt_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

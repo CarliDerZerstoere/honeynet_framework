@@ -1,0 +1,158 @@
+{
+  "benchmark_id": "h02_telecom_mediation",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.6,
+  "placement_violations": 10,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.43333333333333335,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "signaling_stream": [
+        "kafka_broker_1",
+        "kafka_broker_2",
+        "kafka_broker_3"
+      ],
+      "cdr_archive": [
+        "cassandra_cluster"
+      ],
+      "billing_api": [
+        "api_gateway",
+        "billing_api",
+        "honeytoken_billing_api"
+      ],
+      "identity_federation": [
+        "identity_federation"
+      ],
+      "compliance_store": [
+        "cdr_archive",
+        "compliance_audit_log",
+        "compliance_store",
+        "lawful_intercept_export"
+      ],
+      "mediation_engine": [
+        "mediation_engine"
+      ],
+      "subscriber_db": [
+        "subscriber_db"
+      ],
+      "api_gateway": [
+        "api_gateway"
+      ],
+      "monitoring": [
+        "grafana_dashboard",
+        "prometheus_server"
+      ]
+    },
+    "matched_zones": {
+      "signaling_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone",
+        "signaling_zone"
+      ],
+      "data_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone",
+        "signaling_zone"
+      ],
+      "identity_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone",
+        "signaling_zone"
+      ],
+      "compliance_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone",
+        "signaling_zone"
+      ],
+      "core_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone",
+        "signaling_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 3,
+      "total": 5
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "cdr_archive",
+        "zone_id": "signaling_zone",
+        "system": "cassandra_cluster",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "compliance_store",
+        "zone_id": "signaling_zone",
+        "system": "compliance_store",
+        "deployed_zone": "compliance_zone"
+      },
+      {
+        "service_id": "compliance_store",
+        "zone_id": "signaling_zone",
+        "system": "compliance_audit_log",
+        "deployed_zone": "compliance_zone"
+      },
+      {
+        "service_id": "compliance_store",
+        "zone_id": "signaling_zone",
+        "system": "cdr_archive",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "compliance_store",
+        "zone_id": "signaling_zone",
+        "system": "lawful_intercept_export",
+        "deployed_zone": "compliance_zone"
+      },
+      {
+        "service_id": "identity_federation",
+        "zone_id": "signaling_zone",
+        "system": "identity_federation",
+        "deployed_zone": "identity_zone"
+      },
+      {
+        "service_id": "subscriber_db",
+        "zone_id": "signaling_zone",
+        "system": "subscriber_db",
+        "deployed_zone": "data_zone"
+      },
+      {
+        "service_id": "signaling_stream",
+        "zone_id": "signaling_zone",
+        "system": "kafka_broker_2",
+        "deployed_zone": "signaling_zone"
+      },
+      {
+        "service_id": "signaling_stream",
+        "zone_id": "signaling_zone",
+        "system": "kafka_broker_3",
+        "deployed_zone": "signaling_zone"
+      },
+      {
+        "service_id": "signaling_stream",
+        "zone_id": "signaling_zone",
+        "system": "kafka_broker_1",
+        "deployed_zone": "signaling_zone"
+      }
+    ]
+  }
+}

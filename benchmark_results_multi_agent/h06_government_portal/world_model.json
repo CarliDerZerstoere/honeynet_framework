@@ -1,0 +1,591 @@
+{
+  "zones": {
+    "public_dmz": {
+      "name": "public_dmz",
+      "deploy": {
+        "network_name": "public_dmz",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "application_zone": {
+      "name": "application_zone",
+      "deploy": {
+        "network_name": "application_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "identity_zone": {
+      "name": "identity_zone",
+      "deploy": {
+        "network_name": "identity_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "compliance_zone": {
+      "name": "compliance_zone",
+      "deploy": {
+        "network_name": "compliance_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "document_zone": {
+      "name": "document_zone",
+      "deploy": {
+        "network_name": "document_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "ops_zone": {
+      "name": "ops_zone",
+      "deploy": {
+        "network_name": "ops_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "citizen_portal": {
+      "name": "citizen_portal",
+      "kind": "web",
+      "deploy": {
+        "image": "wordpress:6.4-php8.2-apache",
+        "zone": "public_dmz",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "case_management_api"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "portal.national.gov",
+        "role": "Public-facing citizen portal",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "nginx_load_balancer": {
+      "name": "nginx_load_balancer",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_dmz",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "citizen_portal"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "lb.national.gov",
+        "role": "Load balancer for public web services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "case_management_api": {
+      "name": "case_management_api",
+      "kind": "runtime",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "application_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "api.case.national.gov",
+        "role": "REST API for case management",
+        "issues": [],
+        "secrets": [
+          "api_service_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "document_upload_service": {
+      "name": "document_upload_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "application_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "upload.docs.national.gov",
+        "role": "Service for document uploads",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "document_retrieval_service": {
+      "name": "document_retrieval_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "application_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "retrieve.docs.national.gov",
+        "role": "Service for document retrieval",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "esigning_microservice": {
+      "name": "esigning_microservice",
+      "kind": "runtime",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "document_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "esign.docs.national.gov",
+        "role": "Microservice for electronic signatures",
+        "issues": [],
+        "secrets": [
+          "esigning_service_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "classified_document_store": {
+      "name": "classified_document_store",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ROOT_USER=admin",
+          "MINIO_ROOT_PASSWORD=password123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "classified.docs.national.gov",
+        "role": "Storage for classified documents",
+        "issues": [],
+        "secrets": [
+          "classified_store_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "audit_trail_service": {
+      "name": "audit_trail_service",
+      "kind": "storage",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "compliance_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "audit.compliance.national.gov",
+        "role": "Service for audit trails",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "data_retention_compliance_store": {
+      "name": "data_retention_compliance_store",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "compliance_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ROOT_USER=admin",
+          "MINIO_ROOT_PASSWORD=password123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "retention.compliance.national.gov",
+        "role": "Storage for compliance data retention",
+        "issues": [],
+        "secrets": [
+          "retention_store_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "ops_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:3000/health"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.ops.national.gov",
+        "role": "Dashboard for monitoring metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeytoken_esigning_admin_keys": {
+      "name": "honeytoken_esigning_admin_keys",
+      "kind": "unknown",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "document_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeytoken.esignadmin.national.gov",
+        "role": "Decoy keys for eSigning admin",
+        "issues": [],
+        "secrets": [
+          "esigning_admin_honeytoken"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "unknown",
+      "deploy": {
+        "image": "dpage/pgadmin4:6.21",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@national.gov",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.data.national.gov",
+        "role": "Database administration tool",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "national_government_citizen_portal",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "api_service_key": {
+      "name": "api_service_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "dms_access_key": {
+      "name": "dms_access_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "esigning_service_key": {
+      "name": "esigning_service_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "db_admin_password": {
+      "name": "db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "classified_store_key": {
+      "name": "classified_store_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "ldap_admin_password": {
+      "name": "ldap_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "retention_store_key": {
+      "name": "retention_store_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "case_worker_honeytoken": {
+      "name": "case_worker_honeytoken",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "esigning_admin_honeytoken": {
+      "name": "esigning_admin_honeytoken",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "db_replication_honeytoken": {
+      "name": "db_replication_honeytoken",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

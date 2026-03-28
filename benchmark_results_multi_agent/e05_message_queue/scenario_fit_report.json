@@ -1,0 +1,33 @@
+{
+  "benchmark_id": "e05_message_queue",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.6666666666666666,
+  "planned_zone_coverage": 0.5,
+  "planned_dep_coverage": 0.5,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.5555555555555555,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "message_broker": [
+        "rabbitmq_broker"
+      ],
+      "producer_api": [
+        "producer_api"
+      ],
+      "consumer_worker": []
+    },
+    "matched_zones": {
+      "internal_zone": [
+        "internal_zone"
+      ],
+      "app_zone": []
+    },
+    "dependency_matches": {
+      "matched": 1,
+      "total": 2
+    },
+    "placement_violations_detail": []
+  }
+}

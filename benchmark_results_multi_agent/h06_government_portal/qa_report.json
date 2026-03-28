@@ -1,0 +1,171 @@
+{
+  "checks_run": 18,
+  "checks_passed": 18,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_citizen_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 138.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_citizen_portal:1024",
+      "passed": true,
+      "actual": "TCP connect to localhost:1024 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2144.6,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_citizen_portal:1024",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 1007.3,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_citizen_portal:hn_case_management_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 114.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_nginx_load_balancer",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 106.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_nginx_load_balancer:1025",
+      "passed": true,
+      "actual": "TCP connect to localhost:1025 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2119.8,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_nginx_load_balancer:1025",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 351.8,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_nginx_load_balancer:hn_citizen_portal",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 96.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_case_management_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 91.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_document_upload_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 85.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_document_retrieval_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 79.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_esigning_microservice",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 72.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_classified_document_store",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 63.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_audit_trail_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 54.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_data_retention_compliance_store",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 70.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 61.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_honeytoken_esigning_admin_keys",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 51.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_pgadmin",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 41.2,
+      "check_type": "container_running"
+    }
+  ],
+  "run_id": "794d8635530e4c0fbd9b150e7140bb37"
+}

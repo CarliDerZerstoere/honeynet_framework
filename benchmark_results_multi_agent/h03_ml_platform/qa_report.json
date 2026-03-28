@@ -1,0 +1,279 @@
+{
+  "checks_run": 30,
+  "checks_passed": 30,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_inference_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 161.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_inference_api:1027",
+      "passed": true,
+      "actual": "TCP connect to localhost:1027 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2200.1,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_inference_api:1027",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 407.4,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_inference_api:hn_model_registry",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 139.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_inference_api:hn_feature_store",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 131.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_feature_store",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 125.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_model_registry",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 121.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_mlflow_experiment_tracker",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 117.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_minio_storage",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 112.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_kafka_broker",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 106.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 101.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 96.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1028",
+      "passed": true,
+      "actual": "TCP connect to localhost:1028 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2140.8,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1028",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 354.0,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_reverse_proxy:hn_inference_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 84.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_api_gateway",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 78.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_api_gateway:1029",
+      "passed": true,
+      "actual": "TCP connect to localhost:1029 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2122.5,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_api_gateway:1029",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 335.2,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_api_gateway:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 66.2,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 60.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_admin_panel:8081",
+      "passed": true,
+      "actual": "TCP connect to localhost:8081 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2104.3,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_admin_panel:8081",
+      "passed": true,
+      "actual": "HTTP 403",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 318.3,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "tcp:hn_admin_panel:50001",
+      "passed": true,
+      "actual": "TCP connect to localhost:50001 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2097.8,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "running:hn_bait_feature_store_ui",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 42.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_bait_feature_store_ui:3001",
+      "passed": true,
+      "actual": "TCP connect to localhost:3001 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2086.5,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_bait_feature_store_ui:3001",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 304.2,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_service_discovery",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 38.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_backup_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 34.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_monitoring_agent",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 30.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_fake_data_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 28.8,
+      "check_type": "container_running"
+    }
+  ],
+  "run_id": "4b3f6651f2cb493398d86b89bdfce6bf"
+}

@@ -1,0 +1,602 @@
+{
+  "zones": {
+    "build_zone": {
+      "name": "build_zone",
+      "deploy": {
+        "network_name": "build_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "monitoring_zone": {
+      "name": "monitoring_zone",
+      "deploy": {
+        "network_name": "monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    }
+  },
+  "systems": {
+    "ci_runner": {
+      "name": "ci_runner",
+      "kind": "runtime",
+      "deploy": {
+        "image": "jenkins/jenkins@sha256:c4098086090ca98491d4bf66182f5e3b015a8232f2acf2df209a212a5801aa8e",
+        "zone": "build_zone",
+        "ports": [
+          50000,
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "minio_storage",
+          "postgres_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ci-runner.build.continuousintegration.internal",
+        "role": "Build runner executing CI pipelines",
+        "issues": [],
+        "secrets": [
+          "jenkins_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "minio_storage": {
+      "name": "minio_storage",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "minio.data.continuousintegration.internal",
+        "role": "Object store for caching build artifacts",
+        "issues": [],
+        "secrets": [
+          "minio_access_key",
+          "minio_secret_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "postgres_database": {
+      "name": "postgres_database",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "data_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "postgres.data.continuousintegration.internal",
+        "role": "Database tracking job results and pipeline metadata",
+        "issues": [],
+        "secrets": [
+          "postgres_user_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "ci_web_interface": {
+      "name": "ci_web_interface",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ci_runner"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ci-web.public.continuousintegration.internal",
+        "role": "Web interface for CI system",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "ci_proxy": {
+      "name": "ci_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ci_web_interface"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ci-proxy.public.continuousintegration.internal",
+        "role": "Proxy server for CI web interface",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_service": {
+      "name": "monitoring_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "matomo:4",
+        "zone": "monitoring_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ci_runner",
+          "postgres_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoring.monitoring.continuousintegration.internal",
+        "role": "Service for monitoring CI environment",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "monitoring_zone",
+        "ports": [
+          80,
+          443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ci_runner",
+          "minio_storage"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logs.monitoring.continuousintegration.internal",
+        "role": "Log collector for CI environment",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "metrics_dashboard": {
+      "name": "metrics_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "monitoring_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES="
+        ],
+        "volumes": [],
+        "depends_on": [
+          "monitoring_service"
+        ],
+        "command": [
+          "httpd-foreground"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "dashboard.monitoring.continuousintegration.internal",
+        "role": "Metrics dashboard for monitoring CI environment",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alerting_service": {
+      "name": "alerting_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "monitoring_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "monitoring_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alerting.monitoring.continuousintegration.internal",
+        "role": "Alerting service for CI environment",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "postgres_database"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup.data.continuousintegration.internal",
+        "role": "Backup server for CI data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_ui": {
+      "name": "admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "adminer:4",
+        "zone": "public_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "postgres_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "admin-ui.public.continuousintegration.internal",
+        "role": "Admin UI for database management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "build_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "discovery.build.continuousintegration.internal",
+        "role": "Service discovery for build zone",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "infra",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ci_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "load-balancer.public.continuousintegration.internal",
+        "role": "Load balancer for distributing traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "web",
+      "deploy": {
+        "image": "dpage/pgadmin4:latest",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@ci.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "postgres_database"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.public.continuousintegration.internal",
+        "role": "Database administration interface for PostgreSQL",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "continuous_integration_environment",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "jenkins_admin_password": {
+      "name": "jenkins_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "minio_access_key": {
+      "name": "minio_access_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "minio_secret_key": {
+      "name": "minio_secret_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "postgres_user_password": {
+      "name": "postgres_user_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

@@ -1,0 +1,1420 @@
+{
+  "zones": {
+    "portal_zone": {
+      "name": "portal_zone",
+      "deploy": {
+        "network_name": "portal_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "research_zone": {
+      "name": "research_zone",
+      "deploy": {
+        "network_name": "research_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "data_zone": {
+      "name": "data_zone",
+      "deploy": {
+        "network_name": "data_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "regulatory_zone": {
+      "name": "regulatory_zone",
+      "deploy": {
+        "network_name": "regulatory_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "identity_zone": {
+      "name": "identity_zone",
+      "deploy": {
+        "network_name": "identity_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "lab_portal": {
+      "name": "lab_portal",
+      "kind": "web",
+      "deploy": {
+        "image": "drupal:10-apache",
+        "zone": "portal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "lims_api"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "labportal.pharmaceutical_research_lab.internal",
+        "role": "Scientist web portal for accessing lab management tools",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "lims_api": {
+      "name": "lims_api",
+      "kind": "web",
+      "deploy": {
+        "image": "node:20-alpine",
+        "zone": "research_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "compound_db",
+          "identity_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "limsapi.research.pharmaceutical_research_lab.internal",
+        "role": "LIMS REST API for tracking samples and experiments",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "compound_db": {
+      "name": "compound_db",
+      "kind": "database",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "data_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "compounddb.data.pharmaceutical_research_lab.internal",
+        "role": "PostgreSQL database for storing molecular data",
+        "issues": [],
+        "secrets": [
+          "db_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "celery_analysis_pipeline": {
+      "name": "celery_analysis_pipeline",
+      "kind": "runtime",
+      "deploy": {
+        "image": "python:3.12-slim",
+        "zone": "research_zone",
+        "ports": [],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "compound_db"
+        ],
+        "command": [
+          "celery",
+          "-A",
+          "tasks",
+          "worker",
+          "--loglevel=info"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "celerypipeline.research.pharmaceutical_research_lab.internal",
+        "role": "Celery-based pipeline for computational chemistry jobs",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "minio_document_vault": {
+      "name": "minio_document_vault",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "documentvault.data.pharmaceutical_research_lab.internal",
+        "role": "MinIO storage for research papers and patents",
+        "issues": [],
+        "secrets": [
+          "minio_access_key",
+          "minio_secret_key"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "regulatory_api": {
+      "name": "regulatory_api",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "regulatory_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "regulatoryapi.regulatory.pharmaceutical_research_lab.internal",
+        "role": "API for regulatory submissions to FDA",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "audit_service": {
+      "name": "audit_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "regulatory_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9090/-/healthy"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "auditservice.regulatory.pharmaceutical_research_lab.internal",
+        "role": "Service for GxP compliance auditing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "keycloak_identity_service": {
+      "name": "keycloak_identity_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "drupal:10-apache",
+        "zone": "identity_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "keycloak.identity.pharmaceutical_research_lab.internal",
+        "role": "Identity management using Keycloak",
+        "issues": [],
+        "secrets": [
+          "keycloak_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus_monitoring": {
+      "name": "prometheus_monitoring",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "research_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9090/metrics"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus.research.pharmaceutical_research_lab.internal",
+        "role": "Prometheus monitoring for research systems",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "research_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus_monitoring"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:3000"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.research.pharmaceutical_research_lab.internal",
+        "role": "Grafana dashboard for monitoring metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "portal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "lab_portal"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "reverseproxy.portal.pharmaceutical_research_lab.internal",
+        "role": "Reverse proxy for routing web traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "web",
+      "deploy": {
+        "image": "traefik:v2.10",
+        "zone": "portal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "reverse_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "loadbalancer.portal.pharmaceutical_research_lab.internal",
+        "role": "Load balancer for distributing web traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "infra",
+      "deploy": {
+        "image": "dpage/pgadmin4:latest",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@admin.com",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "compound_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.data.pharmaceutical_research_lab.internal",
+        "role": "Database administration tool for PostgreSQL",
+        "issues": [],
+        "secrets": [
+          "pgadmin_login"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "portainer": {
+      "name": "portainer",
+      "kind": "infra",
+      "deploy": {
+        "image": "portainer/portainer-ce:latest",
+        "zone": "research_zone",
+        "ports": [
+          8000,
+          9000,
+          9443
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9000"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "portainer.research.pharmaceutical_research_lab.internal",
+        "role": "Container management interface",
+        "issues": [],
+        "secrets": [
+          "portainer_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "restic/rest-server:latest",
+        "zone": "data_zone",
+        "ports": [
+          8000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 8000 || (echo > /dev/tcp/localhost/8000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backupserver.data.pharmaceutical_research_lab.internal",
+        "role": "Server for backing up research data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/loki:2.9.3",
+        "zone": "research_zone",
+        "ports": [
+          3100
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:3100/ready"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logcollector.research.pharmaceutical_research_lab.internal",
+        "role": "Centralized log collection service",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alert_manager": {
+      "name": "alert_manager",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "research_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "prometheus_monitoring"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9093"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alertmanager.research.pharmaceutical_research_lab.internal",
+        "role": "Alert management for monitoring systems",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_gateway": {
+      "name": "api_gateway",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "portal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "lims_api",
+          "regulatory_api"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "apigateway.portal.pharmaceutical_research_lab.internal",
+        "role": "API gateway for managing API requests",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "hashicorp/consul:1.17",
+        "zone": "research_zone",
+        "ports": [
+          8300,
+          8301,
+          8302,
+          8500,
+          8600
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "consul",
+            "members"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "servicediscovery.research.pharmaceutical_research_lab.internal",
+        "role": "Service discovery using Consul",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "kafka_broker": {
+      "name": "kafka_broker",
+      "kind": "queue",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "research_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "wget",
+            "--spider",
+            "http://localhost:9092"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "kafkabroker.research.pharmaceutical_research_lab.internal",
+        "role": "Kafka broker for message queuing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "rabbitmq_broker": {
+      "name": "rabbitmq_broker",
+      "kind": "queue",
+      "deploy": {
+        "image": "rabbitmq:3.12-management",
+        "zone": "research_zone",
+        "ports": [
+          15671,
+          15672,
+          15691,
+          15692,
+          25672,
+          4369,
+          5671,
+          5672
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "rabbitmq-diagnostics",
+            "status"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "rabbitmqbroker.research.pharmaceutical_research_lab.internal",
+        "role": "RabbitMQ broker for message queuing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "nats_broker": {
+      "name": "nats_broker",
+      "kind": "queue",
+      "deploy": {
+        "image": "nats:latest",
+        "zone": "research_zone",
+        "ports": [
+          4222,
+          6222,
+          8222
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "nats",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "natsbroker.research.pharmaceutical_research_lab.internal",
+        "role": "NATS broker for lightweight messaging",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "ldap_service": {
+      "name": "ldap_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "identity_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ldap.identity.pharmaceutical_research_lab.internal",
+        "role": "LDAP service for directory management",
+        "issues": [],
+        "secrets": [
+          "ldap_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "vault_service": {
+      "name": "vault_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "hashicorp/vault:1.15",
+        "zone": "identity_zone",
+        "ports": [
+          8200
+        ],
+        "env": [
+          "VERSION=1.15"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:8200/v1/sys/health"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "vault.identity.pharmaceutical_research_lab.internal",
+        "role": "Secret management using Vault",
+        "issues": [],
+        "secrets": [
+          "vault_root_token"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "file_share": {
+      "name": "file_share",
+      "kind": "storage",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "data_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fileshare.data.pharmaceutical_research_lab.internal",
+        "role": "File sharing service for research data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_panel": {
+      "name": "admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "portal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "adminpanel.portal.pharmaceutical_research_lab.internal",
+        "role": "Web-based admin panel for database management",
+        "issues": [],
+        "secrets": [
+          "admin_panel_login"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeypot_service": {
+      "name": "honeypot_service",
+      "kind": "unknown",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "portal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot.portal.pharmaceutical_research_lab.internal",
+        "role": "Decoy service to detect unauthorized access",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fake_backup_server": {
+      "name": "fake_backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "restic/rest-server:latest",
+        "zone": "data_zone",
+        "ports": [
+          8000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 8000 || (echo > /dev/tcp/localhost/8000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fakebackupserver.data.pharmaceutical_research_lab.internal",
+        "role": "Decoy backup server to mislead attackers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fake_admin_panel": {
+      "name": "fake_admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "drupal:10-apache",
+        "zone": "portal_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fakeadminpanel.portal.pharmaceutical_research_lab.internal",
+        "role": "Decoy admin panel to mislead attackers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fake_database": {
+      "name": "fake_database",
+      "kind": "database",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "data_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fakedatabase.data.pharmaceutical_research_lab.internal",
+        "role": "Decoy database to mislead attackers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fake_document_vault": {
+      "name": "fake_document_vault",
+      "kind": "storage",
+      "deploy": {
+        "image": "minio/minio:latest",
+        "zone": "data_zone",
+        "ports": [
+          9000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:9000/minio/health/live"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fakedocumentvault.data.pharmaceutical_research_lab.internal",
+        "role": "Decoy document vault to mislead attackers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fake_identity_service": {
+      "name": "fake_identity_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "identity_zone",
+        "ports": [
+          80,
+          443,
+          2019
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost/"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fakeidentityservice.identity.pharmaceutical_research_lab.internal",
+        "role": "Decoy identity service to mislead attackers",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "fluentd_log_forwarder": {
+      "name": "fluentd_log_forwarder",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.15",
+        "zone": "research_zone",
+        "ports": [
+          24224
+        ],
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=default"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fluentd.research.pharmaceutical_research_lab.internal",
+        "role": "Log forwarder for aggregating logs across systems",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_alerting": {
+      "name": "grafana_alerting",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "research_zone",
+        "ports": [
+          3000
+        ],
+        "env": [
+          "GF_SECURITY_ADMIN_PASSWORD=admin"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "grafana_dashboard",
+          "alert_manager"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafanaalerting.research.pharmaceutical_research_lab.internal",
+        "role": "Grafana alerting for monitoring and notifications",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "staging_endpoint": {
+      "name": "staging_endpoint",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "portal_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "lab_portal"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "staging.portal.pharmaceutical_research_lab.internal",
+        "role": "Staging environment for testing web portal changes",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "pharmaceutical_research_lab",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "db_admin_password": {
+      "name": "db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "minio_access_key": {
+      "name": "minio_access_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "minio_secret_key": {
+      "name": "minio_secret_key",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "keycloak_admin_password": {
+      "name": "keycloak_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "pgadmin_login": {
+      "name": "pgadmin_login",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "portainer_admin_password": {
+      "name": "portainer_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "ldap_admin_password": {
+      "name": "ldap_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "vault_root_token": {
+      "name": "vault_root_token",
+      "type": "token",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "admin_panel_login": {
+      "name": "admin_panel_login",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

@@ -1,0 +1,456 @@
+organization:
+  business_units: []
+  name: corporate_remote_access
+  regions: []
+  type: ''
+secrets:
+  admin_panel_password:
+    name: admin_panel_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  backup_db_password:
+    name: backup_db_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  db_user_password:
+    name: db_user_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  ldap_admin_password:
+    name: ldap_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_panel:
+    deploy:
+      depends_on:
+      - internal_wiki
+      env:
+      - HTTPD_PATCHES=none
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: httpd:2.4
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: admin.internal.corporate_remote_access.internal
+      issues: []
+      role: Administrative panel for internal management
+      secrets:
+      - admin_panel_password
+      services: []
+  auth_proxy:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: identity
+    name: auth_proxy
+    simulate:
+      behaviors: []
+      hostname: auth.edge.corporate_remote_access.internal
+      issues: []
+      role: Authentication proxy for validating credentials
+      secrets:
+      - ldap_admin_password
+      services: []
+  backup_server:
+    deploy:
+      depends_on: []
+      env:
+      - MYSQL_ROOT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        timeout: 10s
+      image: mariadb:11
+      ports:
+      - 3306
+      volumes: []
+      zone: internal_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup.internal.corporate_remote_access.internal
+      issues: []
+      role: Backup server for data storage
+      secrets:
+      - backup_db_password
+      services: []
+  bait_admin_ui:
+    deploy:
+      depends_on:
+      - bait_database
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: bait_admin_ui
+    simulate:
+      behaviors: []
+      hostname: dbadmin.internal.corporate_remote_access.internal
+      issues: []
+      role: Admin UI for bait database
+      secrets: []
+      services: []
+  bait_database:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: internal_zone
+    kind: database
+    name: bait_database
+    simulate:
+      behaviors: []
+      hostname: db.internal.corporate_remote_access.internal
+      issues: []
+      role: Bait database with fake data
+      secrets:
+      - db_user_password
+      services: []
+  file_share:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: internal_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: files.internal.corporate_remote_access.internal
+      issues: []
+      role: File sharing service
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:latest
+      ports:
+      - 3000
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana.monitoring.corporate_remote_access.internal
+      issues: []
+      role: Monitoring dashboard for visualizing metrics
+      secrets: []
+      services: []
+  internal_wiki:
+    deploy:
+      depends_on:
+      - auth_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: caddy:2
+      ports:
+      - 80
+      - 443
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: internal_wiki
+    simulate:
+      behaviors: []
+      hostname: wiki.internal.corporate_remote_access.internal
+      issues: []
+      role: Internal wiki with corporate documents
+      secrets: []
+      services: []
+  load_balancer:
+    deploy:
+      depends_on:
+      - reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: traefik:v2.10
+      ports:
+      - 80
+      volumes: []
+      zone: edge_zone
+    kind: infra
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: lb.edge.corporate_remote_access.internal
+      issues: []
+      role: Load balancer for distributing traffic
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9200/_cluster/health || wget -qO- http://localhost:9200/_cluster/health
+          || true
+        timeout: 10s
+      image: elasticsearch:8.11.0
+      ports:
+      - 9200
+      - 9300
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logs.monitoring.corporate_remote_access.internal
+      issues: []
+      role: Centralized log collection service
+      secrets: []
+      services: []
+  pgadmin_ui:
+    deploy:
+      depends_on:
+      - bait_database
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@corporate.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: dpage/pgadmin4:latest
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: pgadmin_ui
+    simulate:
+      behaviors: []
+      hostname: pgadmin.internal.corporate_remote_access.internal
+      issues: []
+      role: Database administration UI for bait database
+      secrets: []
+      services: []
+  prometheus_server:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy
+          || true
+        timeout: 10s
+      image: prom/prometheus:latest
+      ports:
+      - 9090
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: prometheus_server
+    simulate:
+      behaviors: []
+      hostname: prometheus.monitoring.corporate_remote_access.internal
+      issues: []
+      role: Metrics collection and alerting
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - auth_proxy
+      - internal_wiki
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: edge_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy.edge.corporate_remote_access.internal
+      issues: []
+      role: Reverse proxy for routing external requests
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: discovery.internal.corporate_remote_access.internal
+      issues: []
+      role: Service discovery for internal services
+      secrets:
+      - ldap_admin_password
+      services: []
+zones:
+  edge_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: edge_zone
+    name: edge_zone
+  internal_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: internal_zone
+    name: internal_zone
+  monitoring_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: monitoring_zone
+    name: monitoring_zone

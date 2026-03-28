@@ -1,0 +1,324 @@
+{
+  "checks_run": 35,
+  "checks_passed": 34,
+  "checks_failed": 1,
+  "pass_rate": 0.9714,
+  "results": [
+    {
+      "check_id": "running:hn_prometheus_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 172.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 167.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_grafana_dashboard:hn_prometheus_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 162.5,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_alertmanager_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 158.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_alertmanager_service:hn_prometheus_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 154.6,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_loki_logging_agent",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 151.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_elasticsearch_logging_agent",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 147.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_web_frontend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 142.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_web_frontend:1027",
+      "passed": true,
+      "actual": "TCP connect to localhost:1027 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2155.0,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_web_frontend:1027",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 384.3,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 131.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1028",
+      "passed": true,
+      "actual": "TCP connect to localhost:1028 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2142.6,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1028",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 373.1,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "tcp:hn_reverse_proxy:1029",
+      "passed": true,
+      "actual": "TCP connect to localhost:1029 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2135.6,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_reverse_proxy:1029",
+      "passed": false,
+      "actual": "Server disconnected without sending a response.",
+      "expected": "HTTP response",
+      "error": "HTTP request to http://localhost:1029/ failed: Server disconnected without sending a response.",
+      "duration_ms": 362.9,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "dep:hn_reverse_proxy:hn_web_frontend",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 112.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_api_gateway:hn_reverse_proxy",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 106.4,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_database_primary",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 100.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_database_replica",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 95.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_database_replica:hn_database_primary",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 89.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_cache_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 83.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_identity_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 78.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 73.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_backup_server",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 68.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 63.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_monitoring_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 58.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_alerting_service",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 53.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_alerting_service:hn_monitoring_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 48.1,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_service_discovery",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 43.0,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_file_share",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 38.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_honeypot_admin_panel",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 33.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "tcp:hn_honeypot_admin_panel:3001",
+      "passed": true,
+      "actual": "TCP connect to localhost:3001 OK",
+      "expected": "connection",
+      "error": "",
+      "duration_ms": 2059.1,
+      "check_type": "tcp_connect"
+    },
+    {
+      "check_id": "http:hn_honeypot_admin_panel:3001",
+      "passed": true,
+      "actual": "HTTP 200",
+      "expected": "HTTP < 500",
+      "error": "",
+      "duration_ms": 277.5,
+      "check_type": "http_status"
+    },
+    {
+      "check_id": "running:hn_kibana_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 32.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_kibana_dashboard:hn_elasticsearch_logging_agent",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 29.6,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "c2d21882b0534ea6adb8c113e13dddeb"
+}

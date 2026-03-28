@@ -1,0 +1,929 @@
+{
+  "zones": {
+    "public_zone": {
+      "name": "public_zone",
+      "deploy": {
+        "network_name": "public_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "backend_zone": {
+      "name": "backend_zone",
+      "deploy": {
+        "network_name": "backend_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "analytics_zone": {
+      "name": "analytics_zone",
+      "deploy": {
+        "network_name": "analytics_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "ad_server": {
+      "name": "ad_server",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "bid_cache",
+          "campaign_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "adserver.public.programmaticad.internal",
+        "role": "Public ad serving API returning creatives",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "click_tracker": {
+      "name": "click_tracker",
+      "kind": "web",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "public_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "campaign_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 3000 || (echo > /dev/tcp/localhost/3000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "clicktracker.public.programmaticad.internal",
+        "role": "Logs impressions and conversions",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "campaign_db": {
+      "name": "campaign_db",
+      "kind": "database",
+      "deploy": {
+        "image": "mariadb:11",
+        "zone": "backend_zone",
+        "ports": [
+          3306
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=weakpassword",
+          "MYSQL_DATABASE=campaign_db",
+          "MYSQL_USER=admin",
+          "MYSQL_PASSWORD=weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "campaigndb.backend.programmaticad.internal",
+        "role": "Stores campaign data for ad targeting",
+        "issues": [],
+        "secrets": [
+          "db_admin_password"
+        ],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "bid_cache": {
+      "name": "bid_cache",
+      "kind": "unknown",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "backend_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "bidcache.backend.programmaticad.internal",
+        "role": "Real-time bid cache for ad auctions",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "grafana_dashboard": {
+      "name": "grafana_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "analytics_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "grafana.analytics.programmaticad.internal",
+        "role": "Analytics dashboard for reporting",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "prometheus_collector": {
+      "name": "prometheus_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "analytics_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "prometheus.analytics.programmaticad.internal",
+        "role": "Collects metrics for monitoring",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "envoyproxy/envoy:v1.28-latest",
+        "zone": "backend_zone",
+        "ports": [
+          10000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ad_server",
+          "click_tracker"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 10000 || (echo > /dev/tcp/localhost/10000) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "reverseproxy.public.programmaticad.internal",
+        "role": "Handles incoming requests and forwards them to appropriate services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "admin_panel": {
+      "name": "admin_panel",
+      "kind": "web",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "campaign_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "adminpanel.public.programmaticad.internal",
+        "role": "Web interface for database administration",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_agent": {
+      "name": "monitoring_agent",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.16",
+        "zone": "analytics_zone",
+        "ports": [
+          24224,
+          5140
+        ],
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "grafana_dashboard"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:24224 || wget -qO- http://localhost:24224 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "fluentd.analytics.programmaticad.internal",
+        "role": "Monitors system logs and metrics",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "data_backup": {
+      "name": "data_backup",
+      "kind": "storage",
+      "deploy": {
+        "image": "mariadb:11",
+        "zone": "backend_zone",
+        "ports": [
+          3306
+        ],
+        "env": [
+          "MYSQL_ROOT_PASSWORD=weakpassword",
+          "MYSQL_DATABASE=backup_db",
+          "MYSQL_USER=backup_admin",
+          "MYSQL_PASSWORD=weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "campaign_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "mysqladmin",
+            "ping",
+            "-h",
+            "localhost"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup.backend.programmaticad.internal",
+        "role": "Backs up critical data from databases",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "hashicorp/consul:1.17",
+        "zone": "backend_zone",
+        "ports": [
+          8300,
+          8301,
+          8301,
+          8302,
+          8302,
+          8500,
+          8600,
+          8600
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "consul",
+            "members"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "consul.backend.programmaticad.internal",
+        "role": "Service discovery and configuration management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "identity_service": {
+      "name": "identity_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "backend_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ldap.backend.programmaticad.internal",
+        "role": "Manages user identities and authentication",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "reporting_service": {
+      "name": "reporting_service",
+      "kind": "runtime",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "analytics_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "reporting.analytics.programmaticad.internal",
+        "role": "Generates reports from analytics data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "network_monitor": {
+      "name": "network_monitor",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.16",
+        "zone": "analytics_zone",
+        "ports": [
+          24224,
+          5140
+        ],
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "networkmonitor.analytics.programmaticad.internal",
+        "role": "Monitors network traffic and performance",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "security_scanner": {
+      "name": "security_scanner",
+      "kind": "unknown",
+      "deploy": {
+        "image": "fluent/fluentd:v1.16",
+        "zone": "backend_zone",
+        "ports": [
+          24224,
+          5140
+        ],
+        "env": [
+          "LD_PRELOAD=/usr/lib/preloadable_libiconv.so"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "securityscanner.backend.programmaticad.internal",
+        "role": "Scans systems for security vulnerabilities",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "api_monitor": {
+      "name": "api_monitor",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.16",
+        "zone": "analytics_zone",
+        "ports": [
+          24224,
+          5140
+        ],
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "apimonitor.analytics.programmaticad.internal",
+        "role": "Monitors API performance and availability",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "cache_admin": {
+      "name": "cache_admin",
+      "kind": "infra",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "backend_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "bid_cache"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "cacheadmin.backend.programmaticad.internal",
+        "role": "Admin interface for managing cache",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "db_admin_ui": {
+      "name": "db_admin_ui",
+      "kind": "infra",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "backend_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PMA_HOST=campaign_db",
+          "PMA_USER=admin",
+          "PMA_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "campaign_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "dbadminui.backend.programmaticad.internal",
+        "role": "Database administration user interface",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "honeypot_service": {
+      "name": "honeypot_service",
+      "kind": "web",
+      "deploy": {
+        "image": "matomo:4",
+        "zone": "public_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "honeypot.public.programmaticad.internal",
+        "role": "Deceptive service to detect unauthorized access",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "couchdb:3.3",
+        "zone": "backend_zone",
+        "ports": [
+          4369,
+          5984,
+          9100
+        ],
+        "env": [
+          "COUCHDB_USER=admin",
+          "COUCHDB_PASSWORD=password"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "curl",
+            "-f",
+            "http://localhost:5984/_up"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backupserver.backend.programmaticad.internal",
+        "role": "Server dedicated to data backup and recovery",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "fluent/fluentd:v1.16",
+        "zone": "analytics_zone",
+        "ports": [
+          24224,
+          5140
+        ],
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logcollector.analytics.programmaticad.internal",
+        "role": "Collects logs from various services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "metrics_server": {
+      "name": "metrics_server",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/prometheus:v2.48.0",
+        "zone": "analytics_zone",
+        "ports": [
+          9090
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:9090 || wget -qO- http://localhost:9090 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "metricsserver.analytics.programmaticad.internal",
+        "role": "Serves metrics for analysis and monitoring",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alert_manager": {
+      "name": "alert_manager",
+      "kind": "monitor",
+      "deploy": {
+        "image": "prom/alertmanager:v0.26.0",
+        "zone": "analytics_zone",
+        "ports": [
+          9093
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9093 || (echo > /dev/tcp/localhost/9093) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alertmanager.analytics.programmaticad.internal",
+        "role": "Manages alert notifications and responses",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "visualization_tool": {
+      "name": "visualization_tool",
+      "kind": "monitor",
+      "deploy": {
+        "image": "grafana/grafana:10.2.0",
+        "zone": "analytics_zone",
+        "ports": [
+          3000
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "grafana_dashboard"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "visualization.analytics.programmaticad.internal",
+        "role": "Visualizes data for analysis and decision-making",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "pgadmin_ui": {
+      "name": "pgadmin_ui",
+      "kind": "infra",
+      "deploy": {
+        "image": "dpage/pgadmin4:6.21",
+        "zone": "backend_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@programmaticad.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "campaign_db"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.backend.programmaticad.internal",
+        "role": "Web-based database management tool for PostgreSQL",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "programmatic_advertising_platform",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "db_admin_password": {
+      "name": "db_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

@@ -1,0 +1,589 @@
+organization:
+  business_units: []
+  name: corporate_email_infrastructure
+  regions: []
+  type: ''
+secrets:
+  admin_panel_password:
+    name: admin_panel_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  backup_server_password:
+    name: backup_server_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  calendar_api_key:
+    name: calendar_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  file_storage_access_key:
+    name: file_storage_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  ldap_admin_password:
+    name: ldap_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  mail_admin_password:
+    name: mail_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  webmail_admin_password:
+    name: webmail_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_panel:
+    deploy:
+      depends_on:
+      - mail_server
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: admin.corporate_email_infrastructure.com
+      issues: []
+      role: Admin panel for managing email infrastructure
+      secrets:
+      - admin_panel_password
+      services:
+      - http
+  antispam_filter:
+    deploy:
+      depends_on:
+      - mail_server
+      env:
+      - CLICKHOUSE_PASSWORD=weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: internal_zone
+    kind: runtime
+    name: antispam_filter
+    simulate:
+      behaviors: []
+      hostname: antispam.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Antispam filter for incoming emails
+      secrets: []
+      services:
+      - http
+  api_gateway:
+    deploy:
+      depends_on:
+      - calendar_service
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: traefik:v2.10
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api.dmz.corporate_email_infrastructure.com
+      issues: []
+      role: API gateway for external services
+      secrets: []
+      services:
+      - http
+  calendar_service:
+    deploy:
+      depends_on:
+      - ldap_directory
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: runtime
+    name: calendar_service
+    simulate:
+      behaviors: []
+      hostname: calendar.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Shared calendar service
+      secrets:
+      - calendar_api_key
+      services:
+      - http
+  file_storage:
+    deploy:
+      depends_on: []
+      env:
+      - CLICKHOUSE_PASSWORD=weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: internal_zone
+    kind: storage
+    name: file_storage
+    simulate:
+      behaviors: []
+      hostname: filestore.internal.corporate_email_infrastructure.com
+      issues: []
+      role: File share for email attachments
+      secrets:
+      - file_storage_access_key
+      services:
+      - http
+  grafana:
+    deploy:
+      depends_on:
+      - monitoring_service
+      env:
+      - GF_SECURITY_ADMIN_PASSWORD=grafana123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: grafana/grafana:latest
+      ports:
+      - 3000
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: grafana
+    simulate:
+      behaviors: []
+      hostname: grafana.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Monitoring dashboard for infrastructure
+      secrets: []
+      services: []
+  honeypot_admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: honeypot_admin_panel
+    simulate:
+      behaviors: []
+      hostname: honeypot.admin.corporate_email_infrastructure.com
+      issues: []
+      role: Honeypot admin panel
+      secrets: []
+      services:
+      - http
+  honeypot_file_storage:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true
+        timeout: 10s
+      image: portainer/portainer-ce:latest
+      ports:
+      - 8000
+      - 9000
+      - 9443
+      volumes: []
+      zone: internal_zone
+    kind: storage
+    name: honeypot_file_storage
+    simulate:
+      behaviors: []
+      hostname: honeypot.filestore.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Honeypot file storage
+      secrets: []
+      services:
+      - http
+  honeypot_ldap_directory:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: identity
+    name: honeypot_ldap_directory
+    simulate:
+      behaviors: []
+      hostname: honeypot.ldap.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Honeypot LDAP directory
+      secrets: []
+      services:
+      - ldap
+  ldap_directory:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: identity
+    name: ldap_directory
+    simulate:
+      behaviors: []
+      hostname: ldap.internal.corporate_email_infrastructure.com
+      issues: []
+      role: LDAP directory for authentication
+      secrets:
+      - ldap_admin_password
+      services:
+      - ldap
+  load_balancer:
+    deploy:
+      depends_on:
+      - reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: infra
+    name: load_balancer
+    simulate:
+      behaviors: []
+      hostname: lb.dmz.corporate_email_infrastructure.com
+      issues: []
+      role: Load balancer for distributing traffic
+      secrets: []
+      services:
+      - http
+  logging_service:
+    deploy:
+      depends_on:
+      - mail_server
+      - webmail_portal
+      env:
+      - CLICKHOUSE_PASSWORD=weakpassword
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - clickhouse-client --query 'SELECT 1'
+        timeout: 10s
+      image: clickhouse/clickhouse-server:23.12
+      ports:
+      - 8123
+      - 9000
+      - 9009
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: logging_service
+    simulate:
+      behaviors: []
+      hostname: logs.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Centralized logging service
+      secrets: []
+      services:
+      - http
+  mail_server:
+    deploy:
+      depends_on:
+      - ldap_directory
+      - file_storage
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: runtime
+    name: mail_server
+    simulate:
+      behaviors: []
+      hostname: mail.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Internal SMTP/IMAP mail server
+      secrets:
+      - mail_admin_password
+      services:
+      - smtp
+      - imap
+  monitoring_service:
+    deploy:
+      command:
+      - /start.sh
+      depends_on:
+      - mail_server
+      - webmail_portal
+      env:
+      - I_REALLY_WANT_VOLATILE_STORAGE=true
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: vaultwarden/server:latest
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: monitoring_service
+    simulate:
+      behaviors: []
+      hostname: monitor.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Monitoring service for infrastructure
+      secrets: []
+      services:
+      - http
+  pgadmin:
+    deploy:
+      depends_on:
+      - file_storage
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@corporate.com
+      - PGADMIN_DEFAULT_PASSWORD=pgadmin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: dpage/pgadmin4:latest
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: unknown
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.internal.corporate_email_infrastructure.com
+      issues: []
+      role: Admin UI for file storage
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - webmail_portal
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: dmz_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: proxy.dmz.corporate_email_infrastructure.com
+      issues: []
+      role: Reverse proxy for external access
+      secrets: []
+      services:
+      - http
+  webmail_portal:
+    deploy:
+      depends_on:
+      - mail_server
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: webmail_portal
+    simulate:
+      behaviors: []
+      hostname: webmail.corporate_email_infrastructure.com
+      issues: []
+      role: Public-facing webmail portal
+      secrets:
+      - webmail_admin_password
+      services:
+      - http
+zones:
+  dmz_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: dmz_zone
+    name: dmz_zone
+  internal_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: internal_zone
+    name: internal_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

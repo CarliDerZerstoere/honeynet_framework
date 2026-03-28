@@ -1,0 +1,746 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "corporate_application_public_zone": {
+        "name": "corporate_application_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "corporate_application_data_zone": {
+        "name": "corporate_application_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_application_mgmt_zone": {
+        "name": "corporate_application_mgmt_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_application_honeynet_backbone": {
+        "name": "corporate_application_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_web_frontend": {
+        "name": "wordpress@sha256:8ae66efb09a2cc4f1ce44414c52b0ce4198c1f8ed338a6f51910bc09cd7d8bbb",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_postgres_db": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_admin_panel": {
+        "name": "adminer@sha256:aedd36aebf9352b435a2657f0a1e51fc6ac054dd838f42aee2a79ce059a1d796",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_fluentd_agent": {
+        "name": "fluent/fluentd@sha256:3e0bd37d74c95cff04a5a70ca4bb7470c6f807075cb914c1267c89f5801e1333",
+        "keep_locally": true
+      },
+      "hn_prometheus": {
+        "name": "prom/prometheus@sha256:d6ead9daf2355b9923479e24d7e93f246253ee6a5eb18a61b0f607219f341a80",
+        "keep_locally": true
+      },
+      "hn_grafana": {
+        "name": "grafana/grafana@sha256:047c1c5aa6fef257b6c2516f95c8fcd9f28707c201c6413dd78328b6cbedff6f",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "couchdb@sha256:307a3f5276f64c0db28f226b7b5c180b8f2c851afa681cfb4fbb1b1fe7fd5587",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "traefik@sha256:6341b98aec5ec8969b99e9730f4c5b22cca3103d42b6bbe4b7a3c910758fe565",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "couchdb@sha256:307a3f5276f64c0db28f226b7b5c180b8f2c851afa681cfb4fbb1b1fe7fd5587",
+        "keep_locally": true
+      },
+      "hn_honeypot_admin_panel": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_bait_database": {
+        "name": "mariadb@sha256:31c1aa20ba2d78c4cbc45b2675e40ffd6a3cd59897a9767ce88fc284309f55ab",
+        "keep_locally": true
+      },
+      "hn_staging_web_frontend": {
+        "name": "wordpress@sha256:8ae66efb09a2cc4f1ce44414c52b0ce4198c1f8ed338a6f51910bc09cd7d8bbb",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_web_frontend": {
+        "name": "hn_web_frontend",
+        "image": "${docker_image.hn_web_frontend.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_public_zone.name}",
+            "aliases": [
+              "web_frontend"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_application_data_zone.name}",
+            "aliases": [
+              "web_frontend"
+            ]
+          }
+        ],
+        "hostname": "web01.public.corporate_application.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_postgres_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_public_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy01.public.corporate_application.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_web_frontend"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_postgres_db": {
+        "name": "hn_postgres_db",
+        "image": "${docker_image.hn_postgres_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_data_zone.name}",
+            "aliases": [
+              "postgres_db"
+            ]
+          }
+        ],
+        "hostname": "db01.data.corporate_application.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_panel": {
+        "name": "hn_admin_panel",
+        "image": "${docker_image.hn_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_mgmt_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_application_data_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          }
+        ],
+        "hostname": "admin.mgmt.corporate_application.internal",
+        "depends_on": [
+          "docker_container.hn_postgres_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_mgmt_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_application_data_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.mgmt.corporate_application.internal",
+        "depends_on": [
+          "docker_container.hn_postgres_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fluentd_agent": {
+        "name": "hn_fluentd_agent",
+        "image": "${docker_image.hn_fluentd_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_mgmt_zone.name}",
+            "aliases": [
+              "fluentd_agent"
+            ]
+          }
+        ],
+        "hostname": "fluentd.mgmt.corporate_application.internal",
+        "env": [
+          "LD_PRELOAD=default"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus": {
+        "name": "hn_prometheus",
+        "image": "${docker_image.hn_prometheus.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_mgmt_zone.name}",
+            "aliases": [
+              "prometheus"
+            ]
+          }
+        ],
+        "hostname": "prometheus.mgmt.corporate_application.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana": {
+        "name": "hn_grafana",
+        "image": "${docker_image.hn_grafana.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_mgmt_zone.name}",
+            "aliases": [
+              "grafana"
+            ]
+          }
+        ],
+        "hostname": "grafana.mgmt.corporate_application.internal",
+        "depends_on": [
+          "docker_container.hn_prometheus"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_mgmt_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logcollector.mgmt.corporate_application.internal",
+        "depends_on": [
+          "docker_container.hn_fluentd_agent"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_data_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup.data.corporate_application.internal",
+        "env": [
+          "COUCHDB_USER=admin",
+          "COUCHDB_PASSWORD=password"
+        ],
+        "command": [
+          "/opt/couchdb/bin/couchdb"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:5984/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_mgmt_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "discovery.mgmt.corporate_application.internal",
+        "command": [
+          "traefik"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_data_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "fileshare.data.corporate_application.internal",
+        "env": [
+          "COUCHDB_USER=admin",
+          "COUCHDB_PASSWORD=password"
+        ],
+        "command": [
+          "/opt/couchdb/bin/couchdb"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:5984/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_admin_panel": {
+        "name": "hn_honeypot_admin_panel",
+        "image": "${docker_image.hn_honeypot_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_public_zone.name}",
+            "aliases": [
+              "honeypot_admin_panel"
+            ]
+          }
+        ],
+        "hostname": "honeypot.public.corporate_application.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_database": {
+        "name": "hn_bait_database",
+        "image": "${docker_image.hn_bait_database.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_data_zone.name}",
+            "aliases": [
+              "bait_database"
+            ]
+          }
+        ],
+        "hostname": "baitdb.data.corporate_application.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123",
+          "MARIADB_ROOT_PASSWORD=weakpassword"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_staging_web_frontend": {
+        "name": "hn_staging_web_frontend",
+        "image": "${docker_image.hn_staging_web_frontend.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_application_public_zone.name}",
+            "aliases": [
+              "staging_web_frontend"
+            ]
+          }
+        ],
+        "hostname": "staging-web01.public.corporate_application.internal",
+        "ports": [
+          {
+            "internal": 8080,
+            "external": 8081,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "WORDPRESS_DB_HOST=db01.data.corporate_application.internal",
+          "WORDPRESS_DB_USER=staging",
+          "WORDPRESS_DB_PASSWORD=stagingpass"
+        ],
+        "depends_on": [
+          "docker_container.hn_web_frontend"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_application"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080 || wget -qO- http://localhost:8080 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

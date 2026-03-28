@@ -1,0 +1,801 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "corporate_data_lake_app_zone": {
+        "name": "corporate_data_lake_app_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "corporate_data_lake_data_zone": {
+        "name": "corporate_data_lake_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_data_lake_monitoring_zone": {
+        "name": "corporate_data_lake_monitoring_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_data_lake_security_zone": {
+        "name": "corporate_data_lake_security_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_data_lake_honeynet_backbone": {
+        "name": "corporate_data_lake_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_api_gateway": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_web_frontend": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_object_storage": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_metadata_db": {
+        "name": "mysql@sha256:64756cc92f707eb504496d774353990bcb0f6999ddf598b6ad188f2da66bd000",
+        "keep_locally": true
+      },
+      "hn_monitoring_collector": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_alerting_service": {
+        "name": "mongo@sha256:f2b40853c0f796b105e672e04045d2b3e127bd54782dfe7e9b08aebbd9f602ce",
+        "keep_locally": true
+      },
+      "hn_backup_service": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_identity_service": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_bait_admin_panel": {
+        "name": "httpd@sha256:331548c5249bdeced0f048bc2fb8c6b6427d2ec6508bed9c1fec6c57d0b27a60",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_coordination_service": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_data_transform_service": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_security_monitor": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_log_dashboard": {
+        "name": "grafana/grafana@sha256:e932bd6ed0e026595b08483cd0141e5103e1ab7ff8604839ff899b8dc54cabcb",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_app_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api-gateway.app.corporate_data_lake.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 443,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_object_storage",
+          "docker_container.hn_metadata_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_web_frontend": {
+        "name": "hn_web_frontend",
+        "image": "${docker_image.hn_web_frontend.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_app_zone.name}",
+            "aliases": [
+              "web_frontend"
+            ]
+          }
+        ],
+        "hostname": "web-frontend.app.corporate_data_lake.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_api_gateway"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_object_storage": {
+        "name": "hn_object_storage",
+        "image": "${docker_image.hn_object_storage.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "object_storage"
+            ]
+          }
+        ],
+        "hostname": "object-storage.data.corporate_data_lake.internal",
+        "env": [
+          "MINIO_ROOT_USER=minioadmin",
+          "MINIO_ROOT_PASSWORD=minioadmin"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_metadata_db": {
+        "name": "hn_metadata_db",
+        "image": "${docker_image.hn_metadata_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "metadata_db"
+            ]
+          }
+        ],
+        "hostname": "metadata-db.data.corporate_data_lake.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123",
+          "MYSQL_DATABASE=metadata"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_collector": {
+        "name": "hn_monitoring_collector",
+        "image": "${docker_image.hn_monitoring_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_monitoring_zone.name}",
+            "aliases": [
+              "monitoring_collector"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "monitoring_collector"
+            ]
+          }
+        ],
+        "hostname": "monitoring-collector.monitoring.corporate_data_lake.internal",
+        "depends_on": [
+          "docker_container.hn_object_storage",
+          "docker_container.hn_metadata_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alerting_service": {
+        "name": "hn_alerting_service",
+        "image": "${docker_image.hn_alerting_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_monitoring_zone.name}",
+            "aliases": [
+              "alerting_service"
+            ]
+          }
+        ],
+        "hostname": "alerting-service.monitoring.corporate_data_lake.internal",
+        "depends_on": [
+          "docker_container.hn_monitoring_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mongo",
+              "--eval",
+              "db.adminCommand('ping')"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_service": {
+        "name": "hn_backup_service",
+        "image": "${docker_image.hn_backup_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "backup_service"
+            ]
+          }
+        ],
+        "hostname": "backup-service.data.corporate_data_lake.internal",
+        "depends_on": [
+          "docker_container.hn_object_storage"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_monitoring_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "log-collector.monitoring.corporate_data_lake.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "clickhouse-client --query 'SELECT 1'"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_identity_service": {
+        "name": "hn_identity_service",
+        "image": "${docker_image.hn_identity_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_security_zone.name}",
+            "aliases": [
+              "identity_service"
+            ]
+          }
+        ],
+        "hostname": "identity-service.security.corporate_data_lake.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "file-share.data.corporate_data_lake.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "ldapsearch",
+              "-x",
+              "-H",
+              "ldap://localhost:389",
+              "-b",
+              "dc=example,dc=org"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_admin_panel": {
+        "name": "hn_bait_admin_panel",
+        "image": "${docker_image.hn_bait_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_app_zone.name}",
+            "aliases": [
+              "bait_admin_panel"
+            ]
+          }
+        ],
+        "hostname": "bait-admin-panel.app.corporate_data_lake.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1030,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "HTTPD_PATCHES="
+        ],
+        "command": [
+          "httpd-foreground"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "service-discovery.data.corporate_data_lake.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_coordination_service": {
+        "name": "hn_coordination_service",
+        "image": "${docker_image.hn_coordination_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "coordination_service"
+            ]
+          }
+        ],
+        "hostname": "coordination-service.data.corporate_data_lake.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "clickhouse-client --query 'SELECT 1'"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_data_transform_service": {
+        "name": "hn_data_transform_service",
+        "image": "${docker_image.hn_data_transform_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_data_zone.name}",
+            "aliases": [
+              "data_transform_service"
+            ]
+          }
+        ],
+        "hostname": "data-transform-service.data.corporate_data_lake.internal",
+        "depends_on": [
+          "docker_container.hn_object_storage",
+          "docker_container.hn_metadata_db"
+        ],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:2019/health"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_security_monitor": {
+        "name": "hn_security_monitor",
+        "image": "${docker_image.hn_security_monitor.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_security_zone.name}",
+            "aliases": [
+              "security_monitor"
+            ]
+          }
+        ],
+        "hostname": "security-monitor.security.corporate_data_lake.internal",
+        "depends_on": [
+          "docker_container.hn_identity_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_dashboard": {
+        "name": "hn_log_dashboard",
+        "image": "${docker_image.hn_log_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_data_lake_monitoring_zone.name}",
+            "aliases": [
+              "log_dashboard"
+            ]
+          }
+        ],
+        "hostname": "log-dashboard.monitoring.corporate_data_lake.internal",
+        "env": [
+          "GF_SECURITY_ADMIN_PASSWORD=admin"
+        ],
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_data_lake"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

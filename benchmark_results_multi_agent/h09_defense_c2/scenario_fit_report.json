@@ -1,0 +1,117 @@
+{
+  "benchmark_id": "h09_defense_c2",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.8888888888888888,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.8,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.8962962962962964,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "command_portal": [
+        "admin_ui",
+        "api_gateway",
+        "command_portal",
+        "pgadmin_service",
+        "reverse_proxy",
+        "situational_api"
+      ],
+      "situational_api": [
+        "admin_ui",
+        "api_gateway",
+        "audit_trail_service",
+        "command_portal",
+        "compliance_service",
+        "encryption_service",
+        "intel_feed_service",
+        "mission_data_service",
+        "pgadmin_service",
+        "reverse_proxy",
+        "sensor_feed_aggregator",
+        "situational_api",
+        "threat_intelligence_service"
+      ],
+      "tactical_db": [],
+      "message_bus": [
+        "nats_message_bus"
+      ],
+      "intel_feed": [
+        "audit_trail_service",
+        "compliance_service",
+        "encryption_service",
+        "intel_feed_service",
+        "mission_data_service",
+        "sensor_feed_aggregator",
+        "threat_intelligence_service"
+      ],
+      "secrets_vault": [
+        "key_management_service",
+        "vault_service"
+      ],
+      "audit_trail": [
+        "alerting_service",
+        "fluentd_service",
+        "grafana_service",
+        "log_collector",
+        "monitoring_agent",
+        "network_monitor",
+        "prometheus_service",
+        "siem_service",
+        "tactical_db"
+      ],
+      "siem": [
+        "alerting_service",
+        "fluentd_service",
+        "grafana_service",
+        "log_collector",
+        "monitoring_agent",
+        "network_monitor",
+        "prometheus_service",
+        "siem_service"
+      ],
+      "monitoring": [
+        "grafana_service",
+        "log_collector",
+        "monitoring_agent",
+        "prometheus_service",
+        "siem_service"
+      ]
+    },
+    "matched_zones": {
+      "command_zone": [
+        "command_zone"
+      ],
+      "tactical_zone": [
+        "data_zone",
+        "intel_zone",
+        "security_zone",
+        "tactical_zone"
+      ],
+      "intel_zone": [
+        "data_zone",
+        "intel_zone",
+        "security_zone",
+        "tactical_zone"
+      ],
+      "data_zone": [
+        "data_zone",
+        "intel_zone",
+        "security_zone",
+        "tactical_zone"
+      ],
+      "security_zone": [
+        "data_zone",
+        "intel_zone",
+        "security_zone",
+        "tactical_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 4,
+      "total": 5
+    },
+    "placement_violations_detail": []
+  }
+}

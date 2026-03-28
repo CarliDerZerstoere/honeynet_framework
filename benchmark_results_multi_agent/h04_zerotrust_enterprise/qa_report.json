@@ -1,0 +1,54 @@
+{
+  "checks_run": 5,
+  "checks_passed": 5,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_vault_audit_log_consumer",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 37.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_postgresql_primary",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 30.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_siem_audit_log_aggregator",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 29.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 26.4,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_honeytoken_vault_root",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 26.4,
+      "check_type": "container_running"
+    }
+  ],
+  "run_id": "6705b3bf09094fdfa5ffb62c5cdf5a1e"
+}

@@ -1,0 +1,67 @@
+{
+  "benchmark_id": "m08_crypto_exchange",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 0,
+  "benchmark_pass": true,
+  "scenario_fit_score": 1.0,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "trading_api": [
+        "admin_panel",
+        "api_documentation",
+        "api_gateway",
+        "honeypot_admin_panel",
+        "identity_ui",
+        "pgadmin",
+        "postgres_admin_ui",
+        "redis_admin_ui",
+        "reverse_proxy",
+        "trading_api",
+        "wallet_service"
+      ],
+      "order_book": [
+        "redis"
+      ],
+      "wallet_service": [
+        "wallet_service"
+      ],
+      "ledger_db": [
+        "ledger_db",
+        "order_book"
+      ],
+      "kyc_identity": [
+        "kyc_service",
+        "wallet_service"
+      ],
+      "monitoring": [
+        "grafana",
+        "monitoring_agent",
+        "prometheus"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "public_zone"
+      ],
+      "trading_zone": [
+        "monitoring_zone",
+        "trading_zone",
+        "vault_zone"
+      ],
+      "vault_zone": [
+        "monitoring_zone",
+        "trading_zone",
+        "vault_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 3,
+      "total": 3
+    },
+    "placement_violations_detail": []
+  }
+}

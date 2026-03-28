@@ -1,0 +1,849 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "corporate_email_infrastructure_public_zone": {
+        "name": "corporate_email_infrastructure_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "corporate_email_infrastructure_internal_zone": {
+        "name": "corporate_email_infrastructure_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "corporate_email_infrastructure_dmz_zone": {
+        "name": "corporate_email_infrastructure_dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "corporate_email_infrastructure_honeynet_backbone": {
+        "name": "corporate_email_infrastructure_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_webmail_portal": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_mail_server": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_ldap_directory": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_file_storage": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_antispam_filter": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_calendar_service": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_load_balancer": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_monitoring_service": {
+        "name": "vaultwarden/server@sha256:43498a94b22f9563f2a94b53760ab3e710eefc0d0cac2efda4b12b9eb8690664",
+        "keep_locally": true
+      },
+      "hn_logging_service": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_admin_panel": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "traefik@sha256:6341b98aec5ec8969b99e9730f4c5b22cca3103d42b6bbe4b7a3c910758fe565",
+        "keep_locally": true
+      },
+      "hn_honeypot_ldap_directory": {
+        "name": "osixia/openldap@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28",
+        "keep_locally": true
+      },
+      "hn_honeypot_file_storage": {
+        "name": "portainer/portainer-ce@sha256:1ae8e65d50ca5498cb2c33e617495a1e3ef245b0d2392b4a44c70ae09b822891",
+        "keep_locally": true
+      },
+      "hn_honeypot_admin_panel": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d243a4bcc02d2ee6b447c601692813531d2d0fbca18b583d9f7f9658da835d81",
+        "keep_locally": true
+      },
+      "hn_grafana": {
+        "name": "grafana/grafana@sha256:e932bd6ed0e026595b08483cd0141e5103e1ab7ff8604839ff899b8dc54cabcb",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_webmail_portal": {
+        "name": "hn_webmail_portal",
+        "image": "${docker_image.hn_webmail_portal.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_public_zone.name}",
+            "aliases": [
+              "webmail_portal"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "webmail_portal"
+            ]
+          }
+        ],
+        "hostname": "webmail.corporate_email_infrastructure.com",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1030,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_mail_server"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_mail_server": {
+        "name": "hn_mail_server",
+        "image": "${docker_image.hn_mail_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "mail_server"
+            ]
+          }
+        ],
+        "hostname": "mail.internal.corporate_email_infrastructure.com",
+        "depends_on": [
+          "docker_container.hn_ldap_directory",
+          "docker_container.hn_file_storage"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_ldap_directory": {
+        "name": "hn_ldap_directory",
+        "image": "${docker_image.hn_ldap_directory.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "ldap_directory"
+            ]
+          }
+        ],
+        "hostname": "ldap.internal.corporate_email_infrastructure.com",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_storage": {
+        "name": "hn_file_storage",
+        "image": "${docker_image.hn_file_storage.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "file_storage"
+            ]
+          }
+        ],
+        "hostname": "filestore.internal.corporate_email_infrastructure.com",
+        "env": [
+          "CLICKHOUSE_PASSWORD=weakpassword"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "clickhouse-client --query 'SELECT 1'"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_antispam_filter": {
+        "name": "hn_antispam_filter",
+        "image": "${docker_image.hn_antispam_filter.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "antispam_filter"
+            ]
+          }
+        ],
+        "hostname": "antispam.internal.corporate_email_infrastructure.com",
+        "env": [
+          "CLICKHOUSE_PASSWORD=weakpassword"
+        ],
+        "depends_on": [
+          "docker_container.hn_mail_server"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "clickhouse-client --query 'SELECT 1'"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_calendar_service": {
+        "name": "hn_calendar_service",
+        "image": "${docker_image.hn_calendar_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "calendar_service"
+            ]
+          }
+        ],
+        "hostname": "calendar.internal.corporate_email_infrastructure.com",
+        "depends_on": [
+          "docker_container.hn_ldap_directory"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_dmz_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_email_infrastructure_public_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy.dmz.corporate_email_infrastructure.com",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1031,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_webmail_portal"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_load_balancer": {
+        "name": "hn_load_balancer",
+        "image": "${docker_image.hn_load_balancer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_dmz_zone.name}",
+            "aliases": [
+              "load_balancer"
+            ]
+          }
+        ],
+        "hostname": "lb.dmz.corporate_email_infrastructure.com",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1032,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_reverse_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_service": {
+        "name": "hn_monitoring_service",
+        "image": "${docker_image.hn_monitoring_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "monitoring_service"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_email_infrastructure_public_zone.name}",
+            "aliases": [
+              "monitoring_service"
+            ]
+          }
+        ],
+        "hostname": "monitor.internal.corporate_email_infrastructure.com",
+        "env": [
+          "I_REALLY_WANT_VOLATILE_STORAGE=true"
+        ],
+        "depends_on": [
+          "docker_container.hn_mail_server",
+          "docker_container.hn_webmail_portal"
+        ],
+        "command": [
+          "/start.sh"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_logging_service": {
+        "name": "hn_logging_service",
+        "image": "${docker_image.hn_logging_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "logging_service"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_email_infrastructure_public_zone.name}",
+            "aliases": [
+              "logging_service"
+            ]
+          }
+        ],
+        "hostname": "logs.internal.corporate_email_infrastructure.com",
+        "env": [
+          "CLICKHOUSE_PASSWORD=weakpassword"
+        ],
+        "depends_on": [
+          "docker_container.hn_mail_server",
+          "docker_container.hn_webmail_portal"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "clickhouse-client --query 'SELECT 1'"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_panel": {
+        "name": "hn_admin_panel",
+        "image": "${docker_image.hn_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_public_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          }
+        ],
+        "hostname": "admin.corporate_email_infrastructure.com",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1033,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_mail_server"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_dmz_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          },
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api.dmz.corporate_email_infrastructure.com",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1034,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_calendar_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_ldap_directory": {
+        "name": "hn_honeypot_ldap_directory",
+        "image": "${docker_image.hn_honeypot_ldap_directory.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "honeypot_ldap_directory"
+            ]
+          }
+        ],
+        "hostname": "honeypot.ldap.internal.corporate_email_infrastructure.com",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_file_storage": {
+        "name": "hn_honeypot_file_storage",
+        "image": "${docker_image.hn_honeypot_file_storage.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "honeypot_file_storage"
+            ]
+          }
+        ],
+        "hostname": "honeypot.filestore.internal.corporate_email_infrastructure.com",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9000 || wget -qO- http://localhost:9000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_admin_panel": {
+        "name": "hn_honeypot_admin_panel",
+        "image": "${docker_image.hn_honeypot_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_public_zone.name}",
+            "aliases": [
+              "honeypot_admin_panel"
+            ]
+          }
+        ],
+        "hostname": "honeypot.admin.corporate_email_infrastructure.com",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1035,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.internal.corporate_email_infrastructure.com",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@corporate.com",
+          "PGADMIN_DEFAULT_PASSWORD=pgadmin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_file_storage"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana": {
+        "name": "hn_grafana",
+        "image": "${docker_image.hn_grafana.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.corporate_email_infrastructure_internal_zone.name}",
+            "aliases": [
+              "grafana"
+            ]
+          }
+        ],
+        "hostname": "grafana.internal.corporate_email_infrastructure.com",
+        "env": [
+          "GF_SECURITY_ADMIN_PASSWORD=grafana123"
+        ],
+        "depends_on": [
+          "docker_container.hn_monitoring_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "corporate_email_infrastructure"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

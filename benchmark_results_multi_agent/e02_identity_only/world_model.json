@@ -1,0 +1,289 @@
+{
+  "zones": {
+    "internal_zone": {
+      "name": "internal_zone",
+      "deploy": {
+        "network_name": "internal_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "dmz_zone": {
+      "name": "dmz_zone",
+      "deploy": {
+        "network_name": "dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    }
+  },
+  "systems": {
+    "ldap_service": {
+      "name": "ldap_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "osixia/openldap:1.5.0",
+        "zone": "internal_zone",
+        "ports": [
+          389,
+          636
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "ldap01.internal.corporate_internal_directory",
+        "role": "LDAP server for internal directory services",
+        "issues": [],
+        "secrets": [
+          "ldap_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "ldap"
+        ]
+      }
+    },
+    "auth_proxy": {
+      "name": "auth_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "dmz_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ldap_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "authproxy.dmz.corporate_internal_directory",
+        "role": "Authentication proxy for external access",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http",
+          "https"
+        ]
+      }
+    },
+    "admin_console": {
+      "name": "admin_console",
+      "kind": "unknown",
+      "deploy": {
+        "image": "neo4j:5.15",
+        "zone": "internal_zone",
+        "ports": [
+          7473,
+          7474,
+          7687
+        ],
+        "env": [
+          "NEO4J_AUTH=neo4j/weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "ldap_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "cypher-shell",
+            "-u",
+            "neo4j",
+            "-p",
+            "admin123",
+            "RETURN 1"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "adminconsole.internal.corporate_internal_directory",
+        "role": "Admin console for managing internal directory services",
+        "issues": [],
+        "secrets": [
+          "neo4j_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "http",
+          "https"
+        ]
+      }
+    },
+    "monitoring_service": {
+      "name": "monitoring_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "internal_zone",
+        "ports": [
+          2019,
+          443,
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "ldap_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitor.internal.corporate_internal_directory",
+        "role": "Monitoring service for internal systems",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http",
+          "https"
+        ]
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "dmz_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=none"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "auth_proxy"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "reverseproxy.dmz.corporate_internal_directory",
+        "role": "Reverse proxy for routing external requests",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http",
+          "https"
+        ]
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "unknown",
+      "deploy": {
+        "image": "dpage/pgadmin4:6.21",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@example.com",
+          "PGADMIN_DEFAULT_PASSWORD=weakpassword"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "ldap_service"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.internal.corporate_internal_directory",
+        "role": "Database administration interface for internal use",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "corporate_internal_directory",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "ldap_admin_password": {
+      "name": "ldap_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "neo4j_admin_password": {
+      "name": "neo4j_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

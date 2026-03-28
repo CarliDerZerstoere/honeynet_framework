@@ -1,0 +1,679 @@
+{
+  "zones": {
+    "dns_zone": {
+      "name": "dns_zone",
+      "deploy": {
+        "network_name": "dns_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "logging_zone": {
+      "name": "logging_zone",
+      "deploy": {
+        "network_name": "logging_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    }
+  },
+  "systems": {
+    "dns_resolver": {
+      "name": "dns_resolver",
+      "kind": "infra",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "dns_zone",
+        "ports": [
+          2019,
+          443,
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "dns01.dns_sinkhole_environment.internal",
+        "role": "Recursive DNS resolver redirecting suspicious domains",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "sinkhole_web": {
+      "name": "sinkhole_web",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "dns_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "dns_resolver"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "sinkhole.dns_sinkhole_environment.internal",
+        "role": "Web server capturing and logging incoming requests",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "jaegertracing/all-in-one:1.52",
+        "zone": "logging_zone",
+        "ports": [
+          14250,
+          14268,
+          16686,
+          4317,
+          4318,
+          5775,
+          5778,
+          6831,
+          6832,
+          9411
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "sinkhole_web"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 16686 || (echo > /dev/tcp/localhost/16686) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logs.dns_sinkhole_environment.internal",
+        "role": "Collects and aggregates logs for analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "web_proxy": {
+      "name": "web_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "httpd:2.4",
+        "zone": "dns_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "HTTPD_PATCHES=default"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "sinkhole_web"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy.dns_sinkhole_environment.internal",
+        "role": "Proxy server for web traffic",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "monitoring_dashboard": {
+      "name": "monitoring_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "logging_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "dashboard.dns_sinkhole_environment.internal",
+        "role": "Displays monitoring metrics and alerts",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "alerting_service": {
+      "name": "alerting_service",
+      "kind": "monitor",
+      "deploy": {
+        "image": "vaultwarden/server:latest",
+        "zone": "logging_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "I_REALLY_WANT_VOLATILE_STORAGE=true"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "command": [
+          "/start.sh"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "alerts.dns_sinkhole_environment.internal",
+        "role": "Sends alerts based on monitoring data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_storage": {
+      "name": "log_storage",
+      "kind": "storage",
+      "deploy": {
+        "image": "clickhouse/clickhouse-server:23.12",
+        "zone": "logging_zone",
+        "ports": [
+          8123,
+          9000,
+          9009
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "clickhouse-client --query 'SELECT 1'"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "storage.dns_sinkhole_environment.internal",
+        "role": "Stores logs for long-term analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "backup_server": {
+      "name": "backup_server",
+      "kind": "storage",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "logging_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_storage"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "backup.dns_sinkhole_environment.internal",
+        "role": "Backs up critical data and configurations",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "identity_service": {
+      "name": "identity_service",
+      "kind": "identity",
+      "deploy": {
+        "image": "drupal:10-apache",
+        "zone": "logging_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "identity.dns_sinkhole_environment.internal",
+        "role": "Manages user identities and authentication",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "dns_admin_ui": {
+      "name": "dns_admin_ui",
+      "kind": "web",
+      "deploy": {
+        "image": "phpmyadmin:5.2",
+        "zone": "dns_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "dns_resolver"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "dnsadmin.dns_sinkhole_environment.internal",
+        "role": "Web interface for DNS administration",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "threat_analysis_tool": {
+      "name": "threat_analysis_tool",
+      "kind": "runtime",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "logging_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "analysis.dns_sinkhole_environment.internal",
+        "role": "Analyzes threats based on captured data",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "data_aggregator": {
+      "name": "data_aggregator",
+      "kind": "runtime",
+      "deploy": {
+        "image": "postgres:16-alpine",
+        "zone": "logging_zone",
+        "ports": [
+          5432
+        ],
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_collector"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "pg_isready",
+            "-U",
+            "postgres"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "aggregator.dns_sinkhole_environment.internal",
+        "role": "Aggregates data for reporting and analysis",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "service_discovery": {
+      "name": "service_discovery",
+      "kind": "infra",
+      "deploy": {
+        "image": "jaegertracing/all-in-one:1.52",
+        "zone": "logging_zone",
+        "ports": [
+          14250,
+          14268,
+          16686,
+          4317,
+          4318,
+          5775,
+          5778,
+          6831,
+          6832,
+          9411
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:16686 || wget -qO- http://localhost:16686 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "discovery.dns_sinkhole_environment.internal",
+        "role": "Discovers and registers services dynamically",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "load_balancer": {
+      "name": "load_balancer",
+      "kind": "infra",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "dns_zone",
+        "ports": [
+          2019,
+          443,
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "sinkhole_web"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "loadbalancer.dns_sinkhole_environment.internal",
+        "role": "Balances load across multiple services",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "dns_cache": {
+      "name": "dns_cache",
+      "kind": "infra",
+      "deploy": {
+        "image": "redis:7-alpine",
+        "zone": "logging_zone",
+        "ports": [
+          6379
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "dns_resolver"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "redis-cli",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "cache.dns_sinkhole_environment.internal",
+        "role": "Caches DNS queries for faster resolution",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "log_analyzer": {
+      "name": "log_analyzer",
+      "kind": "runtime",
+      "deploy": {
+        "image": "fluent/fluentd:latest",
+        "zone": "logging_zone",
+        "ports": [
+          24224
+        ],
+        "env": [
+          "FLUENTD_CONF=fluent.conf"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "log_collector",
+          "threat_analysis_tool"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "analyzer.dns_sinkhole_environment.internal",
+        "role": "Analyzes logs for threat patterns",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    },
+    "dns_debug_endpoint": {
+      "name": "dns_debug_endpoint",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "dns_zone",
+        "ports": [
+          8080
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "dns_resolver"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "debug.dns_sinkhole_environment.internal",
+        "role": "Debug endpoint for DNS resolution testing",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "dns_sinkhole_environment",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "admin_password": {
+      "name": "admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "api_key": {
+      "name": "api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "db_credentials": {
+      "name": "db_credentials",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

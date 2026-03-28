@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Honeynet Deployment Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --line: #374151;
+      --accent: #38bdf8;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: Inter, 'Segoe UI', Arial, sans-serif; margin: 0; padding: 24px;
+           color: var(--text); background: radial-gradient(circle at top, #111827 0%, var(--bg) 60%); }
+    h1, h2, h3 { margin: 0 0 10px; }
+    .muted { color: var(--muted); font-size: 0.92rem; }
+    .section { margin-top: 28px; }
+    .panel { background: color-mix(in srgb, var(--panel) 92%, #000 8%);
+             border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+
+    /* Status banner */
+    .banner { border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;
+              font-size: 1.05rem; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+    .banner.ok  { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); color: #86efac; }
+    .banner.warn { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); color: #fcd34d; }
+    .banner.bad  { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; }
+    .banner .icon { font-size: 1.3rem; }
+
+    /* KPI cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr));
+                gap: 14px; margin: 16px 0 20px; }
+    .kpi-card { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+                background: var(--card); }
+    .kpi-card .label { color: var(--text); font-size: 0.92rem; font-weight: 600; }
+    .kpi-card .subtitle { color: var(--muted); font-size: 0.78rem; margin-top: 3px; line-height: 1.35; }
+    .kpi-card .value { font-size: 1.4rem; font-weight: 700; margin-top: 8px; display: flex;
+                       align-items: baseline; gap: 6px; }
+    .kpi-card .value .detail { font-size: 0.82rem; font-weight: 400; color: var(--muted); }
+    .kpi-card .value.ok { color: var(--ok); }
+    .kpi-card .value.warn { color: var(--warn); }
+    .kpi-card .value.bad { color: var(--bad); }
+
+    /* Tables */
+    table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 0.88rem;
+            background: var(--panel); border-radius: 8px; overflow: hidden; }
+    th, td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; }
+    th { background: #1f2937; font-weight: 600; font-size: 0.82rem; text-transform: uppercase;
+         letter-spacing: 0.02em; color: var(--muted); }
+    td { color: var(--text); }
+
+    /* Pipeline stage dots */
+    .stage-dots { display: flex; gap: 4px; align-items: center; }
+    .stage-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .stage-dot.pass { background: var(--ok); }
+    .stage-dot.fail { background: var(--bad); }
+    .stage-dot[title] { cursor: help; }
+
+    /* Charts */
+    .chart-row { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 20px; }
+    .chart-box { background: var(--panel); border: 1px solid var(--line);
+                 border-radius: 12px; padding: 14px; min-height: 300px; }
+    .chart-box h3 { font-size: 0.92rem; color: var(--muted); margin-bottom: 8px; }
+
+    /* Glossary */
+    .glossary dt { font-weight: 600; color: var(--accent); margin-top: 10px; }
+    .glossary dd { color: var(--muted); margin: 2px 0 0 0; font-size: 0.9rem; line-height: 1.5; }
+
+    code { background: #0b1220; border: 1px solid var(--line); padding: 1px 4px;
+           border-radius: 4px; color: #bfdbfe; }
+
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(200px, 1fr)); }
+    }
+    @media (max-width: 850px) {
+      .chart-row { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: 1fr; }
+    }
+    </style>
+</head>
+<body>
+  <h1>Honeynet Deployment Dashboard</h1>
+  <p class="muted">Auto-generated after each pipeline run &middot; Last updated: 2026-03-28T10:58:16.300620+00:00</p>
+
+  <div class="banner ok"><span class="icon">&#10003;</span>All systems healthy. Last deployment succeeded end-to-end (7/7 containers running).</div>
+
+  <div class="section">
+    <h2>Is the pipeline working?</h2>
+    <div class="kpi-grid"><div class="kpi-card"><div class="label">End-to-End Success</div><div class="subtitle">Runs completing all stages from model to health checks</div><div class="value ok">100.0% <span class="detail">1/1 runs</span></div></div><div class="kpi-card"><div class="label">World Model Valid</div><div class="subtitle">LLM output successfully parsed into a deployment model</div><div class="value ok">100.0% <span class="detail">1/1 runs</span></div></div><div class="kpi-card"><div class="label">Container Start Rate</div><div class="subtitle">Average share of expected containers that actually started</div><div class="value ok">100.0% <span class="detail">avg over 1 measured runs</span></div></div><div class="kpi-card"><div class="label">Health Check Pass</div><div class="subtitle">Post-startup connectivity probes that passed</div><div class="value ok">100.0% <span class="detail">avg over 1 measured runs</span></div></div><div class="kpi-card"><div class="label">Scenario Fit Score</div><div class="subtitle">Composite score: avg(service, zone, dependency coverage), halved on violations</div><div class="value warn">0.56 <span class="detail">avg over 1 measured runs</span></div></div></div>
+  </div>
+
+  <div class="section">
+    <h2>How are things trending?</h2>
+    <div class="chart-row">
+      <div class="chart-box"><h3>Deployment Success</h3><canvas id="chartDeploy"></canvas></div>
+      <div class="chart-box"><h3>Quality &amp; Coverage</h3><canvas id="chartQuality"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section panel">
+    <h2>What happened in each run?</h2>
+    <p class="muted">Each row shows one pipeline run. The colored dots indicate which stages passed (green) or failed (red):
+    World Model &rarr; Config &rarr; Plan &rarr; Deploy &rarr; Runtime.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Run</th>
+          <th>Time</th>
+          <th title="Five pipeline stages: World Model, Config Validation, Plan, Deploy, Runtime Verify">Pipeline</th>
+          <th title="Running containers out of expected containers">Containers</th>
+          <th title="Percentage of post-startup health/connectivity checks that passed (hover for per-type breakdown)">Health</th>
+          <th title="Benchmark service coverage (running if available, else planned)">Coverage</th>
+          <th title="Composite scenario-fit score (0-1)">Fit Score</th>
+          <th title="Formal benchmark pass: all coverage = 100% and no placement violations">Benchmark</th>
+          <th title="Total pipeline duration in seconds">Duration</th>
+          <th title="The pipeline stage where this run failed, with error class in parentheses">Failed At</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td title='bb26ced5f8644962b8d33a86194b6ce6'>bb26ced5</td><td>2026-03-28T10:58:16</td><td><div class="stage-dots"><span class="stage-dot pass" title="World Model: PASS"></span><span class="stage-dot pass" title="Config: PASS"></span><span class="stage-dot pass" title="Plan: PASS"></span><span class="stage-dot pass" title="Deploy: PASS"></span><span class="stage-dot pass" title="Runtime: PASS"></span></div></td><td>7/7</td><td><span title='container_running: 100%, depends_on_running: 100%, http_status: 100%, tcp_connect: 100%'>100.0%</span></td><td>66.7%</td><td>0.56</td><td>FAIL</td><td>43s</td><td>completed</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section panel">
+    <h2>Where do failures happen?</h2>
+    <p class="muted">Earlier failures (World Model, Config) typically indicate LLM output quality issues.
+    Later failures (Deploy, Runtime) indicate infrastructure or Docker problems.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div>
+    <h3 style="font-size:0.88rem;color:var(--muted)">By Stage</h3>
+    <table>
+      <thead><tr><th>Failure Stage</th><th>Runs</th></tr></thead>
+      <tbody>
+        <tr><td colspan='2'>No failures recorded.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div>
+    <h3 style="font-size:0.88rem;color:var(--muted)">By Error Class</h3>
+    <table>
+      <thead><tr><th>Error Class</th><th>Runs</th></tr></thead>
+      <tbody>
+        <tr><td colspan='2'>No error classes recorded.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    </div>
+  </div>
+
+  <div class="section panel">
+    <h2>Metric Glossary</h2>
+    <dl class="glossary">
+      <dt>End-to-End Success</dt>
+      <dd>A run that passed all five pipeline stages: world model extraction, config validation,
+          plan generation, infrastructure deploy, and runtime verification. This is the primary KPI.</dd>
+      <dt>World Model Valid</dt>
+      <dd>The LLM successfully extracted a structured deployment model (systems, zones, dependencies)
+          from the input prompt. Failures here mean the LLM output could not be parsed.</dd>
+      <dt>Container Start Rate</dt>
+      <dd>Fraction of expected containers that actually started running after deployment.
+          Calculated as running containers / expected containers. 100% means all containers launched.</dd>
+      <dt>Health Check Pass Rate</dt>
+      <dd>Post-startup connectivity probes that passed. These check that containers are not just
+          running but actually responding (e.g., HTTP health endpoints, TCP connectivity).</dd>
+      <dt>Service Coverage</dt>
+      <dd>When a benchmark reference is provided: the fraction of required services (e.g., database,
+          web server, cache) that are present in the deployment. 100% = all required services found.</dd>
+      <dt>Benchmark Pass</dt>
+      <dd>True only when ALL benchmark requirements are met: 100% service coverage, 100% zone coverage,
+          100% dependency coverage, and zero placement violations.</dd>
+      <dt>Scenario Fit Score</dt>
+      <dd>Composite score (0.0&ndash;1.0) computed as the equal-weight average of service, zone, and
+          dependency coverage. Halved when placement violations exist. Useful for ranking partially
+          correct results without the all-or-nothing nature of Benchmark Pass.</dd>
+      <dt>Error Class</dt>
+      <dd>Coarse classification of why a run failed (e.g., <code>port_conflict</code>,
+          <code>invalid_image</code>, <code>llm_schema_error</code>). Shown in the failure column
+          and aggregated in the failure distribution table.</dd>
+      <dt>Failure Stage</dt>
+      <dd>The earliest pipeline stage where a run failed. Common stages:
+          <code>world_model_validation</code>, <code>config_validation</code>,
+          <code>plan</code>, <code>deploy</code>, <code>runtime_verify</code>.</dd>
+    </dl>
+  </div>
+
+  <script>
+    const data = {"labels": ["Run 1"], "deploySuccess": [1], "containerStart": [1.0], "healthCheck": [1.0], "serviceCoverage": [0.6667], "fitScore": [0.5556]};
+    const pct = (v) => v == null ? null : Math.round((v || 0) * 1000) / 10;
+
+    new Chart(document.getElementById("chartDeploy"), {
+      type: "line",
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label: "End-to-End Success (pass=1, fail=0)",
+            data: data.deploySuccess,
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37,99,235,0.12)",
+            tension: 0.2, fill: true
+          },
+          {
+            label: "Container Start Rate %",
+            data: data.containerStart.map(v => pct(v)),
+            borderColor: "#059669",
+            backgroundColor: "rgba(5,150,105,0.12)",
+            tension: 0.2
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom", labels: { color: "#9ca3af" } } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: "#6b7280" }, grid: { color: "#1f2937" } },
+          x: { ticks: { color: "#6b7280" }, grid: { color: "#1f2937" } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("chartQuality"), {
+      type: "line",
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label: "Health Check Pass Rate %",
+            data: data.healthCheck.map(v => pct(v)),
+            borderColor: "#7c3aed",
+            backgroundColor: "rgba(124,58,237,0.12)",
+            tension: 0.2, spanGaps: true
+          },
+          {
+            label: "Service Coverage %",
+            data: data.serviceCoverage.map(v => pct(v)),
+            borderColor: "#22c55e",
+            backgroundColor: "rgba(34,197,94,0.12)",
+            tension: 0.2
+          },
+          {
+            label: "Scenario Fit Score %",
+            data: data.fitScore.map(v => pct(v)),
+            borderColor: "#f59e0b",
+            backgroundColor: "rgba(245,158,11,0.12)",
+            tension: 0.2
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom", labels: { color: "#9ca3af" } } },
+        scales: {
+          y: { beginAtZero: true, suggestedMax: 100,
+                ticks: { color: "#6b7280" }, grid: { color: "#1f2937" } },
+          x: { ticks: { color: "#6b7280" }, grid: { color: "#1f2937" } }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

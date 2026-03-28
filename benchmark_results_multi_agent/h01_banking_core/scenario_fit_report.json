@@ -1,0 +1,101 @@
+{
+  "benchmark_id": "h01_banking_core",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.9090909090909091,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.6666666666666666,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.8585858585858586,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "api_gateway": [
+        "nginx_api_gateway"
+      ],
+      "web_banking": [
+        "nginx_api_gateway",
+        "public_web_banking_portal"
+      ],
+      "core_banking_api": [
+        "core_banking_api",
+        "fraud_detection_service",
+        "nginx_api_gateway",
+        "public_web_banking_portal"
+      ],
+      "fraud_detection": [
+        "core_banking_api",
+        "fraud_detection_service"
+      ],
+      "identity_sso": [
+        "keycloak_sso"
+      ],
+      "ledger_db": [
+        "postgresql_ledger_db"
+      ],
+      "event_bus": [
+        "kafka_event_bus"
+      ],
+      "audit_service": [
+        "audit_logging_service",
+        "document_store",
+        "grafana_dashboard",
+        "postgresql_ledger_db",
+        "prometheus_monitoring"
+      ],
+      "document_store": [
+        "document_store"
+      ],
+      "notification_service": [],
+      "monitoring": [
+        "grafana_dashboard",
+        "prometheus_monitoring"
+      ]
+    },
+    "matched_zones": {
+      "dmz_zone": [
+        "dmz_zone"
+      ],
+      "core_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone"
+      ],
+      "data_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone"
+      ],
+      "identity_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone"
+      ],
+      "compliance_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone"
+      ],
+      "ops_zone": [
+        "compliance_zone",
+        "core_zone",
+        "data_zone",
+        "identity_zone",
+        "ops_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 4,
+      "total": 6
+    },
+    "placement_violations_detail": []
+  }
+}

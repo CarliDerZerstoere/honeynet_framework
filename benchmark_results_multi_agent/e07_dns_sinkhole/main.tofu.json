@@ -1,0 +1,846 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "dns_sinkhole_environment_dns_zone": {
+        "name": "dns_sinkhole_environment_dns_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "dns_sinkhole_environment_logging_zone": {
+        "name": "dns_sinkhole_environment_logging_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "dns_sinkhole_environment_honeynet_backbone": {
+        "name": "dns_sinkhole_environment_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_dns_resolver": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_sinkhole_web": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "jaegertracing/all-in-one@sha256:7885400a153ac908d8bfbf72c27e3389dbab1942a35dd0ce3228611dc48cbf9f",
+        "keep_locally": true
+      },
+      "hn_web_proxy": {
+        "name": "httpd@sha256:331548c5249bdeced0f048bc2fb8c6b6427d2ec6508bed9c1fec6c57d0b27a60",
+        "keep_locally": true
+      },
+      "hn_monitoring_dashboard": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_alerting_service": {
+        "name": "vaultwarden/server@sha256:43498a94b22f9563f2a94b53760ab3e710eefc0d0cac2efda4b12b9eb8690664",
+        "keep_locally": true
+      },
+      "hn_log_storage": {
+        "name": "clickhouse/clickhouse-server@sha256:5d0802b64c09f6d2c6e28123ec4d37226a254e77503bc8b12943dc11722996a5",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_identity_service": {
+        "name": "drupal@sha256:42b3811155c952269b18766dfdb7f12457a7db21b197fc46fb595d7fc0b1f31d",
+        "keep_locally": true
+      },
+      "hn_dns_admin_ui": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_threat_analysis_tool": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_data_aggregator": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "jaegertracing/all-in-one@sha256:7885400a153ac908d8bfbf72c27e3389dbab1942a35dd0ce3228611dc48cbf9f",
+        "keep_locally": true
+      },
+      "hn_load_balancer": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_dns_cache": {
+        "name": "redis@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "keep_locally": true
+      },
+      "hn_log_analyzer": {
+        "name": "fluent/fluentd@sha256:bf96ad1cdf366327ce84bafe5a9c7621a07887efc025aa23e68f98357a8d3997",
+        "keep_locally": true
+      },
+      "hn_dns_debug_endpoint": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_dns_resolver": {
+        "name": "hn_dns_resolver",
+        "image": "${docker_image.hn_dns_resolver.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_dns_zone.name}",
+            "aliases": [
+              "dns_resolver"
+            ]
+          }
+        ],
+        "hostname": "dns01.dns_sinkhole_environment.internal",
+        "ports": [
+          {
+            "internal": 2019,
+            "external": 2019,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 443,
+            "external": 1024,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 80,
+            "external": 1025,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_sinkhole_web": {
+        "name": "hn_sinkhole_web",
+        "image": "${docker_image.hn_sinkhole_web.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_dns_zone.name}",
+            "aliases": [
+              "sinkhole_web"
+            ]
+          }
+        ],
+        "hostname": "sinkhole.dns_sinkhole_environment.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1026,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_dns_resolver"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          },
+          {
+            "name": "${docker_network.dns_sinkhole_environment_dns_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "logs.dns_sinkhole_environment.internal",
+        "depends_on": [
+          "docker_container.hn_sinkhole_web"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 16686 || (echo > /dev/tcp/localhost/16686) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_web_proxy": {
+        "name": "hn_web_proxy",
+        "image": "${docker_image.hn_web_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_dns_zone.name}",
+            "aliases": [
+              "web_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy.dns_sinkhole_environment.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "env": [
+          "HTTPD_PATCHES=default"
+        ],
+        "depends_on": [
+          "docker_container.hn_sinkhole_web"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_dashboard": {
+        "name": "hn_monitoring_dashboard",
+        "image": "${docker_image.hn_monitoring_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "monitoring_dashboard"
+            ]
+          }
+        ],
+        "hostname": "dashboard.dns_sinkhole_environment.internal",
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_alerting_service": {
+        "name": "hn_alerting_service",
+        "image": "${docker_image.hn_alerting_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "alerting_service"
+            ]
+          }
+        ],
+        "hostname": "alerts.dns_sinkhole_environment.internal",
+        "env": [
+          "I_REALLY_WANT_VOLATILE_STORAGE=true"
+        ],
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "command": [
+          "/start.sh"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_storage": {
+        "name": "hn_log_storage",
+        "image": "${docker_image.hn_log_storage.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "log_storage"
+            ]
+          }
+        ],
+        "hostname": "storage.dns_sinkhole_environment.internal",
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "clickhouse-client --query 'SELECT 1'"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup.dns_sinkhole_environment.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_log_storage"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_identity_service": {
+        "name": "hn_identity_service",
+        "image": "${docker_image.hn_identity_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "identity_service"
+            ]
+          }
+        ],
+        "hostname": "identity.dns_sinkhole_environment.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_dns_admin_ui": {
+        "name": "hn_dns_admin_ui",
+        "image": "${docker_image.hn_dns_admin_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_dns_zone.name}",
+            "aliases": [
+              "dns_admin_ui"
+            ]
+          }
+        ],
+        "hostname": "dnsadmin.dns_sinkhole_environment.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_dns_resolver"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_threat_analysis_tool": {
+        "name": "hn_threat_analysis_tool",
+        "image": "${docker_image.hn_threat_analysis_tool.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "threat_analysis_tool"
+            ]
+          }
+        ],
+        "hostname": "analysis.dns_sinkhole_environment.internal",
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_data_aggregator": {
+        "name": "hn_data_aggregator",
+        "image": "${docker_image.hn_data_aggregator.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "data_aggregator"
+            ]
+          }
+        ],
+        "hostname": "aggregator.dns_sinkhole_environment.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_log_collector"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "discovery.dns_sinkhole_environment.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:16686 || wget -qO- http://localhost:16686 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_load_balancer": {
+        "name": "hn_load_balancer",
+        "image": "${docker_image.hn_load_balancer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_dns_zone.name}",
+            "aliases": [
+              "load_balancer"
+            ]
+          }
+        ],
+        "hostname": "loadbalancer.dns_sinkhole_environment.internal",
+        "ports": [
+          {
+            "internal": 2019,
+            "external": 2020,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 443,
+            "external": 1029,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 80,
+            "external": 1030,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_sinkhole_web"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_dns_cache": {
+        "name": "hn_dns_cache",
+        "image": "${docker_image.hn_dns_cache.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "dns_cache"
+            ]
+          },
+          {
+            "name": "${docker_network.dns_sinkhole_environment_dns_zone.name}",
+            "aliases": [
+              "dns_cache"
+            ]
+          }
+        ],
+        "hostname": "cache.dns_sinkhole_environment.internal",
+        "depends_on": [
+          "docker_container.hn_dns_resolver"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "redis-cli",
+              "ping"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_analyzer": {
+        "name": "hn_log_analyzer",
+        "image": "${docker_image.hn_log_analyzer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_logging_zone.name}",
+            "aliases": [
+              "log_analyzer"
+            ]
+          }
+        ],
+        "hostname": "analyzer.dns_sinkhole_environment.internal",
+        "env": [
+          "FLUENTD_CONF=fluent.conf"
+        ],
+        "depends_on": [
+          "docker_container.hn_log_collector",
+          "docker_container.hn_threat_analysis_tool"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_dns_debug_endpoint": {
+        "name": "hn_dns_debug_endpoint",
+        "image": "${docker_image.hn_dns_debug_endpoint.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.dns_sinkhole_environment_dns_zone.name}",
+            "aliases": [
+              "dns_debug_endpoint"
+            ]
+          }
+        ],
+        "hostname": "debug.dns_sinkhole_environment.internal",
+        "ports": [
+          {
+            "internal": 8080,
+            "external": 8080,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_dns_resolver"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "dns_sinkhole_environment"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,366 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "financial_institution_dmz_zone": {
+        "name": "financial_institution_dmz_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "financial_institution_core_zone": {
+        "name": "financial_institution_core_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "financial_institution_data_zone": {
+        "name": "financial_institution_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "financial_institution_identity_zone": {
+        "name": "financial_institution_identity_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "financial_institution_compliance_zone": {
+        "name": "financial_institution_compliance_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "financial_institution_ops_zone": {
+        "name": "financial_institution_ops_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "financial_institution_honeynet_backbone": {
+        "name": "financial_institution_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_nginx_api_gateway": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_public_web_banking_portal": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_postgresql_ledger_db": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_kafka_event_bus": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_audit_logging_service": {
+        "name": "fluent/fluentd@sha256:48106d90f326407602c146981bcec7462adbd5f8d7a16a0af1250d378b7688a4",
+        "keep_locally": true
+      },
+      "hn_prometheus_monitoring": {
+        "name": "prom/prometheus@sha256:b440bc0e8aa5bab44a782952c09516b6a50f9d7b2325c1ffafac7bc833298e2e",
+        "keep_locally": true
+      },
+      "hn_honeytoken_admin_db_credentials": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_nginx_api_gateway": {
+        "name": "hn_nginx_api_gateway",
+        "image": "${docker_image.hn_nginx_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.financial_institution_dmz_zone.name}",
+            "aliases": [
+              "nginx_api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api-gateway.dmz.financialinstitution.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1024,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "financial_institution"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_public_web_banking_portal": {
+        "name": "hn_public_web_banking_portal",
+        "image": "${docker_image.hn_public_web_banking_portal.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.financial_institution_dmz_zone.name}",
+            "aliases": [
+              "public_web_banking_portal"
+            ]
+          }
+        ],
+        "hostname": "web-banking.dmz.financialinstitution.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1025,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "financial_institution"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_postgresql_ledger_db": {
+        "name": "hn_postgresql_ledger_db",
+        "image": "${docker_image.hn_postgresql_ledger_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.financial_institution_data_zone.name}",
+            "aliases": [
+              "postgresql_ledger_db"
+            ]
+          }
+        ],
+        "hostname": "ledger-db.data.financialinstitution.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "financial_institution"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_kafka_event_bus": {
+        "name": "hn_kafka_event_bus",
+        "image": "${docker_image.hn_kafka_event_bus.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.financial_institution_data_zone.name}",
+            "aliases": [
+              "kafka_event_bus"
+            ]
+          }
+        ],
+        "hostname": "event-bus.data.financialinstitution.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "financial_institution"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_audit_logging_service": {
+        "name": "hn_audit_logging_service",
+        "image": "${docker_image.hn_audit_logging_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.financial_institution_compliance_zone.name}",
+            "aliases": [
+              "audit_logging_service"
+            ]
+          }
+        ],
+        "hostname": "audit-logs.compliance.financialinstitution.internal",
+        "env": [
+          "LD_PRELOAD=/usr/lib/libjemalloc.so.2"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "financial_institution"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus_monitoring": {
+        "name": "hn_prometheus_monitoring",
+        "image": "${docker_image.hn_prometheus_monitoring.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.financial_institution_ops_zone.name}",
+            "aliases": [
+              "prometheus_monitoring"
+            ]
+          }
+        ],
+        "hostname": "prometheus.ops.financialinstitution.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "financial_institution"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:9090/-/healthy || wget -qO- http://localhost:9090/-/healthy || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeytoken_admin_db_credentials": {
+        "name": "hn_honeytoken_admin_db_credentials",
+        "image": "${docker_image.hn_honeytoken_admin_db_credentials.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.financial_institution_data_zone.name}",
+            "aliases": [
+              "honeytoken_admin_db_credentials"
+            ]
+          }
+        ],
+        "hostname": "honeytoken-db-credentials.data.financialinstitution.internal",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "financial_institution"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

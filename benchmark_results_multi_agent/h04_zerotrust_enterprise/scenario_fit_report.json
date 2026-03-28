@@ -1,0 +1,90 @@
+{
+  "benchmark_id": "h04_zerotrust_enterprise",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.8888888888888888,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.5,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.7962962962962963,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "api_gateway": [
+        "api_gateway"
+      ],
+      "vault": [
+        "vault"
+      ],
+      "keycloak_sso": [],
+      "data_store": [
+        "postgresql_primary"
+      ],
+      "audit_aggregator": [
+        "grafana",
+        "postgresql_primary",
+        "prometheus"
+      ],
+      "customer_service": [
+        "api_gateway",
+        "customer_service"
+      ],
+      "business_service": [
+        "business_logic_service"
+      ],
+      "notification_service": [
+        "email_dispatch_service",
+        "notification_service"
+      ],
+      "monitoring": [
+        "grafana",
+        "prometheus"
+      ]
+    },
+    "matched_zones": {
+      "dmz_zone": [
+        "dmz_zone"
+      ],
+      "secrets_zone": [
+        "data_zone",
+        "secrets_zone",
+        "security_zone",
+        "service_zone_a",
+        "service_zone_b"
+      ],
+      "data_zone": [
+        "data_zone",
+        "secrets_zone",
+        "security_zone",
+        "service_zone_a",
+        "service_zone_b"
+      ],
+      "security_zone": [
+        "data_zone",
+        "secrets_zone",
+        "security_zone",
+        "service_zone_a",
+        "service_zone_b"
+      ],
+      "service_zone_a": [
+        "data_zone",
+        "secrets_zone",
+        "security_zone",
+        "service_zone_a",
+        "service_zone_b"
+      ],
+      "service_zone_b": [
+        "data_zone",
+        "secrets_zone",
+        "security_zone",
+        "service_zone_a",
+        "service_zone_b"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 3,
+      "total": 6
+    },
+    "placement_violations_detail": []
+  }
+}

@@ -1,0 +1,753 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "production_ml_platform_public_zone": {
+        "name": "production_ml_platform_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "production_ml_platform_internal_zone": {
+        "name": "production_ml_platform_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "production_ml_platform_data_zone": {
+        "name": "production_ml_platform_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "production_ml_platform_ops_zone": {
+        "name": "production_ml_platform_ops_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "production_ml_platform_honeynet_backbone": {
+        "name": "production_ml_platform_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_inference_api": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_feature_store": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_model_registry": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_mlflow_experiment_tracker": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_minio_storage": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_kafka_broker": {
+        "name": "apache/kafka@sha256:41c20d65b0a2180b9deca056d47540771752e69fe9225d5748dd65a25a9675d7",
+        "keep_locally": true
+      },
+      "hn_grafana_dashboard": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_admin_panel": {
+        "name": "jenkins/jenkins@sha256:c4098086090ca98491d4bf66182f5e3b015a8232f2acf2df209a212a5801aa8e",
+        "keep_locally": true
+      },
+      "hn_bait_feature_store_ui": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "hashicorp/consul@sha256:fa5020e2307bc941e4317207de1ab55f2c7a8cd6b02c0592cce1cd20ec8a7f87",
+        "keep_locally": true
+      },
+      "hn_backup_service": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_monitoring_agent": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_fake_data_service": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_inference_api": {
+        "name": "hn_inference_api",
+        "image": "${docker_image.hn_inference_api.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_public_zone.name}",
+            "aliases": [
+              "inference_api"
+            ]
+          },
+          {
+            "name": "${docker_network.production_ml_platform_internal_zone.name}",
+            "aliases": [
+              "inference_api"
+            ]
+          }
+        ],
+        "hostname": "inference-api.production_ml_platform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1027,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_model_registry",
+          "docker_container.hn_feature_store"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_feature_store": {
+        "name": "hn_feature_store",
+        "image": "${docker_image.hn_feature_store.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_internal_zone.name}",
+            "aliases": [
+              "feature_store"
+            ]
+          }
+        ],
+        "hostname": "feature-store.internal.production_ml_platform.internal",
+        "env": [
+          "MINIO_ROOT_USER=minioadmin",
+          "MINIO_ROOT_PASSWORD=minioadmin"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_model_registry": {
+        "name": "hn_model_registry",
+        "image": "${docker_image.hn_model_registry.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_internal_zone.name}",
+            "aliases": [
+              "model_registry"
+            ]
+          }
+        ],
+        "hostname": "model-registry.internal.production_ml_platform.internal",
+        "env": [
+          "MINIO_ROOT_USER=minioadmin",
+          "MINIO_ROOT_PASSWORD=minioadmin"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_mlflow_experiment_tracker": {
+        "name": "hn_mlflow_experiment_tracker",
+        "image": "${docker_image.hn_mlflow_experiment_tracker.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_internal_zone.name}",
+            "aliases": [
+              "mlflow_experiment_tracker"
+            ]
+          }
+        ],
+        "hostname": "mlflow-tracker.internal.production_ml_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:3000/api/health"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_minio_storage": {
+        "name": "hn_minio_storage",
+        "image": "${docker_image.hn_minio_storage.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_data_zone.name}",
+            "aliases": [
+              "minio_storage"
+            ]
+          }
+        ],
+        "hostname": "minio-storage.data.production_ml_platform.internal",
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_kafka_broker": {
+        "name": "hn_kafka_broker",
+        "image": "${docker_image.hn_kafka_broker.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_data_zone.name}",
+            "aliases": [
+              "kafka_broker"
+            ]
+          }
+        ],
+        "hostname": "kafka-broker.data.production_ml_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana_dashboard": {
+        "name": "hn_grafana_dashboard",
+        "image": "${docker_image.hn_grafana_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_ops_zone.name}",
+            "aliases": [
+              "grafana_dashboard"
+            ]
+          }
+        ],
+        "hostname": "grafana-dashboard.ops.production_ml_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3000/api/health"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_public_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "reverse-proxy.public.production_ml_platform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_inference_api"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_public_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "api-gateway.public.production_ml_platform.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_reverse_proxy"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_panel": {
+        "name": "hn_admin_panel",
+        "image": "${docker_image.hn_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_public_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          }
+        ],
+        "hostname": "admin-panel.public.production_ml_platform.internal",
+        "ports": [
+          {
+            "internal": 8080,
+            "external": 8081,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 50000,
+            "external": 50001,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_bait_feature_store_ui": {
+        "name": "hn_bait_feature_store_ui",
+        "image": "${docker_image.hn_bait_feature_store_ui.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_public_zone.name}",
+            "aliases": [
+              "bait_feature_store_ui"
+            ]
+          }
+        ],
+        "hostname": "bait-feature-store-ui.public.production_ml_platform.internal",
+        "ports": [
+          {
+            "internal": 3000,
+            "external": 3001,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_internal_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "service-discovery.internal.production_ml_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "consul",
+              "members"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_service": {
+        "name": "hn_backup_service",
+        "image": "${docker_image.hn_backup_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_data_zone.name}",
+            "aliases": [
+              "backup_service"
+            ]
+          }
+        ],
+        "hostname": "backup-service.data.production_ml_platform.internal",
+        "env": [
+          "MINIO_ACCESS_KEY=admin",
+          "MINIO_SECRET_KEY=admin123"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_agent": {
+        "name": "hn_monitoring_agent",
+        "image": "${docker_image.hn_monitoring_agent.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_ops_zone.name}",
+            "aliases": [
+              "monitoring_agent"
+            ]
+          }
+        ],
+        "hostname": "monitoring-agent.ops.production_ml_platform.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fake_data_service": {
+        "name": "hn_fake_data_service",
+        "image": "${docker_image.hn_fake_data_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.production_ml_platform_internal_zone.name}",
+            "aliases": [
+              "fake_data_service"
+            ]
+          }
+        ],
+        "hostname": "fake-data-service.public.production_ml_platform.internal",
+        "env": [
+          "MINIO_ROOT_USER=minioadmin",
+          "MINIO_ROOT_PASSWORD=minioadmin"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "production_ml_platform"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:9000/minio/health/live"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

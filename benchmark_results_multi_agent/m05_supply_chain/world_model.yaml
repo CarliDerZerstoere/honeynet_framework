@@ -1,0 +1,604 @@
+organization:
+  business_units: []
+  name: corporate_supply_chain
+  regions: []
+  type: ''
+secrets:
+  erp_db_admin_password:
+    name: erp_db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_panel:
+    deploy:
+      depends_on:
+      - erp_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 8080 || (echo > /dev/tcp/localhost/8080) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: adminer:4
+      ports:
+      - 8080
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: adminpanel.internal.corporate_supply_chain.com
+      issues: []
+      role: Internal admin panel for database management
+      secrets: []
+      services: []
+  api_gateway:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true
+        timeout: 10s
+      image: traefik:v2.10
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: apigateway.corporate_supply_chain.com
+      issues: []
+      role: Public API gateway
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backupserver.data.corporate_supply_chain.com
+      issues: []
+      role: Backup server for data storage
+      secrets: []
+      services: []
+  coordination_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - consul members | grep -q alive
+        timeout: 10s
+      image: hashicorp/consul:1.17
+      ports:
+      - 8300
+      - 8301
+      - 8302
+      - 8500
+      - 8600
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: coordination_service
+    simulate:
+      behaviors: []
+      hostname: coordinationservice.internal.corporate_supply_chain.com
+      issues: []
+      role: Coordination service for internal services
+      secrets: []
+      services: []
+  document_storage:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - mongo
+        - --eval
+        - db.adminCommand('ping')
+        timeout: 10s
+      image: mongo:7.0
+      ports:
+      - 27017
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: document_storage
+    simulate:
+      behaviors: []
+      hostname: documentstorage.data.corporate_supply_chain.com
+      issues: []
+      role: Document storage for contracts and invoices
+      secrets: []
+      services: []
+  erp_db:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: erp_db
+    simulate:
+      behaviors: []
+      hostname: erpdb.data.corporate_supply_chain.com
+      issues: []
+      role: ERP-style PostgreSQL database for purchase orders and supplier data
+      secrets:
+      - erp_db_admin_password
+      services: []
+  file_share:
+    deploy:
+      command:
+      - /opt/couchdb/bin/couchdb
+      depends_on: []
+      env:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=password
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:5984/_up
+        timeout: 10s
+      image: couchdb:3.3
+      ports:
+      - 4369
+      - 5984
+      - 9100
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: fileshare.data.corporate_supply_chain.com
+      issues: []
+      role: File sharing service for internal use
+      secrets: []
+      services: []
+  fluentd:
+    deploy:
+      depends_on:
+      - log_collector
+      env:
+      - LD_PRELOAD=default
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - 'true'
+        timeout: 10s
+      image: fluent/fluentd:v1.14-1
+      ports:
+      - 24224
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: fluentd
+    simulate:
+      behaviors: []
+      hostname: fluentd.internal.corporate_supply_chain.com
+      issues: []
+      role: Log collector for monitoring and analysis
+      secrets: []
+      services: []
+  honeytoken_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: unknown
+    name: honeytoken_service
+    simulate:
+      behaviors: []
+      hostname: honeytokenservice.internal.corporate_supply_chain.com
+      issues: []
+      role: Honeytoken service for security monitoring
+      secrets: []
+      services: []
+  log_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: grafana/loki:2.9.3
+      ports:
+      - 3100
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: log_collector
+    simulate:
+      behaviors: []
+      hostname: logcollector.internal.corporate_supply_chain.com
+      issues: []
+      role: Log collection service
+      secrets: []
+      services: []
+  mailer_service:
+    deploy:
+      command:
+      - python3
+      - -m
+      - http.server
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8000/ || wget -qO- http://localhost:8000/ || true
+        timeout: 10s
+      image: python:3.12-slim
+      ports: []
+      volumes: []
+      zone: internal_zone
+    kind: runtime
+    name: mailer_service
+    simulate:
+      behaviors: []
+      hostname: mailerservice.internal.corporate_supply_chain.com
+      issues: []
+      role: Internal mailer service
+      secrets: []
+      services: []
+  monitoring_collector:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:9090/ || wget -qO- http://localhost:9090/ || true
+        timeout: 10s
+      image: prom/prometheus:v2.48.0
+      ports:
+      - 9090
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: monitoring_collector
+    simulate:
+      behaviors: []
+      hostname: monitoringcollector.internal.corporate_supply_chain.com
+      issues: []
+      role: Monitoring data collector
+      secrets: []
+      services: []
+  monitoring_dashboard:
+    deploy:
+      depends_on:
+      - monitoring_collector
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: internal_zone
+    kind: monitor
+    name: monitoring_dashboard
+    simulate:
+      behaviors: []
+      hostname: monitoringdashboard.internal.corporate_supply_chain.com
+      issues: []
+      role: Monitoring dashboard
+      secrets: []
+      services: []
+  notification_service:
+    deploy:
+      command:
+      - python3
+      - -m
+      - http.server
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8000/ || wget -qO- http://localhost:8000/ || true
+        timeout: 10s
+      image: python:3.12-slim
+      ports: []
+      volumes: []
+      zone: internal_zone
+    kind: runtime
+    name: notification_service
+    simulate:
+      behaviors: []
+      hostname: notificationservice.internal.corporate_supply_chain.com
+      issues: []
+      role: Internal notification service
+      secrets: []
+      services: []
+  pgadmin:
+    deploy:
+      depends_on:
+      - erp_db
+      env:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: dpage/pgadmin4:6.21
+      ports:
+      - 80
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: pgadmin
+    simulate:
+      behaviors: []
+      hostname: pgadmin.internal.corporate_supply_chain.com
+      issues: []
+      role: Admin UI for ERP database management
+      secrets: []
+      services: []
+  redis_cache:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: data_zone
+    kind: runtime
+    name: redis_cache
+    simulate:
+      behaviors: []
+      hostname: rediscache.data.corporate_supply_chain.com
+      issues: []
+      role: Redis cache for inventory look-ups
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - vendor_portal
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: reverseproxy.corporate_supply_chain.com
+      issues: []
+      role: Public reverse proxy for web services
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - consul members | grep -q alive
+        timeout: 10s
+      image: hashicorp/consul:1.17
+      ports:
+      - 8300
+      - 8301
+      - 8302
+      - 8500
+      - 8600
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: servicediscovery.internal.corporate_supply_chain.com
+      issues: []
+      role: Service discovery for internal services
+      secrets: []
+      services: []
+  supplier_api_keys:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 389 || (echo > /dev/tcp/localhost/389) 2>/dev/null || true
+        timeout: 10s
+      image: osixia/openldap:1.5.0
+      ports:
+      - 389
+      - 636
+      volumes: []
+      zone: internal_zone
+    kind: identity
+    name: supplier_api_keys
+    simulate:
+      behaviors: []
+      hostname: supplierapikeys.internal.corporate_supply_chain.com
+      issues: []
+      role: Supplier API keys management
+      secrets: []
+      services: []
+  vendor_portal:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: drupal:10-apache
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: vendor_portal
+    simulate:
+      behaviors: []
+      hostname: vendorportal.corporate_supply_chain.com
+      issues: []
+      role: Public vendor self-service portal
+      secrets: []
+      services: []
+zones:
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  internal_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: internal_zone
+    name: internal_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

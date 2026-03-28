@@ -1,0 +1,438 @@
+organization:
+  business_units: []
+  name: multiplayer_online_game
+  regions: []
+  type: ''
+secrets:
+  admin_api_key:
+    name: admin_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  admin_dashboard_password:
+    name: admin_dashboard_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  api_key:
+    name: api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  db_admin_password:
+    name: db_admin_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  redis_password:
+    name: redis_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_api:
+    deploy:
+      depends_on:
+      - postgres_player_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true
+        timeout: 10s
+      image: adminer:4
+      ports:
+      - 8080
+      volumes: []
+      zone: data_zone
+    kind: web
+    name: admin_api
+    simulate:
+      behaviors: []
+      hostname: admin-api.data.multiplayergame.internal
+      issues: []
+      role: API for admin operations
+      secrets:
+      - admin_api_key
+      services: []
+  admin_dashboard:
+    deploy:
+      depends_on:
+      - postgres_player_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true
+        timeout: 10s
+      image: adminer:4
+      ports:
+      - 8080
+      volumes: []
+      zone: data_zone
+    kind: web
+    name: admin_dashboard
+    simulate:
+      behaviors: []
+      hostname: admin-dashboard.data.multiplayergame.internal
+      issues: []
+      role: Admin panel for game masters
+      secrets:
+      - admin_dashboard_password
+      services: []
+  alert_manager:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9093/-/ready
+        timeout: 10s
+      image: prom/alertmanager:v0.26.0
+      ports:
+      - 9093
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: alert_manager
+    simulate:
+      behaviors: []
+      hostname: alert-manager.monitoring.multiplayergame.internal
+      issues: []
+      role: Manages alerts based on monitoring data
+      secrets: []
+      services: []
+  api_gateway:
+    deploy:
+      depends_on:
+      - reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api-gateway.public.multiplayergame.internal
+      issues: []
+      role: Manages API requests and routes them to appropriate backend services
+      secrets: []
+      services: []
+  backup_server:
+    deploy:
+      depends_on:
+      - postgres_player_db
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_server
+    simulate:
+      behaviors: []
+      hostname: backup-server.data.multiplayergame.internal
+      issues: []
+      role: Stores backups of critical data
+      secrets: []
+      services: []
+  coordination_service:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - consul
+        - members
+        timeout: 10s
+      image: hashicorp/consul:1.17
+      ports:
+      - 8300
+      - 8301
+      - 8302
+      - 8500
+      - 8600
+      volumes: []
+      zone: game_zone
+    kind: infra
+    name: coordination_service
+    simulate:
+      behaviors: []
+      hostname: coordination-service.game.multiplayergame.internal
+      issues: []
+      role: Coordinates distributed services
+      secrets: []
+      services: []
+  file_share:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: file_share
+    simulate:
+      behaviors: []
+      hostname: file-share.data.multiplayergame.internal
+      issues: []
+      role: Provides shared file storage
+      secrets: []
+      services: []
+  game_master_tools:
+    deploy:
+      depends_on:
+      - admin_dashboard
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true
+        timeout: 10s
+      image: adminer:4
+      ports:
+      - 8080
+      volumes: []
+      zone: data_zone
+    kind: web
+    name: game_master_tools
+    simulate:
+      behaviors: []
+      hostname: game-master-tools.data.multiplayergame.internal
+      issues: []
+      role: Tools for game masters to manage the game environment
+      secrets: []
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:3000/healthz
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: monitoring_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana-dashboard.monitoring.multiplayergame.internal
+      issues: []
+      role: Visualizes monitoring data
+      secrets: []
+      services: []
+  postgres_player_db:
+    deploy:
+      depends_on: []
+      env:
+      - POSTGRES_PASSWORD=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - pg_isready
+        - -U
+        - postgres
+        timeout: 10s
+      image: postgres:16-alpine
+      ports:
+      - 5432
+      volumes: []
+      zone: data_zone
+    kind: database
+    name: postgres_player_db
+    simulate:
+      behaviors: []
+      hostname: postgres-player-db.data.multiplayergame.internal
+      issues: []
+      role: Stores player profiles and inventories
+      secrets:
+      - db_admin_password
+      services: []
+  redis_session_store:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - redis-cli
+        - ping
+        timeout: 10s
+      image: redis:7-alpine
+      ports:
+      - 6379
+      volumes: []
+      zone: game_zone
+    kind: database
+    name: redis_session_store
+    simulate:
+      behaviors: []
+      hostname: redis-session-store.game.multiplayergame.internal
+      issues: []
+      role: Stores active player sessions
+      secrets:
+      - redis_password
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: reverse-proxy.public.multiplayergame.internal
+      issues: []
+      role: Handles incoming HTTP requests and forwards them to appropriate services
+      secrets: []
+      services: []
+  session_management_ui:
+    deploy:
+      depends_on:
+      - redis_session_store
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:80/ || wget -qO- http://localhost:80/ || true
+        timeout: 10s
+      image: phpmyadmin:5.2
+      ports:
+      - 80
+      volumes: []
+      zone: data_zone
+    kind: web
+    name: session_management_ui
+    simulate:
+      behaviors: []
+      hostname: session-management-ui.data.multiplayergame.internal
+      issues: []
+      role: User interface for managing player sessions
+      secrets: []
+      services: []
+zones:
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  game_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: game_zone
+    name: game_zone
+  monitoring_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: monitoring_zone
+    name: monitoring_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

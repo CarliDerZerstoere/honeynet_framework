@@ -1,0 +1,342 @@
+{
+  "zones": {
+    "internal_zone": {
+      "name": "internal_zone",
+      "deploy": {
+        "network_name": "internal_zone",
+        "driver": "bridge",
+        "internal": true
+      }
+    },
+    "app_zone": {
+      "name": "app_zone",
+      "deploy": {
+        "network_name": "app_zone",
+        "driver": "bridge",
+        "internal": false
+      }
+    }
+  },
+  "systems": {
+    "rabbitmq_broker": {
+      "name": "rabbitmq_broker",
+      "kind": "queue",
+      "deploy": {
+        "image": "rabbitmq:3.12-management",
+        "zone": "internal_zone",
+        "ports": [
+          15671,
+          15672,
+          15691,
+          15692,
+          25672,
+          4369,
+          5671,
+          5672
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "rabbitmq-diagnostics",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "rabbitmq01.internal.eventdrivenplatform.internal",
+        "role": "Message broker for internal asynchronous communication",
+        "issues": [],
+        "secrets": [
+          "rabbitmq_admin_password"
+        ],
+        "behaviors": [],
+        "services": [
+          "amqp",
+          "http"
+        ]
+      }
+    },
+    "producer_api": {
+      "name": "producer_api",
+      "kind": "web",
+      "deploy": {
+        "image": "apache/kafka:3.7.0",
+        "zone": "internal_zone",
+        "ports": [
+          9092
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "rabbitmq_broker"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "producer.api.eventdrivenplatform.app",
+        "role": "API for producing messages to the broker",
+        "issues": [],
+        "secrets": [
+          "producer_api_key"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "consumer_worker": {
+      "name": "consumer_worker",
+      "kind": "runtime",
+      "deploy": {
+        "image": "eclipse-mosquitto:2.0",
+        "zone": "internal_zone",
+        "ports": [
+          1883
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "rabbitmq_broker"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 1883 || (echo > /dev/tcp/localhost/1883) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "consumer.worker.internal.eventdrivenplatform.internal",
+        "role": "Worker for consuming messages from the broker",
+        "issues": [],
+        "secrets": [
+          "consumer_worker_secret"
+        ],
+        "behaviors": [],
+        "services": [
+          "mqtt"
+        ]
+      }
+    },
+    "reverse_proxy": {
+      "name": "reverse_proxy",
+      "kind": "web",
+      "deploy": {
+        "image": "nginx:1.25-alpine",
+        "zone": "app_zone",
+        "ports": [
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [
+          "producer_api"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost:80 || wget -qO- http://localhost:80 || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "proxy.eventdrivenplatform.app",
+        "role": "Reverse proxy for routing external requests",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http",
+          "https"
+        ]
+      }
+    },
+    "monitoring_dashboard": {
+      "name": "monitoring_dashboard",
+      "kind": "monitor",
+      "deploy": {
+        "image": "influxdb:2.7",
+        "zone": "internal_zone",
+        "ports": [
+          8086
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD",
+            "influx",
+            "ping"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "monitoring.internal.eventdrivenplatform.internal",
+        "role": "Dashboard for monitoring system metrics",
+        "issues": [],
+        "secrets": [
+          "monitoring_dashboard_token"
+        ],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "log_collector": {
+      "name": "log_collector",
+      "kind": "monitor",
+      "deploy": {
+        "image": "caddy:2",
+        "zone": "internal_zone",
+        "ports": [
+          2019,
+          443,
+          80
+        ],
+        "env": [],
+        "volumes": [],
+        "depends_on": [],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "logs.internal.eventdrivenplatform.internal",
+        "role": "Log collector for system logs",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": [
+          "http"
+        ]
+      }
+    },
+    "pgadmin": {
+      "name": "pgadmin",
+      "kind": "unknown",
+      "deploy": {
+        "image": "dpage/pgadmin4:6.21",
+        "zone": "internal_zone",
+        "ports": [
+          80
+        ],
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@eventdrivenplatform.internal",
+          "PGADMIN_DEFAULT_PASSWORD=admin"
+        ],
+        "volumes": [],
+        "depends_on": [
+          "rabbitmq_broker"
+        ],
+        "healthcheck": {
+          "test": [
+            "CMD-SHELL",
+            "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+          ],
+          "interval": "30s",
+          "timeout": "10s",
+          "retries": 3,
+          "start_period": "30s"
+        }
+      },
+      "simulate": {
+        "hostname": "pgadmin.internal.eventdrivenplatform.internal",
+        "role": "Admin UI for database management",
+        "issues": [],
+        "secrets": [],
+        "behaviors": [],
+        "services": []
+      }
+    }
+  },
+  "organization": {
+    "name": "event_driven_platform",
+    "type": "",
+    "regions": [],
+    "business_units": []
+  },
+  "secrets": {
+    "rabbitmq_admin_password": {
+      "name": "rabbitmq_admin_password",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "producer_api_key": {
+      "name": "producer_api_key",
+      "type": "api_key",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "consumer_worker_secret": {
+      "name": "consumer_worker_secret",
+      "type": "credential",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    },
+    "monitoring_dashboard_token": {
+      "name": "monitoring_dashboard_token",
+      "type": "token",
+      "simulate": {
+        "strength": "medium",
+        "age_days": 0,
+        "reused_by": [],
+        "leaked_in": [],
+        "known_to": []
+      }
+    }
+  }
+}

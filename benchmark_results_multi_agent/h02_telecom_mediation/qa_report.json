@@ -1,0 +1,135 @@
+{
+  "checks_run": 14,
+  "checks_passed": 14,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_kafka_broker_1",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 112.7,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_kafka_broker_2",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 100.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_kafka_broker_3",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 92.5,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_billing_api",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 86.8,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_billing_api:hn_cdr_archive",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 82.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_cdr_archive",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 78.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_compliance_audit_log",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 71.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 62.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_lawful_intercept_export",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 54.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_clickhouse_admin_ui",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 49.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_clickhouse_admin_ui:hn_cdr_archive",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 48.8,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_honeytoken_compliance_keys",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 44.6,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_fluentd_log_collector",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 38.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_fluentd_log_collector:hn_grafana_dashboard",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 30.7,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "6871bc347e3d44e8919ba829ab36d5e1"
+}

@@ -1,0 +1,626 @@
+organization:
+  business_units: []
+  name: production_ml_platform
+  regions: []
+  type: ''
+secrets:
+  admin_panel_password:
+    name: admin_panel_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  auth_service_access_key:
+    name: auth_service_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  backup_service_access_key:
+    name: backup_service_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  config_management_access_key:
+    name: config_management_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  data_ingestion_service_access_key:
+    name: data_ingestion_service_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  data_pipeline_access_key:
+    name: data_pipeline_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  feature_store_access_key:
+    name: feature_store_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  identity_service_access_key:
+    name: identity_service_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  job_queue_access_key:
+    name: job_queue_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  kafka_broker_access_key:
+    name: kafka_broker_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  minio_storage_access_key:
+    name: minio_storage_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  mlflow_tracker_access_key:
+    name: mlflow_tracker_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  model_api_key:
+    name: model_api_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: api_key
+  model_registry_access_key:
+    name: model_registry_access_key
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  postgresql_metadata_db_password:
+    name: postgresql_metadata_db_password
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+  training_scheduler_service_account:
+    name: training_scheduler_service_account
+    simulate:
+      age_days: 0
+      known_to: []
+      leaked_in: []
+      reused_by: []
+      strength: medium
+    type: credential
+systems:
+  admin_panel:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:8080/ || wget -qO- http://localhost:8080/ || true
+        timeout: 10s
+      image: jenkins/jenkins:lts
+      ports:
+      - 8080
+      - 50000
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: admin_panel
+    simulate:
+      behaviors: []
+      hostname: admin-panel.public.production_ml_platform.internal
+      issues: []
+      role: Administrative panel for system management
+      secrets:
+      - admin_panel_password
+      services: []
+  api_gateway:
+    deploy:
+      depends_on:
+      - reverse_proxy
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: api_gateway
+    simulate:
+      behaviors: []
+      hostname: api-gateway.public.production_ml_platform.internal
+      issues: []
+      role: API gateway for managing API requests
+      secrets: []
+      services: []
+  backup_service:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: backup_service
+    simulate:
+      behaviors: []
+      hostname: backup-service.data.production_ml_platform.internal
+      issues: []
+      role: Backup service for data storage
+      secrets:
+      - backup_service_access_key
+      services: []
+  bait_feature_store_ui:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000/ || wget -qO- http://localhost:3000/ || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: bait_feature_store_ui
+    simulate:
+      behaviors: []
+      hostname: bait-feature-store-ui.public.production_ml_platform.internal
+      issues: []
+      role: Decoy UI for feature store
+      secrets: []
+      services: []
+  fake_data_service:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: internal_zone
+    kind: storage
+    name: fake_data_service
+    simulate:
+      behaviors: []
+      hostname: fake-data-service.public.production_ml_platform.internal
+      issues: []
+      role: Fake data service for decoy purposes
+      secrets: []
+      services: []
+  feature_store:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: internal_zone
+    kind: storage
+    name: feature_store
+    simulate:
+      behaviors: []
+      hostname: feature-store.internal.production_ml_platform.internal
+      issues: []
+      role: Feature store for ML features
+      secrets:
+      - feature_store_access_key
+      services: []
+  grafana_dashboard:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:3000/api/health
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: grafana_dashboard
+    simulate:
+      behaviors: []
+      hostname: grafana-dashboard.ops.production_ml_platform.internal
+      issues: []
+      role: Grafana dashboard for monitoring
+      secrets: []
+      services: []
+  inference_api:
+    deploy:
+      depends_on:
+      - model_registry
+      - feature_store
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: inference_api
+    simulate:
+      behaviors: []
+      hostname: inference-api.production_ml_platform.internal
+      issues: []
+      role: Model inference REST API
+      secrets:
+      - model_api_key
+      services: []
+  kafka_broker:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - nc -z localhost 9092 || (echo > /dev/tcp/localhost/9092) 2>/dev/null ||
+          true
+        timeout: 10s
+      image: apache/kafka:3.7.0
+      ports:
+      - 9092
+      volumes: []
+      zone: data_zone
+    kind: queue
+    name: kafka_broker
+    simulate:
+      behaviors: []
+      hostname: kafka-broker.data.production_ml_platform.internal
+      issues: []
+      role: Kafka broker for data pipeline events
+      secrets:
+      - kafka_broker_access_key
+      services: []
+  minio_storage:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin123
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: data_zone
+    kind: storage
+    name: minio_storage
+    simulate:
+      behaviors: []
+      hostname: minio-storage.data.production_ml_platform.internal
+      issues: []
+      role: Object storage for datasets and model artifacts
+      secrets:
+      - minio_storage_access_key
+      services: []
+  mlflow_experiment_tracker:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:3000/api/health
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: internal_zone
+    kind: web
+    name: mlflow_experiment_tracker
+    simulate:
+      behaviors: []
+      hostname: mlflow-tracker.internal.production_ml_platform.internal
+      issues: []
+      role: MLflow experiment tracking
+      secrets:
+      - mlflow_tracker_access_key
+      services: []
+  model_registry:
+    deploy:
+      command:
+      - minio
+      - server
+      - /data
+      depends_on: []
+      env:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - wget
+        - --spider
+        - http://localhost:9000/minio/health/live
+        timeout: 10s
+      image: minio/minio:latest
+      ports:
+      - 9000
+      volumes: []
+      zone: internal_zone
+    kind: storage
+    name: model_registry
+    simulate:
+      behaviors: []
+      hostname: model-registry.internal.production_ml_platform.internal
+      issues: []
+      role: Model registry for versioning and storage
+      secrets:
+      - model_registry_access_key
+      services: []
+  monitoring_agent:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost:3000 || wget -qO- http://localhost:3000 || true
+        timeout: 10s
+      image: grafana/grafana:10.2.0
+      ports:
+      - 3000
+      volumes: []
+      zone: ops_zone
+    kind: monitor
+    name: monitoring_agent
+    simulate:
+      behaviors: []
+      hostname: monitoring-agent.ops.production_ml_platform.internal
+      issues: []
+      role: Monitoring agent for system health
+      secrets: []
+      services: []
+  reverse_proxy:
+    deploy:
+      depends_on:
+      - inference_api
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD-SHELL
+        - curl -sf http://localhost/ || wget -qO- http://localhost/ || true
+        timeout: 10s
+      image: nginx:1.25-alpine
+      ports:
+      - 80
+      volumes: []
+      zone: public_zone
+    kind: web
+    name: reverse_proxy
+    simulate:
+      behaviors: []
+      hostname: reverse-proxy.public.production_ml_platform.internal
+      issues: []
+      role: Reverse proxy for routing requests
+      secrets: []
+      services: []
+  service_discovery:
+    deploy:
+      depends_on: []
+      env: []
+      healthcheck:
+        interval: 30s
+        retries: 3
+        start_period: 30s
+        test:
+        - CMD
+        - consul
+        - members
+        timeout: 10s
+      image: hashicorp/consul:1.17
+      ports:
+      - 8500
+      - 8600
+      volumes: []
+      zone: internal_zone
+    kind: infra
+    name: service_discovery
+    simulate:
+      behaviors: []
+      hostname: service-discovery.internal.production_ml_platform.internal
+      issues: []
+      role: Service discovery for internal services
+      secrets: []
+      services: []
+zones:
+  data_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: data_zone
+    name: data_zone
+  internal_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: internal_zone
+    name: internal_zone
+  ops_zone:
+    deploy:
+      driver: bridge
+      internal: true
+      network_name: ops_zone
+    name: ops_zone
+  public_zone:
+    deploy:
+      driver: bridge
+      internal: false
+      network_name: public_zone
+    name: public_zone

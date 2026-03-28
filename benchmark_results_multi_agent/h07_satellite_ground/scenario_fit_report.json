@@ -1,0 +1,132 @@
+{
+  "benchmark_id": "h07_satellite_ground",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.875,
+  "planned_zone_coverage": 1.0,
+  "planned_dep_coverage": 0.4,
+  "placement_violations": 5,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.37916666666666665,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "telemetry_stream": [
+        "kafka_broker"
+      ],
+      "command_uplink": [
+        "admin_panel",
+        "api_gateway",
+        "command_scheduler",
+        "command_uplink_api",
+        "mission_control_dashboard",
+        "orbit_propagator_service",
+        "pgadmin",
+        "reverse_proxy",
+        "telemetry_dashboard",
+        "telemetry_ingest",
+        "telemetry_processor"
+      ],
+      "ephemeris_db": [],
+      "orbit_propagator": [
+        "command_scheduler",
+        "orbit_propagator_service",
+        "telemetry_ingest",
+        "telemetry_processor"
+      ],
+      "mission_control": [
+        "admin_panel",
+        "api_gateway",
+        "command_uplink_api",
+        "mission_control_dashboard",
+        "pgadmin",
+        "reverse_proxy",
+        "telemetry_dashboard"
+      ],
+      "key_vault": [
+        "vault_hsm"
+      ],
+      "audit_service": [
+        "alerting_service",
+        "audit_logging_service",
+        "command_logger",
+        "ephemeris_db",
+        "fluentd",
+        "grafana_dashboard",
+        "log_collector",
+        "monitoring_agent"
+      ],
+      "monitoring": [
+        "audit_logging_service",
+        "command_logger",
+        "grafana_dashboard",
+        "log_collector",
+        "monitoring_agent"
+      ]
+    },
+    "matched_zones": {
+      "ops_zone": [
+        "ops_zone"
+      ],
+      "telemetry_zone": [
+        "command_zone",
+        "data_zone",
+        "security_zone",
+        "telemetry_zone"
+      ],
+      "command_zone": [
+        "command_zone",
+        "data_zone",
+        "security_zone",
+        "telemetry_zone"
+      ],
+      "data_zone": [
+        "command_zone",
+        "data_zone",
+        "security_zone",
+        "telemetry_zone"
+      ],
+      "security_zone": [
+        "command_zone",
+        "data_zone",
+        "security_zone",
+        "telemetry_zone"
+      ]
+    },
+    "dependency_matches": {
+      "matched": 2,
+      "total": 5
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "command_uplink",
+        "zone_id": "ops_zone",
+        "system": "api_gateway",
+        "deployed_zone": "ops_zone"
+      },
+      {
+        "service_id": "command_uplink",
+        "zone_id": "ops_zone",
+        "system": "telemetry_dashboard",
+        "deployed_zone": "ops_zone"
+      },
+      {
+        "service_id": "command_uplink",
+        "zone_id": "ops_zone",
+        "system": "reverse_proxy",
+        "deployed_zone": "ops_zone"
+      },
+      {
+        "service_id": "command_uplink",
+        "zone_id": "ops_zone",
+        "system": "mission_control_dashboard",
+        "deployed_zone": "ops_zone"
+      },
+      {
+        "service_id": "command_uplink",
+        "zone_id": "ops_zone",
+        "system": "admin_panel",
+        "deployed_zone": "ops_zone"
+      }
+    ]
+  }
+}

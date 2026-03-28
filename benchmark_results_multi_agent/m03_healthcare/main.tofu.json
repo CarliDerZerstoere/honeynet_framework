@@ -1,0 +1,758 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "hipaa_healthcare_it_public_zone": {
+        "name": "hipaa_healthcare_it_public_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "hipaa_healthcare_it_internal_zone": {
+        "name": "hipaa_healthcare_it_internal_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "hipaa_healthcare_it_data_zone": {
+        "name": "hipaa_healthcare_it_data_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "hipaa_healthcare_it_honeynet_backbone": {
+        "name": "hipaa_healthcare_it_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_patient_portal": {
+        "name": "drupal@sha256:42b3811155c952269b18766dfdb7f12457a7db21b197fc46fb595d7fc0b1f31d",
+        "keep_locally": true
+      },
+      "hn_fhir_service": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_patient_db": {
+        "name": "postgres@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416",
+        "keep_locally": true
+      },
+      "hn_audit_logging_service": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_load_balancer": {
+        "name": "traefik@sha256:6341b98aec5ec8969b99e9730f4c5b22cca3103d42b6bbe4b7a3c910758fe565",
+        "keep_locally": true
+      },
+      "hn_monitoring_service": {
+        "name": "grafana/loki@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313",
+        "keep_locally": true
+      },
+      "hn_admin_panel": {
+        "name": "drupal@sha256:42b3811155c952269b18766dfdb7f12457a7db21b197fc46fb595d7fc0b1f31d",
+        "keep_locally": true
+      },
+      "hn_backup_service": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_log_collector": {
+        "name": "fluent/fluentd@sha256:48106d90f326407602c146981bcec7462adbd5f8d7a16a0af1250d378b7688a4",
+        "keep_locally": true
+      },
+      "hn_api_gateway": {
+        "name": "envoyproxy/envoy@sha256:2ff39d93964ddadfc74e7db0ec62bf433d91dcafa6c3542a6754715a60ba6b3c",
+        "keep_locally": true
+      },
+      "hn_service_discovery": {
+        "name": "hashicorp/consul@sha256:fa5020e2307bc941e4317207de1ab55f2c7a8cd6b02c0592cce1cd20ec8a7f87",
+        "keep_locally": true
+      },
+      "hn_honeypot_admin_panel": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_fake_backup_server": {
+        "name": "minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "keep_locally": true
+      },
+      "hn_pgadmin": {
+        "name": "dpage/pgadmin4@sha256:d243a4bcc02d2ee6b447c601692813531d2d0fbca18b583d9f7f9658da835d81",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_patient_portal": {
+        "name": "hn_patient_portal",
+        "image": "${docker_image.hn_patient_portal.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_public_zone.name}",
+            "aliases": [
+              "patient_portal"
+            ]
+          }
+        ],
+        "hostname": "portal.hipaa_healthcare_it.org",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1026,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fhir_service": {
+        "name": "hn_fhir_service",
+        "image": "${docker_image.hn_fhir_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "fhir_service"
+            ]
+          },
+          {
+            "name": "${docker_network.hipaa_healthcare_it_data_zone.name}",
+            "aliases": [
+              "fhir_service"
+            ]
+          }
+        ],
+        "hostname": "fhir.internal.hipaa_healthcare_it.org",
+        "depends_on": [
+          "docker_container.hn_patient_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_patient_db": {
+        "name": "hn_patient_db",
+        "image": "${docker_image.hn_patient_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_data_zone.name}",
+            "aliases": [
+              "patient_db"
+            ]
+          }
+        ],
+        "hostname": "db01.data.hipaa_healthcare_it.org",
+        "env": [
+          "POSTGRES_PASSWORD=admin123"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "pg_isready",
+              "-U",
+              "postgres"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_audit_logging_service": {
+        "name": "hn_audit_logging_service",
+        "image": "${docker_image.hn_audit_logging_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "audit_logging_service"
+            ]
+          }
+        ],
+        "hostname": "audit.internal.hipaa_healthcare_it.org",
+        "command": [
+          "-config.file=/etc/loki/local-config.yaml"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3100/ready"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_public_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy.hipaa_healthcare_it.org",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_patient_portal"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_load_balancer": {
+        "name": "hn_load_balancer",
+        "image": "${docker_image.hn_load_balancer.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_public_zone.name}",
+            "aliases": [
+              "load_balancer"
+            ]
+          }
+        ],
+        "hostname": "lb.hipaa_healthcare_it.org",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_reverse_proxy"
+        ],
+        "command": [
+          "traefik"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_monitoring_service": {
+        "name": "hn_monitoring_service",
+        "image": "${docker_image.hn_monitoring_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "monitoring_service"
+            ]
+          }
+        ],
+        "hostname": "monitor.internal.hipaa_healthcare_it.org",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 3100 || (echo > /dev/tcp/localhost/3100) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_panel": {
+        "name": "hn_admin_panel",
+        "image": "${docker_image.hn_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          },
+          {
+            "name": "${docker_network.hipaa_healthcare_it_data_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          }
+        ],
+        "hostname": "admin.internal.hipaa_healthcare_it.org",
+        "depends_on": [
+          "docker_container.hn_patient_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_service": {
+        "name": "hn_backup_service",
+        "image": "${docker_image.hn_backup_service.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_data_zone.name}",
+            "aliases": [
+              "backup_service"
+            ]
+          }
+        ],
+        "hostname": "backup.data.hipaa_healthcare_it.org",
+        "depends_on": [
+          "docker_container.hn_patient_db"
+        ],
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_log_collector": {
+        "name": "hn_log_collector",
+        "image": "${docker_image.hn_log_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "log_collector"
+            ]
+          }
+        ],
+        "hostname": "log-collector.internal.hipaa_healthcare_it.org",
+        "env": [
+          "LD_PRELOAD=/usr/lib/preload.so"
+        ],
+        "depends_on": [
+          "docker_container.hn_audit_logging_service"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 24224 || (echo > /dev/tcp/localhost/24224) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_api_gateway": {
+        "name": "hn_api_gateway",
+        "image": "${docker_image.hn_api_gateway.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "api_gateway"
+            ]
+          }
+        ],
+        "hostname": "gateway.hipaa_healthcare_it.org",
+        "depends_on": [
+          "docker_container.hn_fhir_service"
+        ],
+        "command": [
+          "envoy",
+          "-c",
+          "/etc/envoy/envoy.yaml"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:10000/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_service_discovery": {
+        "name": "hn_service_discovery",
+        "image": "${docker_image.hn_service_discovery.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "service_discovery"
+            ]
+          }
+        ],
+        "hostname": "discovery.internal.hipaa_healthcare_it.org",
+        "command": [
+          "agent",
+          "-dev",
+          "-client",
+          "0.0.0.0"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "consul",
+              "members"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_honeypot_admin_panel": {
+        "name": "hn_honeypot_admin_panel",
+        "image": "${docker_image.hn_honeypot_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_public_zone.name}",
+            "aliases": [
+              "honeypot_admin_panel"
+            ]
+          }
+        ],
+        "hostname": "honeypot-admin.hipaa_healthcare_it.org",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1030,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fake_backup_server": {
+        "name": "hn_fake_backup_server",
+        "image": "${docker_image.hn_fake_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "fake_backup_server"
+            ]
+          }
+        ],
+        "hostname": "fake-backup.internal.hipaa_healthcare_it.org",
+        "command": [
+          "minio",
+          "server",
+          "/data"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 9000 || (echo > /dev/tcp/localhost/9000) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_pgadmin": {
+        "name": "hn_pgadmin",
+        "image": "${docker_image.hn_pgadmin.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.hipaa_healthcare_it_internal_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          },
+          {
+            "name": "${docker_network.hipaa_healthcare_it_data_zone.name}",
+            "aliases": [
+              "pgadmin"
+            ]
+          }
+        ],
+        "hostname": "pgadmin.internal.hipaa_healthcare_it.org",
+        "env": [
+          "PGADMIN_DEFAULT_EMAIL=admin@healthcare.org",
+          "PGADMIN_DEFAULT_PASSWORD=admin"
+        ],
+        "depends_on": [
+          "docker_container.hn_patient_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "hipaa_healthcare_it"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "curl -sf http://localhost/ || wget -qO- http://localhost/ || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}

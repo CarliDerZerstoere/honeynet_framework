@@ -1,0 +1,10 @@
+{
+  "generated_at_utc": "2026-03-28T10:41:27.933667+00:00",
+  "runs": 1,
+  "deploy_success_rate": 0.0,
+  "health_check_rate_mean": 0.9423,
+  "container_start_rate_mean": 0.9545,
+  "failure_stage_counts": {
+    "runtime_verify": 1
+  }
+}

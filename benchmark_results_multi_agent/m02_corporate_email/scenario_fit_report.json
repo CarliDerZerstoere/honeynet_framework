@@ -1,0 +1,63 @@
+{
+  "benchmark_id": "m02_corporate_email",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 1.0,
+  "planned_zone_coverage": 0.6666666666666666,
+  "planned_dep_coverage": 1.0,
+  "placement_violations": 1,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.7999999999999999,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "webmail_portal": [
+        "honeypot_webmail_portal",
+        "webmail_portal"
+      ],
+      "mail_server": [
+        "admin_panel",
+        "antispam_filter",
+        "file_storage",
+        "honeypot_mail_server",
+        "mail_server"
+      ],
+      "ldap_directory": [
+        "honeypot_ldap_directory",
+        "ldap_directory"
+      ],
+      "file_storage": [
+        "backup_server",
+        "file_storage",
+        "honeypot_file_storage"
+      ],
+      "antispam_filter": [
+        "antispam_filter"
+      ],
+      "calendar_service": [
+        "calendar_service"
+      ]
+    },
+    "matched_zones": {
+      "public_zone": [
+        "dmz_zone",
+        "public_zone"
+      ],
+      "internal_zone": [
+        "internal_zone"
+      ],
+      "dmz_zone": []
+    },
+    "dependency_matches": {
+      "matched": 4,
+      "total": 4
+    },
+    "placement_violations_detail": [
+      {
+        "service_id": "mail_server",
+        "zone_id": "public_zone",
+        "system": "admin_panel",
+        "deployed_zone": "public_zone"
+      }
+    ]
+  }
+}

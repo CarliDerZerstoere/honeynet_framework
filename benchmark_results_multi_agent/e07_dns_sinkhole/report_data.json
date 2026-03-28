@@ -1,0 +1,91 @@
+{
+  "schema_version": 2,
+  "generated_at_utc": "2026-03-28T11:14:44.817276+00:00",
+  "total_runs": 1,
+  "runs": [
+    {
+      "run_id": "ed7f4add7801488e91e9578aba65b09b",
+      "recorded_at_utc": "2026-03-28T11:14:44.817267+00:00",
+      "failure_stage": "runtime_verify",
+      "error_class": "unknown",
+      "stage_durations": {
+        "extraction": 38.667,
+        "validation": 0.006,
+        "image_resolution": 0.218,
+        "compilation": 0.267,
+        "render": 0.001,
+        "deploy": 44.824,
+        "runtime_verify": 3.576
+      },
+      "repair_actions": [],
+      "tofu_version": "OpenTofu v1.11.5",
+      "sources": {
+        "qa_report": {
+          "mode": "inline",
+          "run_id_match": true
+        },
+        "validation_report": {
+          "mode": "inline",
+          "run_id_match": true
+        }
+      },
+      "deployability": {
+        "world_model_valid": true,
+        "config_validation_pass": true,
+        "plan_success": true,
+        "deploy_success": true,
+        "runtime_verification_success": true,
+        "health_check_rate": 0.94,
+        "container_start_rate": 1.0,
+        "expected_containers": 17,
+        "planned_containers": 18,
+        "dropped_containers": 1,
+        "running_containers": 17,
+        "health_checks_total": 50,
+        "health_checks_passed": 47,
+        "health_check_status": "measured",
+        "container_health_status": "measured",
+        "health_check_rate_by_type": {
+          "container_running": 1.0,
+          "depends_on_running": 1.0,
+          "http_status": 0.625,
+          "tcp_connect": 1.0
+        }
+      },
+      "scenario_fit": {
+        "zone_count": 2,
+        "system_count": 18,
+        "model_dep_rate": 1.0,
+        "image_check_rate": 1.0,
+        "planned_service_coverage": 0.3333,
+        "running_service_coverage": 0.3333,
+        "planned_zone_coverage": 1.0,
+        "running_zone_coverage": 1.0,
+        "planned_dep_coverage": 0.0,
+        "running_dep_coverage": 0.0,
+        "placement_violations": 0,
+        "benchmark_pass": false,
+        "benchmark_status": "measured",
+        "benchmark_id": "e07_dns_sinkhole",
+        "benchmark_ref": "benchmarks\\corpus_v1\\easy\\e07_dns_sinkhole.yaml",
+        "scenario_fit_score": 0.4444
+      },
+      "validation_summary": {
+        "error_count": 0,
+        "warning_count": 0
+      },
+      "qa_summary": {
+        "checks_run": 50,
+        "checks_passed": 47,
+        "checks_failed": 3,
+        "pass_rate": 0.94,
+        "derived_from": "inline"
+      },
+      "pipeline_kpis": {
+        "blocked_before_deploy": false,
+        "deploy_eligible": true
+      },
+      "errors": []
+    }
+  ]
+}

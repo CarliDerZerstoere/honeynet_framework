@@ -1,0 +1,81 @@
+{
+  "checks_run": 8,
+  "checks_passed": 8,
+  "checks_failed": 0,
+  "pass_rate": 1.0,
+  "results": [
+    {
+      "check_id": "running:hn_kafka_cluster",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 60.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_influxdb",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 50.1,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 39.3,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "running:hn_grafana",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 33.9,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_grafana:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 34.3,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "running:hn_filebeat",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 33.2,
+      "check_type": "container_running"
+    },
+    {
+      "check_id": "dep:hn_filebeat:hn_prometheus",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 30.9,
+      "check_type": "depends_on_running"
+    },
+    {
+      "check_id": "dep:hn_filebeat:hn_grafana",
+      "passed": true,
+      "actual": "running",
+      "expected": "running",
+      "error": "",
+      "duration_ms": 30.6,
+      "check_type": "depends_on_running"
+    }
+  ],
+  "run_id": "6a240ad197324392bb6f993a5172212e"
+}

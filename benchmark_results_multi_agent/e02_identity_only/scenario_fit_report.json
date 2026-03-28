@@ -1,0 +1,34 @@
+{
+  "benchmark_id": "e02_identity_only",
+  "reference_status": "evaluated",
+  "planned_service_coverage": 0.6666666666666666,
+  "planned_zone_coverage": 0.5,
+  "planned_dep_coverage": 0.5,
+  "placement_violations": 0,
+  "benchmark_pass": false,
+  "scenario_fit_score": 0.5555555555555555,
+  "vacuous_reference": false,
+  "details": {
+    "matched_services": {
+      "ldap_service": [
+        "ldap_service"
+      ],
+      "auth_proxy": [
+        "auth_proxy",
+        "reverse_proxy"
+      ],
+      "admin_console": []
+    },
+    "matched_zones": {
+      "internal_zone": [
+        "internal_zone"
+      ],
+      "dmz_zone": []
+    },
+    "dependency_matches": {
+      "matched": 1,
+      "total": 2
+    },
+    "placement_violations_detail": []
+  }
+}

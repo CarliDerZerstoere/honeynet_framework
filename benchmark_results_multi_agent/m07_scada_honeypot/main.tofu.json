@@ -1,0 +1,519 @@
+{
+  "terraform": {
+    "required_providers": {
+      "docker": {
+        "source": "registry.terraform.io/kreuzwerker/docker",
+        "version": "3.6.2"
+      }
+    }
+  },
+  "provider": [
+    {
+      "docker": [
+        {
+          "host": "npipe:////./pipe/docker_engine"
+        }
+      ]
+    }
+  ],
+  "resource": {
+    "docker_network": {
+      "industrial_control_system_corporate_zone": {
+        "name": "industrial_control_system_corporate_zone",
+        "driver": "bridge",
+        "internal": false
+      },
+      "industrial_control_system_process_zone": {
+        "name": "industrial_control_system_process_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "industrial_control_system_logging_zone": {
+        "name": "industrial_control_system_logging_zone",
+        "driver": "bridge",
+        "internal": true
+      },
+      "industrial_control_system_honeynet_backbone": {
+        "name": "industrial_control_system_honeynet_backbone",
+        "driver": "bridge",
+        "internal": false
+      }
+    },
+    "docker_image": {
+      "hn_hmi_panel": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_historian_db": {
+        "name": "influxdb@sha256:5355c90249dac331bbcd1fdf3c31c7782400cd0ec5225145fc50b9aa026e9342",
+        "keep_locally": true
+      },
+      "hn_syslog_server": {
+        "name": "nginx@sha256:516475cc129da42866742567714ddc681e5eed7b9ee0b9e9c015e464b4221a00",
+        "keep_locally": true
+      },
+      "hn_grafana_dashboard": {
+        "name": "grafana/grafana@sha256:1ee0c54286b8ca09a3dd1419ff8653e7780a148a006ac088544203bb0affe550",
+        "keep_locally": true
+      },
+      "hn_prometheus_collector": {
+        "name": "prom/prometheus@sha256:4a61322ac1103a0e3aea2a61ef1718422a48fa046441f299d71e660a3bc71ae9",
+        "keep_locally": true
+      },
+      "hn_reverse_proxy": {
+        "name": "caddy@sha256:1e40b251ca9639ead7b5cd2cedcc8765adfbabb99450fe23f130eefabf50f4bc",
+        "keep_locally": true
+      },
+      "hn_admin_panel": {
+        "name": "phpmyadmin@sha256:f3a5bfe8dbe509a2c9706c03c0ab9f82a74b0f2cb855f4b45a67f644d5368d5a",
+        "keep_locally": true
+      },
+      "hn_backup_server": {
+        "name": "mariadb@sha256:31c1aa20ba2d78c4cbc45b2675e40ffd6a3cd59897a9767ce88fc284309f55ab",
+        "keep_locally": true
+      },
+      "hn_file_share": {
+        "name": "alpine@sha256:de0eb0b3f2a47ba1eb89389859a9bd88b28e82f5826b6969ad604979713c2d4f",
+        "keep_locally": true
+      },
+      "hn_fluentd_collector": {
+        "name": "fluent/fluentd@sha256:3e0bd37d74c95cff04a5a70ca4bb7470c6f807075cb914c1267c89f5801e1333",
+        "keep_locally": true
+      }
+    },
+    "docker_container": {
+      "hn_hmi_panel": {
+        "name": "hn_hmi_panel",
+        "image": "${docker_image.hn_hmi_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_corporate_zone.name}",
+            "aliases": [
+              "hmi_panel"
+            ]
+          }
+        ],
+        "hostname": "hmi01.corporate.industrial.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1028,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_historian_db": {
+        "name": "hn_historian_db",
+        "image": "${docker_image.hn_historian_db.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_process_zone.name}",
+            "aliases": [
+              "historian_db"
+            ]
+          }
+        ],
+        "hostname": "historian01.process.industrial.internal",
+        "env": [
+          "INFLUXDB_ADMIN_USER=admin",
+          "INFLUXDB_ADMIN_PASSWORD=password"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 8086 || (echo > /dev/tcp/localhost/8086) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_syslog_server": {
+        "name": "hn_syslog_server",
+        "image": "${docker_image.hn_syslog_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_logging_zone.name}",
+            "aliases": [
+              "syslog_server"
+            ]
+          }
+        ],
+        "hostname": "syslog01.logging.industrial.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_grafana_dashboard": {
+        "name": "hn_grafana_dashboard",
+        "image": "${docker_image.hn_grafana_dashboard.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_logging_zone.name}",
+            "aliases": [
+              "grafana_dashboard"
+            ]
+          },
+          {
+            "name": "${docker_network.industrial_control_system_process_zone.name}",
+            "aliases": [
+              "grafana_dashboard"
+            ]
+          }
+        ],
+        "hostname": "grafana01.logging.industrial.internal",
+        "depends_on": [
+          "docker_container.hn_historian_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "curl",
+              "-f",
+              "http://localhost:3000/"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_prometheus_collector": {
+        "name": "hn_prometheus_collector",
+        "image": "${docker_image.hn_prometheus_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_logging_zone.name}",
+            "aliases": [
+              "prometheus_collector"
+            ]
+          }
+        ],
+        "hostname": "prometheus01.logging.industrial.internal",
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "wget",
+              "--spider",
+              "http://localhost:9090/metrics"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_reverse_proxy": {
+        "name": "hn_reverse_proxy",
+        "image": "${docker_image.hn_reverse_proxy.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_corporate_zone.name}",
+            "aliases": [
+              "reverse_proxy"
+            ]
+          }
+        ],
+        "hostname": "proxy01.corporate.industrial.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1029,
+            "protocol": "tcp"
+          },
+          {
+            "internal": 443,
+            "external": 1030,
+            "protocol": "tcp"
+          }
+        ],
+        "depends_on": [
+          "docker_container.hn_hmi_panel"
+        ],
+        "command": [
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--adapter",
+          "caddyfile"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 2019 || (echo > /dev/tcp/localhost/2019) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_admin_panel": {
+        "name": "hn_admin_panel",
+        "image": "${docker_image.hn_admin_panel.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_corporate_zone.name}",
+            "aliases": [
+              "admin_panel"
+            ]
+          }
+        ],
+        "hostname": "admin01.corporate.industrial.internal",
+        "ports": [
+          {
+            "internal": 80,
+            "external": 1031,
+            "protocol": "tcp"
+          }
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "nc -z localhost 80 || (echo > /dev/tcp/localhost/80) 2>/dev/null || true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_backup_server": {
+        "name": "hn_backup_server",
+        "image": "${docker_image.hn_backup_server.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_process_zone.name}",
+            "aliases": [
+              "backup_server"
+            ]
+          }
+        ],
+        "hostname": "backup01.process.industrial.internal",
+        "env": [
+          "MYSQL_ROOT_PASSWORD=admin123"
+        ],
+        "depends_on": [
+          "docker_container.hn_historian_db"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD",
+              "mysqladmin",
+              "ping",
+              "-h",
+              "localhost"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_file_share": {
+        "name": "hn_file_share",
+        "image": "${docker_image.hn_file_share.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_process_zone.name}",
+            "aliases": [
+              "file_share"
+            ]
+          }
+        ],
+        "hostname": "fileshare01.process.industrial.internal",
+        "env": [
+          "SHARE_NAME=data_share"
+        ],
+        "depends_on": [
+          "docker_container.hn_historian_db",
+          "docker_container.hn_backup_server"
+        ],
+        "command": [
+          "/bin/sh",
+          "-c",
+          "while :; do sleep 2073600; done"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      },
+      "hn_fluentd_collector": {
+        "name": "hn_fluentd_collector",
+        "image": "${docker_image.hn_fluentd_collector.image_id}",
+        "networks_advanced": [
+          {
+            "name": "${docker_network.industrial_control_system_logging_zone.name}",
+            "aliases": [
+              "fluentd_collector"
+            ]
+          }
+        ],
+        "hostname": "fluentd01.logging.industrial.internal",
+        "env": [
+          "FLUENTD_CONF=fluent.conf",
+          "LD_PRELOAD=default"
+        ],
+        "depends_on": [
+          "docker_container.hn_syslog_server"
+        ],
+        "labels": [
+          {
+            "label": "honeynet.project",
+            "value": "industrial_control_system"
+          },
+          {
+            "label": "honeynet.managed",
+            "value": "true"
+          }
+        ],
+        "healthcheck": [
+          {
+            "test": [
+              "CMD-SHELL",
+              "true"
+            ],
+            "interval": "30s",
+            "timeout": "10s",
+            "retries": 3,
+            "start_period": "30s"
+          }
+        ]
+      }
+    }
+  }
+}
