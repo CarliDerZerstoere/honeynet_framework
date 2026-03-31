@@ -82,7 +82,7 @@ class System:
     Core system definition - the heart of the World Model.
     """
     name: str
-    kind: "SystemKind" = None  # type: ignore[assignment]
+    kind: Optional["SystemKind"] = None
     owner: Optional[str] = None
     deploy: Optional[SystemDeploy] = None
     simulate: Optional[SystemSimulate] = None

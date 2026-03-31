@@ -7,6 +7,7 @@ Falls back to empty lists if metadata is missing or a distribution is broken.
 from __future__ import annotations
 
 import logging
+import threading
 from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ CATALOG_GROUP = "honeynet.catalog_pack"
 # Empty list [] = allow ALL plugins (explicitly opened).
 # Non-empty list = only listed plugin names are loaded.
 _plugin_allowlist: list[str] | None = None  # None = not yet configured → deny all
+_plugin_allowlist_lock = threading.Lock()
 
 
 def set_plugin_allowlist(names: list[str]) -> None:
@@ -39,7 +41,8 @@ def set_plugin_allowlist(names: list[str]) -> None:
     ``None`` (never called) blocks all plugins (default-deny).
     """
     global _plugin_allowlist
-    _plugin_allowlist = list(names)
+    with _plugin_allowlist_lock:
+        _plugin_allowlist = list(names)
     if not names:
         logger.info("Plugin allowlist set to [] — all plugins allowed")
 
@@ -51,11 +54,13 @@ def _is_allowed(name: str) -> bool:
     - ``[]`` (empty list): allow all (explicitly opened).
     - ``["a", "b"]``: allow only "a" and "b".
     """
-    if _plugin_allowlist is None:
+    with _plugin_allowlist_lock:
+        allowlist = _plugin_allowlist
+    if allowlist is None:
         return False
-    if len(_plugin_allowlist) == 0:
+    if len(allowlist) == 0:
         return True  # empty = allow all
-    return name in _plugin_allowlist
+    return name in allowlist
 
 
 def discover_repair_strategies(*, strict: bool = False) -> list[tuple[str, Any]]:

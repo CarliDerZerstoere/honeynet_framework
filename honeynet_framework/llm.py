@@ -11,7 +11,7 @@ import re
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Callable, Optional
 
 import httpx
@@ -46,7 +46,7 @@ class LLMConfig:
     provider: str = "ollama"  # ollama, openai, anthropic
     model: str = "qwen2.5-coder:32b"
     base_url: str = "http://localhost:11434"
-    api_key: Optional[str] = None
+    api_key: Optional[str] = field(default=None, repr=False)
     temperature: float = 0.3
     max_tokens: int = 8192
     timeout: float = 1200.0  # 20 minutes (model load + first response for large models)
@@ -74,6 +74,8 @@ class TokenUsage:
 
 class LLMProvider(ABC):
     """Abstract base class for LLM providers."""
+
+    config: LLMConfig  # Subclasses must set this in __init__
 
     @abstractmethod
     async def generate(
@@ -966,16 +968,16 @@ def extract_json_from_response(text: str) -> dict:
         if code_match:
             text = code_match.group(1).strip()
 
-    # Find outermost JSON object by tracking brace depth (skipping string literals)
-    first_brace = -1
+    # Find outermost JSON object or array by tracking brace/bracket depth (skipping string literals)
+    first_delim = -1
     depth = 0
     in_str = False
-    brace_matched = False
+    delim_matched = False
+    open_ch = ''
+    close_ch = ''
     for i, ch in enumerate(text):
         if in_str:
             if ch == '"':
-                # Count consecutive backslashes before this quote.
-                # An even number means the quote is NOT escaped (\\\" → escaped-bs + real-quote).
                 num_bs = 0
                 j = i - 1
                 while j >= 0 and text[j] == '\\':
@@ -987,27 +989,38 @@ def extract_json_from_response(text: str) -> dict:
         if ch == '"':
             in_str = True
             continue
-        if ch == '{':
+        if ch in ('{', '['):
             if depth == 0:
-                first_brace = i
-            depth += 1
-        elif ch == '}':
+                first_delim = i
+                open_ch = ch
+                close_ch = '}' if ch == '{' else ']'
+            if ch == open_ch:
+                depth += 1
+        elif ch == close_ch:
             depth -= 1
-            if depth == 0 and first_brace >= 0:
-                text = text[first_brace:i + 1]
-                brace_matched = True
+            if depth == 0 and first_delim >= 0:
+                text = text[first_delim:i + 1]
+                delim_matched = True
                 break
 
-    # If braces never balanced (truncated JSON), at least strip the non-JSON
+    # If delimiters never balanced (truncated JSON), at least strip the non-JSON
     # preamble so downstream repair heuristics operate on the JSON fragment.
-    if not brace_matched and first_brace >= 0:
-        text = text[first_brace:]
+    if not delim_matched and first_delim >= 0:
+        text = text[first_delim:]
 
     # Clean up common issues
     # Remove trailing commas before ] or }
     text = re.sub(r',\s*([}\]])', r'\1', text)
 
-    # Remove single-line comments (not in strings)
+    # Try parsing BEFORE comment stripping or regex repairs — valid JSON
+    # should never be mutated by heuristics that can corrupt strings
+    # containing '//' (e.g. URLs or escaped sequences like \\").
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Remove single-line comments (not in strings) — only on parse failure
     lines = []
     for line in text.split('\n'):
         # Simple heuristic: remove // comments not inside strings
@@ -1039,8 +1052,7 @@ def extract_json_from_response(text: str) -> dict:
         lines.append(line)
     text = '\n'.join(lines)
 
-    # Try parsing first BEFORE applying any regex repairs — valid JSON should
-    # never be mutated by repair heuristics.
+    # Try again after comment stripping
     try:
         return json.loads(text)
     except json.JSONDecodeError as e:

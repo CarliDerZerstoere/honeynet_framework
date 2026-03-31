@@ -2026,10 +2026,11 @@ class HoneynetOrchestrator:
 
     async def generate(self, user_request: str) -> WorldModel:
         """Generate a World Model without deploying."""
-        await self.initialize()
-        world_model = await self.extractor.extract(user_request)
-        self._save_world_model(world_model, Path(self.config.work_dir))
-        return world_model
+        async with self._deploy_lock:
+            await self.initialize()
+            world_model = await self.extractor.extract(user_request)
+            self._save_world_model(world_model, Path(self.config.work_dir))
+            return world_model
 
     async def _apply_repair_loop(
         self,

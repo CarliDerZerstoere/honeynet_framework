@@ -18,7 +18,6 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
-from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -295,15 +294,26 @@ def _tokenize(text: str) -> list[str]:
     return [t for t in re.split(r"[^a-z0-9]+", text.lower()) if t]
 
 
-@lru_cache(maxsize=1)
+_registry_cache: dict | None = None
+
+
 def _load_registry() -> dict:
-    """Load the known-good images registry (cached after first load)."""
+    """Load the known-good images registry (cached after first successful load).
+
+    Unlike ``@lru_cache``, this does NOT cache failures — a transient read
+    error or missing file will be retried on the next call.
+    """
+    global _registry_cache
+    if _registry_cache is not None:
+        return _registry_cache
     registry_path = Path(__file__).parent / "data" / "known_good_images.json"
     if not registry_path.exists():
         return {}
     try:
         import json
-        return json.loads(registry_path.read_text(encoding="utf-8"))
+        data = json.loads(registry_path.read_text(encoding="utf-8"))
+        _registry_cache = data
+        return data
     except Exception:
         return {}
 

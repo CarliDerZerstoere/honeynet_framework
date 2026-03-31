@@ -142,9 +142,10 @@ def _repair_yaml(text: str) -> str:
             indent, key, _ws_before, _ws_after, value = equals_match.groups()
             # Only convert key=value to key: value for YAML mapping entries.
             # Skip lines that look like env var assignments (values containing
-            # '=' or lines under an 'env:' parent) to avoid corrupting
+            # '=' or ALL_CAPS keys typical of env vars) to avoid corrupting
             # "MY_VAR=admin123" into a nested YAML mapping.
-            if '=' not in value:
+            _is_env_var_key = re.match(r'^[A-Z][A-Z0-9_]*$', key)
+            if '=' not in value and not _is_env_var_key:
                 line = f"{indent}{key}: {value}"
 
         # Quote values with YAML-significant characters when they are bare scalars.

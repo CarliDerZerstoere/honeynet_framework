@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 # In-process cache for image config results (cleared between runs via
 # clear_image_config_cache).  Only successful results are cached.
 _image_config_cache: dict[str, dict] = {}
+_image_config_cache_lock = threading.Lock()
 
 
 def clear_image_config_cache() -> None:
@@ -54,13 +55,15 @@ async def fetch_image_config(image_ref: str, timeout: int = 15) -> dict:
     Returns a dict with keys ``env``, ``cmd``, ``entrypoint``, ``exposed_ports``,
     ``working_dir``, or ``{"error": "..."}`` on failure.
     """
-    cached = _image_config_cache.get(image_ref)
+    with _image_config_cache_lock:
+        cached = _image_config_cache.get(image_ref)
     if cached is not None:
         return cached
     resolver = ImageResolver(timeout=timeout, max_retries=1)
     result = await resolver._fetch_image_config(image_ref)
     if "error" not in result:
-        _image_config_cache[image_ref] = result
+        with _image_config_cache_lock:
+            _image_config_cache[image_ref] = result
     return result
 
 
